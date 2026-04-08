@@ -6,6 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "build:server": "cd server && npm run build",
+    "build:all": "npm run build && npm run build:server",
+    "start": "node server/dist/index.js",
     "preview": "vite preview"
   },
   "dependencies": {

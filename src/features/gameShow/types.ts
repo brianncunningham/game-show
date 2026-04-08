@@ -5,10 +5,17 @@ export interface GameShowTeam {
   score: number;
 }
 
+export interface GameShowSong {
+  title: string;
+  artist: string;
+}
+
 export interface GameShowQuestion {
   id: string;
+  round: number;
   category: string;
   songLabel: string;
+  songs: GameShowSong[];
   clipStart: number;
   clipDuration: number;
   basePoints: number;
@@ -22,21 +29,29 @@ export interface GameShowRules {
 
 export interface GameShowRoundState {
   selectedQuestionId: string | null;
+  activeSongIndex: number | null;
+  usedQuestionIds: string[];
   clipState: 'idle' | 'active' | 'resolved';
   buzzWinnerTeamId: string | null;
   answerState: 'pending' | 'correct' | 'wrong';
   stealState: 'idle' | 'available' | 'resolved';
   lastPointsAwarded: number | null;
+  artistBonusUsed: boolean;
 }
 
 export interface GameShowState {
   id: string;
-  status: 'setup' | 'live' | 'paused' | 'complete';
+  status: 'setup' | 'live' | 'paused' | 'complete' | 'sudden_death';
   currentRound: number;
   chooserTeamId: string | null;
   multiplier: number;
   practiceMode: boolean;
   hostLocked: boolean;
+  showIntro: boolean;
+  showRules: boolean;
+  randomizerSeq: number;
+  firstPickSeq: number;
+  firstPickTeamId: string | null;
   playerPool: string[];
   teams: GameShowTeam[];
   rules: GameShowRules;

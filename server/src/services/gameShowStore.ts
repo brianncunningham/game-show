@@ -1,33 +1,64 @@
 import { EventEmitter } from 'events';
+import { existsSync, readFileSync, writeFileSync } from 'fs';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
 import type {
   GameShowQuestion,
   GameShowSocketMessage,
   GameShowState,
   GameShowTeam,
-} from '../types/gameShow';
+} from '../types/gameShow.js';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const PERSIST_PATH = join(__dirname, '../../../game-state.json');
+
+const loadPersistedState = (): GameShowState | null => {
+  try {
+    if (existsSync(PERSIST_PATH)) {
+      const raw = readFileSync(PERSIST_PATH, 'utf-8');
+      return JSON.parse(raw) as GameShowState;
+    }
+  } catch {
+    console.warn('Could not load persisted state, using defaults.');
+  }
+  return null;
+};
+
+const persistState = (state: GameShowState): void => {
+  try {
+    writeFileSync(PERSIST_PATH, JSON.stringify(state, null, 2));
+  } catch {
+    console.warn('Could not persist state to disk.');
+  }
+};
 
 const DEFAULT_TEAMS: GameShowTeam[] = [
   { id: 'team-a', name: 'Team A', players: [], score: 0 },
   { id: 'team-b', name: 'Team B', players: [], score: 0 },
 ];
 
+const EMPTY_SONGS = [
+  { title: '', artist: '' },
+  { title: '', artist: '' },
+  { title: '', artist: '' },
+];
+
 const DEFAULT_QUESTIONS: GameShowQuestion[] = [
-  {
-    id: 'q1',
-    category: 'Warmup',
-    songLabel: 'Sample Song 1',
-    clipStart: 0,
-    clipDuration: 15,
-    basePoints: 100,
-  },
-  {
-    id: 'q2',
-    category: 'Warmup',
-    songLabel: 'Sample Song 2',
-    clipStart: 15,
-    clipDuration: 15,
-    basePoints: 100,
-  },
+  { id: 'r1q1', round: 1, category: 'Theme 1', songLabel: '', songs: [...EMPTY_SONGS], clipStart: 0, clipDuration: 0, basePoints: 100 },
+  { id: 'r1q2', round: 1, category: 'Theme 2', songLabel: '', songs: [...EMPTY_SONGS], clipStart: 0, clipDuration: 0, basePoints: 100 },
+  { id: 'r1q3', round: 1, category: 'Theme 3', songLabel: '', songs: [...EMPTY_SONGS], clipStart: 0, clipDuration: 0, basePoints: 100 },
+  { id: 'r1q4', round: 1, category: 'Theme 4', songLabel: '', songs: [...EMPTY_SONGS], clipStart: 0, clipDuration: 0, basePoints: 100 },
+  { id: 'r1q5', round: 1, category: 'Theme 5', songLabel: '', songs: [...EMPTY_SONGS], clipStart: 0, clipDuration: 0, basePoints: 100 },
+  { id: 'r2q1', round: 2, category: 'Theme 1', songLabel: '', songs: [...EMPTY_SONGS], clipStart: 0, clipDuration: 0, basePoints: 100 },
+  { id: 'r2q2', round: 2, category: 'Theme 2', songLabel: '', songs: [...EMPTY_SONGS], clipStart: 0, clipDuration: 0, basePoints: 100 },
+  { id: 'r2q3', round: 2, category: 'Theme 3', songLabel: '', songs: [...EMPTY_SONGS], clipStart: 0, clipDuration: 0, basePoints: 100 },
+  { id: 'r2q4', round: 2, category: 'Theme 4', songLabel: '', songs: [...EMPTY_SONGS], clipStart: 0, clipDuration: 0, basePoints: 100 },
+  { id: 'r2q5', round: 2, category: 'Theme 5', songLabel: '', songs: [...EMPTY_SONGS], clipStart: 0, clipDuration: 0, basePoints: 100 },
+  { id: 'r3q1', round: 3, category: 'Theme 1', songLabel: '', songs: [...EMPTY_SONGS], clipStart: 0, clipDuration: 0, basePoints: 100 },
+  { id: 'r3q2', round: 3, category: 'Theme 2', songLabel: '', songs: [...EMPTY_SONGS], clipStart: 0, clipDuration: 0, basePoints: 100 },
+  { id: 'r3q3', round: 3, category: 'Theme 3', songLabel: '', songs: [...EMPTY_SONGS], clipStart: 0, clipDuration: 0, basePoints: 100 },
+  { id: 'r3q4', round: 3, category: 'Theme 4', songLabel: '', songs: [...EMPTY_SONGS], clipStart: 0, clipDuration: 0, basePoints: 100 },
+  { id: 'r3q5', round: 3, category: 'Theme 5', songLabel: '', songs: [...EMPTY_SONGS], clipStart: 0, clipDuration: 0, basePoints: 100 },
 ];
 
 const shuffle = <T,>(items: T[]) => {
@@ -47,6 +78,11 @@ const createInitialState = (): GameShowState => ({
   multiplier: 1,
   practiceMode: false,
   hostLocked: false,
+  showIntro: false,
+  showRules: false,
+  randomizerSeq: 0,
+  firstPickSeq: 0,
+  firstPickTeamId: null,
   playerPool: [],
   teams: DEFAULT_TEAMS,
   rules: {
@@ -57,18 +93,38 @@ const createInitialState = (): GameShowState => ({
   questions: DEFAULT_QUESTIONS,
   roundState: {
     selectedQuestionId: null,
+    activeSongIndex: null,
+    usedQuestionIds: [],
     clipState: 'idle',
     buzzWinnerTeamId: null,
     answerState: 'pending',
     stealState: 'idle',
     lastPointsAwarded: null,
+    artistBonusUsed: false,
   },
   eventLog: [],
   updatedAt: new Date().toISOString(),
 });
 
+const migrateState = (state: GameShowState): GameShowState => ({
+  ...state,
+  questions: state.questions.map((q) => ({
+    ...q,
+    round: q.round ?? 1,
+    songs: q.songs?.length ? q.songs : [{ title: '', artist: '' }, { title: '', artist: '' }, { title: '', artist: '' }],
+  })),
+  roundState: {
+    ...state.roundState,
+    activeSongIndex: state.roundState.activeSongIndex ?? null,
+    usedQuestionIds: state.roundState.usedQuestionIds ?? [],
+  },
+});
+
 class GameShowStore extends EventEmitter {
-  private state: GameShowState = createInitialState();
+  private state: GameShowState = (() => {
+    const persisted = loadPersistedState();
+    return persisted ? migrateState(persisted) : createInitialState();
+  })();
   private history: GameShowState[] = [];
 
   getState(): GameShowState {
@@ -101,6 +157,7 @@ class GameShowStore extends EventEmitter {
       },
     };
 
+    persistState(this.state);
     this.emit('change', message);
     return this.state;
   }
@@ -124,11 +181,14 @@ class GameShowStore extends EventEmitter {
       teams: this.state.teams.map((team) => ({ ...team, score: 0 })),
       roundState: {
         selectedQuestionId: null,
+        activeSongIndex: null,
+        usedQuestionIds: [],
         clipState: 'idle',
         buzzWinnerTeamId: null,
         answerState: 'pending',
         stealState: 'idle',
         lastPointsAwarded: null,
+        artistBonusUsed: false,
       },
     });
   }
@@ -158,7 +218,23 @@ class GameShowStore extends EventEmitter {
 
     return this.commit('random_assign_players', {
       ...this.state,
-      teams: nextTeams,
+      status: 'setup',
+      currentRound: 1,
+      multiplier: this.state.rules.roundMultipliers[0] ?? 1,
+      chooserTeamId: nextTeams[0]?.id ?? null,
+      teams: nextTeams.map(t => ({ ...t, score: 0 })),
+      randomizerSeq: (this.state.randomizerSeq ?? 0) + 1,
+      roundState: {
+        selectedQuestionId: null,
+        activeSongIndex: null,
+        usedQuestionIds: [],
+        clipState: 'idle',
+        buzzWinnerTeamId: null,
+        answerState: 'pending',
+        stealState: 'idle',
+        lastPointsAwarded: null,
+        artistBonusUsed: false,
+      },
     });
   }
 
@@ -170,7 +246,7 @@ class GameShowStore extends EventEmitter {
   }
 
   selectQuestion(questionId: string): GameShowState {
-    if (!this.canMutate() || this.state.status !== 'live') {
+    if (!this.canMutate() || (this.state.status !== 'live' && this.state.status !== 'sudden_death')) {
       return this.state;
     }
 
@@ -184,7 +260,80 @@ class GameShowStore extends EventEmitter {
       roundState: {
         ...this.state.roundState,
         selectedQuestionId: questionId,
+        activeSongIndex: null,
+        clipState: 'idle',
+        buzzWinnerTeamId: null,
+        answerState: 'pending',
+        stealState: 'idle',
+        lastPointsAwarded: null,
+      },
+    });
+  }
+
+  selectSong(songIndex: number): GameShowState {
+    if (!this.canMutate()) {
+      return this.state;
+    }
+
+    if (!this.state.roundState.selectedQuestionId) {
+      return this.state;
+    }
+
+    return this.commit('select_song', {
+      ...this.state,
+      roundState: {
+        ...this.state.roundState,
+        activeSongIndex: songIndex,
         clipState: 'active',
+        buzzWinnerTeamId: null,
+        answerState: 'pending',
+        stealState: 'idle',
+        lastPointsAwarded: null,
+        artistBonusUsed: false,
+      },
+    });
+  }
+
+  awardArtistBonus(): GameShowState {
+    if (!this.canMutate()) {
+      return this.state;
+    }
+
+    const buzzWinnerTeamId = this.state.roundState.buzzWinnerTeamId;
+    if (!buzzWinnerTeamId || this.state.roundState.answerState !== 'correct' || this.state.roundState.artistBonusUsed) {
+      return this.state;
+    }
+
+    const bonus = 50 * this.state.multiplier;
+
+    return this.commit('award_artist_bonus', {
+      ...this.state,
+      teams: this.state.teams.map((team) =>
+        team.id === buzzWinnerTeamId && !this.state.practiceMode
+          ? { ...team, score: team.score + bonus }
+          : team,
+      ),
+      roundState: {
+        ...this.state.roundState,
+        lastPointsAwarded: bonus,
+        artistBonusUsed: true,
+      },
+    });
+  }
+
+  triggerSuddenDeath(): GameShowState {
+    if (!this.canMutate()) {
+      return this.state;
+    }
+
+    return this.commit('sudden_death', {
+      ...this.state,
+      status: 'sudden_death',
+      roundState: {
+        ...this.state.roundState,
+        selectedQuestionId: null,
+        activeSongIndex: null,
+        clipState: 'idle',
         buzzWinnerTeamId: null,
         answerState: 'pending',
         stealState: 'idle',
@@ -225,6 +374,10 @@ class GameShowStore extends EventEmitter {
     const awardedPoints = question ? question.basePoints * this.state.multiplier : 0;
     const buzzWinnerTeamId = this.state.roundState.buzzWinnerTeamId;
 
+    const usedIds = this.state.roundState.selectedQuestionId
+      ? [...new Set([...this.state.roundState.usedQuestionIds, this.state.roundState.selectedQuestionId])]
+      : this.state.roundState.usedQuestionIds;
+
     return this.commit('mark_correct', {
       ...this.state,
       teams: this.state.teams.map((team) =>
@@ -238,6 +391,7 @@ class GameShowStore extends EventEmitter {
         stealState: 'resolved',
         clipState: 'resolved',
         lastPointsAwarded: awardedPoints,
+        usedQuestionIds: usedIds,
       },
     });
   }
@@ -286,6 +440,10 @@ class GameShowStore extends EventEmitter {
     const stealingTeam = this.state.teams.find((team) => team.id !== buzzWinnerTeamId) ?? null;
     const awardedPoints = success && selectedQuestion ? selectedQuestion.basePoints * this.state.multiplier : 0;
 
+    const usedIds = this.state.roundState.selectedQuestionId
+      ? [...new Set([...this.state.roundState.usedQuestionIds, this.state.roundState.selectedQuestionId])]
+      : this.state.roundState.usedQuestionIds;
+
     return this.commit(success ? 'steal_success' : 'steal_fail', {
       ...this.state,
       teams: this.state.teams.map((team) =>
@@ -298,6 +456,7 @@ class GameShowStore extends EventEmitter {
         stealState: 'resolved',
         clipState: 'resolved',
         lastPointsAwarded: awardedPoints,
+        usedQuestionIds: usedIds,
       },
     });
   }
@@ -324,11 +483,14 @@ class GameShowStore extends EventEmitter {
       chooserTeamId: nextChooser?.id ?? null,
       roundState: {
         selectedQuestionId: null,
+        activeSongIndex: null,
+        usedQuestionIds: [],
         clipState: 'idle',
         buzzWinnerTeamId: null,
         answerState: 'pending',
         stealState: 'idle',
         lastPointsAwarded: null,
+        artistBonusUsed: false,
       },
     });
   }
@@ -338,16 +500,76 @@ class GameShowStore extends EventEmitter {
       return this.state;
     }
 
+    const usedIds = this.state.roundState.selectedQuestionId
+      ? [...new Set([...this.state.roundState.usedQuestionIds, this.state.roundState.selectedQuestionId])]
+      : this.state.roundState.usedQuestionIds;
+
     return this.commit('reset_round', {
       ...this.state,
       roundState: {
         selectedQuestionId: null,
+        activeSongIndex: null,
+        usedQuestionIds: usedIds,
         clipState: 'idle',
         buzzWinnerTeamId: null,
         answerState: 'pending',
         stealState: 'idle',
         lastPointsAwarded: null,
+        artistBonusUsed: false,
       },
+    });
+  }
+
+  dismissFirstPick(): GameShowState {
+    return this.commit('dismiss_first_pick', {
+      ...this.state,
+      firstPickSeq: 0,
+    });
+  }
+
+  showBoard(): GameShowState {
+    return this.commit('show_board', {
+      ...this.state,
+      showIntro: false,
+      showRules: false,
+      firstPickSeq: 0,
+    });
+  }
+
+  randomFirstPick(): GameShowState {
+    const teams = this.state.teams.filter(t => t.players.length > 0);
+    const pool = teams.length > 0 ? teams : this.state.teams;
+    const winner = pool[Math.floor(Math.random() * pool.length)];
+    return this.commit('random_first_pick', {
+      ...this.state,
+      firstPickSeq: (this.state.firstPickSeq ?? 0) + 1,
+      firstPickTeamId: winner?.id ?? null,
+      chooserTeamId: winner?.id ?? this.state.chooserTeamId,
+    });
+  }
+
+  toggleShowRules(show: boolean): GameShowState {
+    return this.commit('toggle_show_rules', {
+      ...this.state,
+      showRules: show,
+    });
+  }
+
+  toggleShowIntro(show: boolean): GameShowState {
+    return this.commit('toggle_show_intro', {
+      ...this.state,
+      showIntro: show,
+    });
+  }
+
+  endGame(winnerTeamId: string): GameShowState {
+    if (!this.canMutate()) {
+      return this.state;
+    }
+    return this.commit('end_game', {
+      ...this.state,
+      status: 'complete',
+      chooserTeamId: winnerTeamId,
     });
   }
 

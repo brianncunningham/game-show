@@ -1,19 +1,27 @@
 import { useMemo, useState } from 'react';
-import { Button, Card, CardContent, Divider, Stack, TextField, Typography } from '@mui/material';
+import { Box, Button, Card, CardContent, Divider, Stack, TextField, Typography } from '@mui/material';
 import { SAMPLE_QUESTIONS } from './sampleContent';
-import type { GameShowQuestion } from './types';
+import type { GameShowQuestion, GameShowSong } from './types';
 
 interface ContentManagerProps {
   questions: GameShowQuestion[];
   onChange: (questions: GameShowQuestion[]) => void;
 }
 
-const createEmptyQuestion = (index: number): GameShowQuestion => ({
-  id: `q${index + 1}`,
+const ROUNDS = [1, 2, 3];
+const SONG_COUNT = 3;
+
+const emptySongs = (): GameShowSong[] =>
+  Array.from({ length: SONG_COUNT }, () => ({ title: '', artist: '' }));
+
+const createEmptyQuestion = (round: number, index: number): GameShowQuestion => ({
+  id: `r${round}q${index + 1}-${Date.now()}`,
+  round,
   category: '',
   songLabel: '',
+  songs: emptySongs(),
   clipStart: 0,
-  clipDuration: 15,
+  clipDuration: 0,
   basePoints: 100,
 });
 
@@ -21,15 +29,21 @@ export const ContentManager = ({ questions, onChange }: ContentManagerProps) => 
   const [csvText, setCsvText] = useState('');
 
   const rows = useMemo(() => {
-    return questions.length ? questions : [createEmptyQuestion(0), createEmptyQuestion(1)];
+    if (questions.length) return questions;
+    return ROUNDS.flatMap((r) => Array.from({ length: 5 }, (_, i) => createEmptyQuestion(r, i)));
   }, [questions]);
 
   const updateQuestion = (questionId: string, patch: Partial<GameShowQuestion>) => {
-    onChange(rows.map((question) => (question.id === questionId ? { ...question, ...patch } : question)));
+    onChange(rows.map((q) => (q.id === questionId ? { ...q, ...patch } : q)));
   };
 
-  const addQuestion = () => {
-    onChange([...rows, createEmptyQuestion(rows.length)]);
+  const addQuestionToRound = (round: number) => {
+    const countInRound = rows.filter((q) => q.round === round).length;
+    onChange([...rows, createEmptyQuestion(round, countInRound)]);
+  };
+
+  const removeQuestion = (questionId: string) => {
+    onChange(rows.filter((q) => q.id !== questionId));
   };
 
   const importCsv = () => {
@@ -38,14 +52,21 @@ export const ContentManager = ({ questions, onChange }: ContentManagerProps) => 
       .map((line) => line.trim())
       .filter(Boolean)
       .map((line, index) => {
-        const [category = '', songLabel = '', clipStart = '0', clipDuration = '15', basePoints = '100'] = line.split(',');
+        const [roundStr = '1', category = '', basePoints = '100', t1 = '', a1 = '', t2 = '', a2 = '', t3 = '', a3 = ''] = line.split(',').map(s => s.trim());
+        const round = Number(roundStr) || 1;
         return {
-          id: `q${index + 1}`,
-          category: category.trim(),
-          songLabel: songLabel.trim(),
-          clipStart: Number(clipStart.trim()) || 0,
-          clipDuration: Number(clipDuration.trim()) || 15,
-          basePoints: Number(basePoints.trim()) || 100,
+          id: `csv-r${round}q${index + 1}`,
+          round,
+          category,
+          songLabel: '',
+          songs: [
+            { title: t1, artist: a1 },
+            { title: t2, artist: a2 },
+            { title: t3, artist: a3 },
+          ],
+          clipStart: 0,
+          clipDuration: 0,
+          basePoints: Number(basePoints) || 100,
         } satisfies GameShowQuestion;
       });
 
@@ -60,64 +81,106 @@ export const ContentManager = ({ questions, onChange }: ContentManagerProps) => 
         <Stack spacing={2}>
           <Stack direction="row" spacing={2} justifyContent="space-between" alignItems="center" flexWrap="wrap">
             <Typography variant="h6">Content manager</Typography>
-            <Stack direction="row" spacing={1}>
-              <Button variant="outlined" onClick={() => onChange(SAMPLE_QUESTIONS)}>
-                Load sample pack
-              </Button>
-              <Button variant="contained" onClick={addQuestion}>
-                Add question
-              </Button>
-            </Stack>
+            <Button variant="outlined" onClick={() => onChange(SAMPLE_QUESTIONS)}>
+              Load sample pack
+            </Button>
           </Stack>
 
-          {rows.map((question) => (
-            <Stack key={question.id} direction="row" spacing={2} flexWrap="wrap">
-              <TextField
-                label="Category"
-                size="small"
-                value={question.category}
-                onChange={(event) => updateQuestion(question.id, { category: event.target.value })}
-              />
-              <TextField
-                label="Song"
-                size="small"
-                value={question.songLabel}
-                onChange={(event) => updateQuestion(question.id, { songLabel: event.target.value })}
-              />
-              <TextField
-                label="Clip start"
-                size="small"
-                type="number"
-                value={question.clipStart}
-                onChange={(event) => updateQuestion(question.id, { clipStart: Number(event.target.value) || 0 })}
-              />
-              <TextField
-                label="Duration"
-                size="small"
-                type="number"
-                value={question.clipDuration}
-                onChange={(event) => updateQuestion(question.id, { clipDuration: Number(event.target.value) || 15 })}
-              />
-              <TextField
-                label="Base points"
-                size="small"
-                type="number"
-                value={question.basePoints}
-                onChange={(event) => updateQuestion(question.id, { basePoints: Number(event.target.value) || 100 })}
-              />
-            </Stack>
-          ))}
+          {ROUNDS.map((round) => {
+            const roundRows = rows.filter((q) => q.round === round);
+            const accentColor = round === 1 ? '#4fc3f7' : round === 2 ? '#81c784' : '#ffb74d';
+            return (
+              <Box
+                key={round}
+                sx={{
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  borderLeft: `4px solid ${accentColor}`,
+                  borderRadius: 2,
+                  p: 2,
+                  backgroundColor: 'rgba(255,255,255,0.02)',
+                }}
+              >
+                <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 2 }}>
+                  <Typography variant="subtitle1" fontWeight={700} sx={{ color: accentColor }}>
+                    Round {round}
+                  </Typography>
+                  <Button size="small" variant="outlined" onClick={() => addQuestionToRound(round)}>
+                    + Add theme
+                  </Button>
+                </Stack>
+                <Stack spacing={2}>
+                  {roundRows.map((question) => (
+                    <Box key={question.id} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1, p: 1.5 }}>
+                      <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap" sx={{ mb: 1 }}>
+                        <TextField
+                          label="Theme / Category"
+                          size="small"
+                          sx={{ minWidth: 160 }}
+                          value={question.category}
+                          onChange={(event) => updateQuestion(question.id, { category: event.target.value })}
+                        />
+                        <TextField
+                          label="Base points"
+                          size="small"
+                          type="number"
+                          sx={{ width: 110 }}
+                          value={question.basePoints}
+                          onChange={(event) => updateQuestion(question.id, { basePoints: Number(event.target.value) || 100 })}
+                        />
+                        <Button size="small" color="error" variant="text" onClick={() => removeQuestion(question.id)} sx={{ ml: 'auto' }}>
+                          Remove
+                        </Button>
+                      </Stack>
+                      <Stack spacing={1}>
+                        {(question.songs ?? emptySongs()).map((song, si) => (
+                          <Stack key={si} direction="row" spacing={1} alignItems="center">
+                            <Typography variant="caption" sx={{ width: 52, flexShrink: 0, color: 'text.secondary' }}>Song {si + 1}</Typography>
+                            <TextField
+                              label="Title"
+                              size="small"
+                              sx={{ flex: 1 }}
+                              value={song.title}
+                              onChange={(event) => {
+                                const updated = [...(question.songs ?? emptySongs())];
+                                updated[si] = { ...updated[si], title: event.target.value };
+                                updateQuestion(question.id, { songs: updated });
+                              }}
+                            />
+                            <TextField
+                              label="Artist"
+                              size="small"
+                              sx={{ flex: 1 }}
+                              value={song.artist}
+                              onChange={(event) => {
+                                const updated = [...(question.songs ?? emptySongs())];
+                                updated[si] = { ...updated[si], artist: event.target.value };
+                                updateQuestion(question.id, { songs: updated });
+                              }}
+                            />
+                          </Stack>
+                        ))}
+                      </Stack>
+                    </Box>
+                  ))}
+                  {roundRows.length === 0 && (
+                    <Typography variant="body2" color="text.secondary">No themes for this round yet.</Typography>
+                  )}
+                </Stack>
+              </Box>
+            );
+          })}
 
           <Divider />
 
           <Typography variant="subtitle1">Quick CSV import</Typography>
-          <Typography color="text.secondary">
-            Format: category, song label, clipStart, clipDuration, basePoints
+          <Typography variant="body2" color="text.secondary">
+            Format per line: round, category, basePoints, song1 title, song1 artist, song2 title, song2 artist, song3 title, song3 artist
           </Typography>
           <TextField
             multiline
             minRows={4}
-            placeholder="Warmup, Never Gonna Give You Up, 0, 15, 100"
+            placeholder={'1, Warmup, 100, Never Gonna Give You Up, Rick Astley, Bohemian Rhapsody, Queen, Sweet Child O Mine, Guns N Roses\n1, TV Themes, 100, ...'}
             value={csvText}
             onChange={(event) => setCsvText(event.target.value)}
           />

@@ -1,0 +1,814 @@
+{
+  "id": "default-game",
+  "status": "live",
+  "currentRound": 1,
+  "chooserTeamId": "team-b",
+  "multiplier": 1,
+  "practiceMode": false,
+  "hostLocked": false,
+  "playerPool": [
+    "Abby",
+    "Bradley",
+    "Charlie",
+    "Monica",
+    "Abbey",
+    "Sutton"
+  ],
+  "teams": [
+    {
+      "id": "team-a",
+      "name": "Team Popcorn",
+      "players": [
+        "Bradley",
+        "Sutton",
+        "Charlie"
+      ],
+      "score": 0
+    },
+    {
+      "id": "team-b",
+      "name": "Team M&Ms",
+      "players": [
+        "Abby",
+        "Monica",
+        "Abbey"
+      ],
+      "score": 0
+    }
+  ],
+  "rules": {
+    "allowSteal": true,
+    "wrongBuzzPenalty": false,
+    "roundMultipliers": [
+      1,
+      2,
+      3
+    ]
+  },
+  "questions": [
+    {
+      "id": "csv-r1q1",
+      "round": 1,
+      "category": "The 80s",
+      "songLabel": "",
+      "songs": [
+        {
+          "title": "Sweet Child O’ Mine",
+          "artist": "Guns N’ Roses"
+        },
+        {
+          "title": "Billie Jean",
+          "artist": "Michael Jackson"
+        },
+        {
+          "title": "Livin’ on a Prayer",
+          "artist": "Bon Jovi"
+        }
+      ],
+      "clipStart": 0,
+      "clipDuration": 0,
+      "basePoints": 100
+    },
+    {
+      "id": "csv-r1q2",
+      "round": 1,
+      "category": "Party Anthems",
+      "songLabel": "",
+      "songs": [
+        {
+          "title": "I Gotta Feeling",
+          "artist": "Black Eyed Peas"
+        },
+        {
+          "title": "Party in the U.S.A.",
+          "artist": "Miley Cyrus"
+        },
+        {
+          "title": "Don’t Stop Believin’",
+          "artist": "Journey"
+        }
+      ],
+      "clipStart": 0,
+      "clipDuration": 0,
+      "basePoints": 100
+    },
+    {
+      "id": "csv-r1q3",
+      "round": 1,
+      "category": "Today’s Top Hits",
+      "songLabel": "",
+      "songs": [
+        {
+          "title": "Anti-Hero",
+          "artist": "Taylor Swift"
+        },
+        {
+          "title": "As It Was",
+          "artist": "Harry Styles"
+        },
+        {
+          "title": "Espresso",
+          "artist": "Sabrina Carpenter"
+        }
+      ],
+      "clipStart": 0,
+      "clipDuration": 0,
+      "basePoints": 100
+    },
+    {
+      "id": "csv-r1q4",
+      "round": 1,
+      "category": "Country Hits",
+      "songLabel": "",
+      "songs": [
+        {
+          "title": "Wagon Wheel",
+          "artist": "Darius Rucker"
+        },
+        {
+          "title": "Chicken Fried",
+          "artist": "Zac Brown Band"
+        },
+        {
+          "title": "Old Town Road",
+          "artist": "Lil Nas X"
+        }
+      ],
+      "clipStart": 0,
+      "clipDuration": 0,
+      "basePoints": 100
+    },
+    {
+      "id": "csv-r1q5",
+      "round": 1,
+      "category": "In the Movies",
+      "songLabel": "",
+      "songs": [
+        {
+          "title": "Happy",
+          "artist": "Pharrell Williams"
+        },
+        {
+          "title": "Ghostbusters",
+          "artist": "Ray Parker Jr."
+        },
+        {
+          "title": "Footloose",
+          "artist": "Kenny Loggins"
+        }
+      ],
+      "clipStart": 0,
+      "clipDuration": 0,
+      "basePoints": 100
+    },
+    {
+      "id": "csv-r2q6",
+      "round": 2,
+      "category": "The 90s",
+      "songLabel": "",
+      "songs": [
+        {
+          "title": "Baby One More Time",
+          "artist": "Britney Spears"
+        },
+        {
+          "title": "Smells Like Teen Spirit",
+          "artist": "Nirvana"
+        },
+        {
+          "title": "No Scrubs",
+          "artist": "TLC"
+        }
+      ],
+      "clipStart": 0,
+      "clipDuration": 0,
+      "basePoints": 100
+    },
+    {
+      "id": "csv-r2q7",
+      "round": 2,
+      "category": "Duets",
+      "songLabel": "",
+      "songs": [
+        {
+          "title": "Shallow",
+          "artist": "Lady Gaga & Bradley Cooper"
+        },
+        {
+          "title": "Señorita",
+          "artist": "Shawn Mendes & Camila Cabello"
+        },
+        {
+          "title": "Cold Heart",
+          "artist": "Elton John & Dua Lipa"
+        }
+      ],
+      "clipStart": 0,
+      "clipDuration": 0,
+      "basePoints": 100
+    },
+    {
+      "id": "csv-r2q8",
+      "round": 2,
+      "category": "Boy Bands",
+      "songLabel": "",
+      "songs": [
+        {
+          "title": "Bye Bye Bye",
+          "artist": "NSYNC"
+        },
+        {
+          "title": "Dynamite",
+          "artist": "BTS"
+        },
+        {
+          "title": "What Makes You Beautiful",
+          "artist": "One Direction"
+        }
+      ],
+      "clipStart": 0,
+      "clipDuration": 0,
+      "basePoints": 100
+    },
+    {
+      "id": "csv-r2q9",
+      "round": 2,
+      "category": "Disney Songs",
+      "songLabel": "",
+      "songs": [
+        {
+          "title": "Let It Go",
+          "artist": "Idina Menzel"
+        },
+        {
+          "title": "We Don’t Talk About Bruno",
+          "artist": "Encanto Cast"
+        },
+        {
+          "title": "Under the Sea",
+          "artist": "The Little Mermaid"
+        }
+      ],
+      "clipStart": 0,
+      "clipDuration": 0,
+      "basePoints": 100
+    },
+    {
+      "id": "csv-r2q10",
+      "round": 2,
+      "category": "Heard on TikTok",
+      "songLabel": "",
+      "songs": [
+        {
+          "title": "Say So",
+          "artist": "Doja Cat"
+        },
+        {
+          "title": "Made You Look",
+          "artist": "Meghan Trainor"
+        },
+        {
+          "title": "Kill Bill",
+          "artist": "SZA"
+        }
+      ],
+      "clipStart": 0,
+      "clipDuration": 0,
+      "basePoints": 100
+    },
+    {
+      "id": "csv-r3q11",
+      "round": 3,
+      "category": "The 2000s",
+      "songLabel": "",
+      "songs": [
+        {
+          "title": "Since U Been Gone",
+          "artist": "Kelly Clarkson"
+        },
+        {
+          "title": "Uptown Funk",
+          "artist": "Mark Ronson ft. Bruno Mars"
+        },
+        {
+          "title": "Rolling in the Deep",
+          "artist": "Adele"
+        }
+      ],
+      "clipStart": 0,
+      "clipDuration": 0,
+      "basePoints": 100
+    },
+    {
+      "id": "csv-r3q12",
+      "round": 3,
+      "category": "Girl Power!",
+      "songLabel": "",
+      "songs": [
+        {
+          "title": "Firework",
+          "artist": "Katy Perry"
+        },
+        {
+          "title": "Wannabe",
+          "artist": "Spice Girls"
+        },
+        {
+          "title": "Survivor",
+          "artist": "Destiny’s Child"
+        }
+      ],
+      "clipStart": 0,
+      "clipDuration": 0,
+      "basePoints": 100
+    },
+    {
+      "id": "csv-r3q13",
+      "round": 3,
+      "category": "One-Hit Wonders",
+      "songLabel": "",
+      "songs": [
+        {
+          "title": "Take On Me",
+          "artist": "a-ha"
+        },
+        {
+          "title": "Tubthumping",
+          "artist": "Chumbawamba"
+        },
+        {
+          "title": "Mambo No. 5",
+          "artist": "Lou Bega"
+        }
+      ],
+      "clipStart": 0,
+      "clipDuration": 0,
+      "basePoints": 100
+    },
+    {
+      "id": "csv-r3q14",
+      "round": 3,
+      "category": "Throwback Hip-Hop",
+      "songLabel": "",
+      "songs": [
+        {
+          "title": "Ice Ice Baby",
+          "artist": "Vanilla Ice"
+        },
+        {
+          "title": "Lose Yourself",
+          "artist": "Eminem"
+        },
+        {
+          "title": "U Can’t Touch This",
+          "artist": "MC Hammer"
+        }
+      ],
+      "clipStart": 0,
+      "clipDuration": 0,
+      "basePoints": 100
+    },
+    {
+      "id": "csv-r3q15",
+      "round": 3,
+      "category": "TV Theme Songs",
+      "songLabel": "",
+      "songs": [
+        {
+          "title": "Friends Theme (I’ll Be There for You)",
+          "artist": "The Rembrandts"
+        },
+        {
+          "title": "SpongeBob SquarePants Theme",
+          "artist": "Cast"
+        },
+        {
+          "title": "Fresh Prince of Bel-Air",
+          "artist": "Will Smith"
+        }
+      ],
+      "clipStart": 0,
+      "clipDuration": 0,
+      "basePoints": 100
+    }
+  ],
+  "roundState": {
+    "selectedQuestionId": null,
+    "activeSongIndex": null,
+    "usedQuestionIds": [],
+    "clipState": "idle",
+    "buzzWinnerTeamId": null,
+    "answerState": "pending",
+    "stealState": "idle",
+    "lastPointsAwarded": null,
+    "artistBonusUsed": false
+  },
+  "eventLog": [
+    {
+      "action": "random_assign_players",
+      "at": "2026-04-08T21:28:37.200Z"
+    },
+    {
+      "action": "random_assign_players",
+      "at": "2026-04-08T21:28:37.364Z"
+    },
+    {
+      "action": "random_assign_players",
+      "at": "2026-04-08T21:30:19.595Z"
+    },
+    {
+      "action": "random_assign_players",
+      "at": "2026-04-08T21:30:19.702Z"
+    },
+    {
+      "action": "random_assign_players",
+      "at": "2026-04-08T21:30:27.890Z"
+    },
+    {
+      "action": "random_assign_players",
+      "at": "2026-04-08T21:30:27.984Z"
+    },
+    {
+      "action": "toggle_show_intro",
+      "at": "2026-04-08T21:32:30.911Z"
+    },
+    {
+      "action": "random_assign_players",
+      "at": "2026-04-08T21:32:30.914Z"
+    },
+    {
+      "action": "toggle_show_intro",
+      "at": "2026-04-08T21:32:39.806Z"
+    },
+    {
+      "action": "start_game",
+      "at": "2026-04-08T21:32:39.809Z"
+    },
+    {
+      "action": "toggle_show_intro",
+      "at": "2026-04-08T21:32:42.145Z"
+    },
+    {
+      "action": "toggle_show_intro",
+      "at": "2026-04-08T21:32:47.445Z"
+    },
+    {
+      "action": "random_assign_players",
+      "at": "2026-04-08T21:32:47.447Z"
+    },
+    {
+      "action": "toggle_show_intro",
+      "at": "2026-04-08T21:33:05.011Z"
+    },
+    {
+      "action": "start_game",
+      "at": "2026-04-08T21:33:05.013Z"
+    },
+    {
+      "action": "select_question",
+      "at": "2026-04-08T21:33:27.294Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-08T21:33:29.029Z"
+    },
+    {
+      "action": "set_buzz_winner",
+      "at": "2026-04-08T21:33:30.533Z"
+    },
+    {
+      "action": "mark_correct",
+      "at": "2026-04-08T21:33:32.452Z"
+    },
+    {
+      "action": "award_artist_bonus",
+      "at": "2026-04-08T21:33:34.786Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-08T21:33:39.723Z"
+    },
+    {
+      "action": "set_buzz_winner",
+      "at": "2026-04-08T21:33:45.372Z"
+    },
+    {
+      "action": "mark_wrong",
+      "at": "2026-04-08T21:33:47.472Z"
+    },
+    {
+      "action": "steal_success",
+      "at": "2026-04-08T21:33:50.279Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-08T21:33:58.420Z"
+    },
+    {
+      "action": "set_buzz_winner",
+      "at": "2026-04-08T21:34:02.031Z"
+    },
+    {
+      "action": "mark_wrong",
+      "at": "2026-04-08T21:34:03.350Z"
+    },
+    {
+      "action": "steal_success",
+      "at": "2026-04-08T21:34:05.646Z"
+    },
+    {
+      "action": "reset_round",
+      "at": "2026-04-08T21:34:17.980Z"
+    },
+    {
+      "action": "toggle_show_intro",
+      "at": "2026-04-08T21:45:50.676Z"
+    },
+    {
+      "action": "toggle_show_rules",
+      "at": "2026-04-08T21:45:50.682Z"
+    },
+    {
+      "action": "toggle_show_intro",
+      "at": "2026-04-08T22:01:33.828Z"
+    },
+    {
+      "action": "toggle_show_intro",
+      "at": "2026-04-08T22:01:35.256Z"
+    },
+    {
+      "action": "toggle_show_rules",
+      "at": "2026-04-08T22:01:35.259Z"
+    },
+    {
+      "action": "toggle_show_intro",
+      "at": "2026-04-08T22:01:36.585Z"
+    },
+    {
+      "action": "toggle_show_rules",
+      "at": "2026-04-08T22:01:36.587Z"
+    },
+    {
+      "action": "random_assign_players",
+      "at": "2026-04-08T22:01:36.591Z"
+    },
+    {
+      "action": "toggle_show_intro",
+      "at": "2026-04-08T22:02:32.035Z"
+    },
+    {
+      "action": "toggle_show_rules",
+      "at": "2026-04-08T22:02:32.040Z"
+    },
+    {
+      "action": "start_game",
+      "at": "2026-04-08T22:02:32.044Z"
+    },
+    {
+      "action": "toggle_show_intro",
+      "at": "2026-04-08T22:06:39.908Z"
+    },
+    {
+      "action": "toggle_show_rules",
+      "at": "2026-04-08T22:06:39.912Z"
+    },
+    {
+      "action": "random_first_pick",
+      "at": "2026-04-08T22:06:39.916Z"
+    },
+    {
+      "action": "toggle_show_rules",
+      "at": "2026-04-08T22:08:51.155Z"
+    },
+    {
+      "action": "toggle_show_intro",
+      "at": "2026-04-08T22:08:51.163Z"
+    },
+    {
+      "action": "random_first_pick",
+      "at": "2026-04-08T22:08:51.164Z"
+    },
+    {
+      "action": "dismiss_first_pick",
+      "at": "2026-04-08T22:08:59.940Z"
+    },
+    {
+      "action": "toggle_show_intro",
+      "at": "2026-04-08T22:11:13.568Z"
+    },
+    {
+      "action": "toggle_show_rules",
+      "at": "2026-04-08T22:11:13.572Z"
+    },
+    {
+      "action": "random_first_pick",
+      "at": "2026-04-08T22:11:13.573Z"
+    },
+    {
+      "action": "toggle_show_intro",
+      "at": "2026-04-08T22:11:15.547Z"
+    },
+    {
+      "action": "toggle_show_rules",
+      "at": "2026-04-08T22:11:15.550Z"
+    },
+    {
+      "action": "random_first_pick",
+      "at": "2026-04-08T22:11:15.551Z"
+    },
+    {
+      "action": "toggle_show_intro",
+      "at": "2026-04-08T22:11:21.855Z"
+    },
+    {
+      "action": "toggle_show_intro",
+      "at": "2026-04-08T22:11:30.855Z"
+    },
+    {
+      "action": "dismiss_first_pick",
+      "at": "2026-04-08T22:11:34.599Z"
+    },
+    {
+      "action": "toggle_show_intro",
+      "at": "2026-04-08T22:11:36.941Z"
+    },
+    {
+      "action": "toggle_show_intro",
+      "at": "2026-04-08T22:11:42.212Z"
+    },
+    {
+      "action": "toggle_show_intro",
+      "at": "2026-04-08T22:11:44.852Z"
+    },
+    {
+      "action": "toggle_show_rules",
+      "at": "2026-04-08T22:11:44.855Z"
+    },
+    {
+      "action": "random_first_pick",
+      "at": "2026-04-08T22:11:44.857Z"
+    },
+    {
+      "action": "dismiss_first_pick",
+      "at": "2026-04-08T22:11:51.412Z"
+    },
+    {
+      "action": "toggle_show_intro",
+      "at": "2026-04-08T22:11:58.414Z"
+    },
+    {
+      "action": "toggle_show_intro",
+      "at": "2026-04-08T22:12:02.097Z"
+    },
+    {
+      "action": "toggle_show_rules",
+      "at": "2026-04-08T22:12:02.099Z"
+    },
+    {
+      "action": "toggle_show_intro",
+      "at": "2026-04-08T22:12:08.186Z"
+    },
+    {
+      "action": "toggle_show_rules",
+      "at": "2026-04-08T22:12:08.189Z"
+    },
+    {
+      "action": "random_assign_players",
+      "at": "2026-04-08T22:12:08.192Z"
+    },
+    {
+      "action": "toggle_show_intro",
+      "at": "2026-04-08T22:12:22.386Z"
+    },
+    {
+      "action": "toggle_show_rules",
+      "at": "2026-04-08T22:12:22.388Z"
+    },
+    {
+      "action": "random_first_pick",
+      "at": "2026-04-08T22:12:22.389Z"
+    },
+    {
+      "action": "reset_scores",
+      "at": "2026-04-08T22:12:46.332Z"
+    },
+    {
+      "action": "dismiss_first_pick",
+      "at": "2026-04-08T22:13:03.015Z"
+    },
+    {
+      "action": "toggle_show_intro",
+      "at": "2026-04-08T22:15:13.127Z"
+    },
+    {
+      "action": "toggle_show_rules",
+      "at": "2026-04-08T22:15:13.128Z"
+    },
+    {
+      "action": "start_game",
+      "at": "2026-04-08T22:15:13.130Z"
+    },
+    {
+      "action": "toggle_show_intro",
+      "at": "2026-04-08T22:15:14.557Z"
+    },
+    {
+      "action": "toggle_show_intro",
+      "at": "2026-04-08T22:15:20.430Z"
+    },
+    {
+      "action": "toggle_show_rules",
+      "at": "2026-04-08T22:15:20.433Z"
+    },
+    {
+      "action": "toggle_show_intro",
+      "at": "2026-04-08T22:15:48.779Z"
+    },
+    {
+      "action": "toggle_show_rules",
+      "at": "2026-04-08T22:15:48.780Z"
+    },
+    {
+      "action": "random_assign_players",
+      "at": "2026-04-08T22:15:48.781Z"
+    },
+    {
+      "action": "toggle_show_intro",
+      "at": "2026-04-08T22:16:05.090Z"
+    },
+    {
+      "action": "toggle_show_rules",
+      "at": "2026-04-08T22:16:05.092Z"
+    },
+    {
+      "action": "random_first_pick",
+      "at": "2026-04-08T22:16:05.094Z"
+    },
+    {
+      "action": "dismiss_first_pick",
+      "at": "2026-04-08T22:16:12.346Z"
+    },
+    {
+      "action": "sudden_death",
+      "at": "2026-04-08T22:16:31.969Z"
+    },
+    {
+      "action": "end_game",
+      "at": "2026-04-08T22:16:36.290Z"
+    },
+    {
+      "action": "reset_scores",
+      "at": "2026-04-08T22:16:42.809Z"
+    },
+    {
+      "action": "toggle_show_intro",
+      "at": "2026-04-08T22:16:44.934Z"
+    },
+    {
+      "action": "toggle_show_rules",
+      "at": "2026-04-08T22:16:44.938Z"
+    },
+    {
+      "action": "start_game",
+      "at": "2026-04-08T22:16:44.939Z"
+    },
+    {
+      "action": "toggle_show_intro",
+      "at": "2026-04-08T22:16:49.301Z"
+    },
+    {
+      "action": "toggle_show_intro",
+      "at": "2026-04-08T22:16:51.696Z"
+    },
+    {
+      "action": "show_board",
+      "at": "2026-04-08T22:18:04.176Z"
+    },
+    {
+      "action": "show_board",
+      "at": "2026-04-08T22:18:04.410Z"
+    },
+    {
+      "action": "toggle_show_intro",
+      "at": "2026-04-08T22:18:06.810Z"
+    },
+    {
+      "action": "toggle_show_rules",
+      "at": "2026-04-08T22:18:06.811Z"
+    },
+    {
+      "action": "random_first_pick",
+      "at": "2026-04-08T22:18:06.812Z"
+    },
+    {
+      "action": "show_board",
+      "at": "2026-04-08T22:18:18.009Z"
+    }
+  ],
+  "updatedAt": "2026-04-08T22:18:18.009Z",
+  "showIntro": false,
+  "randomizerSeq": 20,
+  "showRules": false,
+  "firstPickSeq": 0,
+  "firstPickTeamId": "team-b"
+}

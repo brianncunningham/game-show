@@ -1,0 +1,352 @@
+{
+  "id": "save-1775666892285",
+  "name": "Game 1 - 041026",
+  "savedAt": "2026-04-08T16:48:12.285Z",
+  "questions": [
+    {
+      "id": "csv-r1q1",
+      "round": 1,
+      "category": "The 80s",
+      "songLabel": "",
+      "songs": [
+        {
+          "title": "Sweet Child O’ Mine",
+          "artist": "Guns N’ Roses"
+        },
+        {
+          "title": "Billie Jean",
+          "artist": "Michael Jackson"
+        },
+        {
+          "title": "Livin’ on a Prayer",
+          "artist": "Bon Jovi"
+        }
+      ],
+      "clipStart": 0,
+      "clipDuration": 0,
+      "basePoints": 100
+    },
+    {
+      "id": "csv-r1q2",
+      "round": 1,
+      "category": "Party Anthems",
+      "songLabel": "",
+      "songs": [
+        {
+          "title": "I Gotta Feeling",
+          "artist": "Black Eyed Peas"
+        },
+        {
+          "title": "Party in the U.S.A.",
+          "artist": "Miley Cyrus"
+        },
+        {
+          "title": "Don’t Stop Believin’",
+          "artist": "Journey"
+        }
+      ],
+      "clipStart": 0,
+      "clipDuration": 0,
+      "basePoints": 100
+    },
+    {
+      "id": "csv-r1q3",
+      "round": 1,
+      "category": "Today’s Top Hits",
+      "songLabel": "",
+      "songs": [
+        {
+          "title": "Anti-Hero",
+          "artist": "Taylor Swift"
+        },
+        {
+          "title": "As It Was",
+          "artist": "Harry Styles"
+        },
+        {
+          "title": "Espresso",
+          "artist": "Sabrina Carpenter"
+        }
+      ],
+      "clipStart": 0,
+      "clipDuration": 0,
+      "basePoints": 100
+    },
+    {
+      "id": "csv-r1q4",
+      "round": 1,
+      "category": "Country Hits",
+      "songLabel": "",
+      "songs": [
+        {
+          "title": "Wagon Wheel",
+          "artist": "Darius Rucker"
+        },
+        {
+          "title": "Chicken Fried",
+          "artist": "Zac Brown Band"
+        },
+        {
+          "title": "Old Town Road",
+          "artist": "Lil Nas X"
+        }
+      ],
+      "clipStart": 0,
+      "clipDuration": 0,
+      "basePoints": 100
+    },
+    {
+      "id": "csv-r1q5",
+      "round": 1,
+      "category": "In the Movies",
+      "songLabel": "",
+      "songs": [
+        {
+          "title": "Happy",
+          "artist": "Pharrell Williams"
+        },
+        {
+          "title": "Ghostbusters",
+          "artist": "Ray Parker Jr."
+        },
+        {
+          "title": "Footloose",
+          "artist": "Kenny Loggins"
+        }
+      ],
+      "clipStart": 0,
+      "clipDuration": 0,
+      "basePoints": 100
+    },
+    {
+      "id": "csv-r2q6",
+      "round": 2,
+      "category": "The 90s",
+      "songLabel": "",
+      "songs": [
+        {
+          "title": "Baby One More Time",
+          "artist": "Britney Spears"
+        },
+        {
+          "title": "Smells Like Teen Spirit",
+          "artist": "Nirvana"
+        },
+        {
+          "title": "No Scrubs",
+          "artist": "TLC"
+        }
+      ],
+      "clipStart": 0,
+      "clipDuration": 0,
+      "basePoints": 100
+    },
+    {
+      "id": "csv-r2q7",
+      "round": 2,
+      "category": "Duets",
+      "songLabel": "",
+      "songs": [
+        {
+          "title": "Shallow",
+          "artist": "Lady Gaga & Bradley Cooper"
+        },
+        {
+          "title": "Señorita",
+          "artist": "Shawn Mendes & Camila Cabello"
+        },
+        {
+          "title": "Cold Heart",
+          "artist": "Elton John & Dua Lipa"
+        }
+      ],
+      "clipStart": 0,
+      "clipDuration": 0,
+      "basePoints": 100
+    },
+    {
+      "id": "csv-r2q8",
+      "round": 2,
+      "category": "Boy Bands",
+      "songLabel": "",
+      "songs": [
+        {
+          "title": "Bye Bye Bye",
+          "artist": "NSYNC"
+        },
+        {
+          "title": "Dynamite",
+          "artist": "BTS"
+        },
+        {
+          "title": "What Makes You Beautiful",
+          "artist": "One Direction"
+        }
+      ],
+      "clipStart": 0,
+      "clipDuration": 0,
+      "basePoints": 100
+    },
+    {
+      "id": "csv-r2q9",
+      "round": 2,
+      "category": "Disney Songs",
+      "songLabel": "",
+      "songs": [
+        {
+          "title": "Let It Go",
+          "artist": "Idina Menzel"
+        },
+        {
+          "title": "We Don’t Talk About Bruno",
+          "artist": "Encanto Cast"
+        },
+        {
+          "title": "Under the Sea",
+          "artist": "The Little Mermaid"
+        }
+      ],
+      "clipStart": 0,
+      "clipDuration": 0,
+      "basePoints": 100
+    },
+    {
+      "id": "csv-r2q10",
+      "round": 2,
+      "category": "Heard on TikTok",
+      "songLabel": "",
+      "songs": [
+        {
+          "title": "Say So",
+          "artist": "Doja Cat"
+        },
+        {
+          "title": "Made You Look",
+          "artist": "Meghan Trainor"
+        },
+        {
+          "title": "Kill Bill",
+          "artist": "SZA"
+        }
+      ],
+      "clipStart": 0,
+      "clipDuration": 0,
+      "basePoints": 100
+    },
+    {
+      "id": "csv-r3q11",
+      "round": 3,
+      "category": "The 2000s",
+      "songLabel": "",
+      "songs": [
+        {
+          "title": "Since U Been Gone",
+          "artist": "Kelly Clarkson"
+        },
+        {
+          "title": "Uptown Funk",
+          "artist": "Mark Ronson ft. Bruno Mars"
+        },
+        {
+          "title": "Rolling in the Deep",
+          "artist": "Adele"
+        }
+      ],
+      "clipStart": 0,
+      "clipDuration": 0,
+      "basePoints": 100
+    },
+    {
+      "id": "csv-r3q12",
+      "round": 3,
+      "category": "Girl Power!",
+      "songLabel": "",
+      "songs": [
+        {
+          "title": "Firework",
+          "artist": "Katy Perry"
+        },
+        {
+          "title": "Wannabe",
+          "artist": "Spice Girls"
+        },
+        {
+          "title": "Survivor",
+          "artist": "Destiny’s Child"
+        }
+      ],
+      "clipStart": 0,
+      "clipDuration": 0,
+      "basePoints": 100
+    },
+    {
+      "id": "csv-r3q13",
+      "round": 3,
+      "category": "One-Hit Wonders",
+      "songLabel": "",
+      "songs": [
+        {
+          "title": "Take On Me",
+          "artist": "a-ha"
+        },
+        {
+          "title": "Tubthumping",
+          "artist": "Chumbawamba"
+        },
+        {
+          "title": "Mambo No. 5",
+          "artist": "Lou Bega"
+        }
+      ],
+      "clipStart": 0,
+      "clipDuration": 0,
+      "basePoints": 100
+    },
+    {
+      "id": "csv-r3q14",
+      "round": 3,
+      "category": "Throwback Hip-Hop",
+      "songLabel": "",
+      "songs": [
+        {
+          "title": "Ice Ice Baby",
+          "artist": "Vanilla Ice"
+        },
+        {
+          "title": "Lose Yourself",
+          "artist": "Eminem"
+        },
+        {
+          "title": "U Can’t Touch This",
+          "artist": "MC Hammer"
+        }
+      ],
+      "clipStart": 0,
+      "clipDuration": 0,
+      "basePoints": 100
+    },
+    {
+      "id": "csv-r3q15",
+      "round": 3,
+      "category": "TV Theme Songs",
+      "songLabel": "",
+      "songs": [
+        {
+          "title": "Friends Theme (I’ll Be There for You)",
+          "artist": "The Rembrandts"
+        },
+        {
+          "title": "SpongeBob SquarePants Theme",
+          "artist": "Cast"
+        },
+        {
+          "title": "Fresh Prince of Bel-Air",
+          "artist": "Will Smith"
+        }
+      ],
+      "clipStart": 0,
+      "clipDuration": 0,
+      "basePoints": 100
+    }
+  ]
+}

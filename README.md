@@ -1,11 +1,46 @@
-# game-show
+# Name That Tune — Game Show
 
-Standalone game show app extracted from prototype work.
+Music game show app with a host control panel, admin setup, and audience display board.
 
 ## Routes
-- `/gameadmin`
-- `/host`
-- `/show`
+- `/show` — audience-facing board (put on screen via HDMI / screenshare)
+- `/host` — host controls for running each round (use on tablet)
+- `/gameadmin` — pre-game setup: teams, players, questions, rules
 
-## Status
-Early extraction in progress. Frontend and backend files have been copied into this standalone project and still need path cleanup and independent server wiring.
+## Local development
+
+```bash
+# Terminal 1 — backend (Express + WebSocket on :3001)
+cd server && npm run dev
+
+# Terminal 2 — frontend (Vite on :4174, proxies /api and /ws to :3001)
+npm run dev
+```
+
+## VPS deployment (Tailscale)
+
+All devices (laptop showing `/show`, tablet running `/host`) connect via Tailscale. No public internet exposure needed.
+
+```bash
+# On the VPS — one-time setup
+npm install
+cd server && npm install && cd ..
+
+# Build frontend + server
+npm run build:all
+
+# Run (single process serves everything on port 3001)
+npm start
+```
+
+Then on each device:
+1. Install Tailscale and join your tailnet
+2. Open `http://<your-vps-tailscale-hostname>:3001/show` on the laptop
+3. Open `http://<your-vps-tailscale-hostname>:3001/host` on the tablet
+
+To run persistently on the VPS, use `pm2`:
+```bash
+npm install -g pm2
+pm2 start "npm start" --name game-show
+pm2 save
+```

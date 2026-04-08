@@ -1,20 +1,24 @@
-import { useMemo } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button, Card, CardContent, FormControlLabel, Stack, Switch, TextField, Typography } from '@mui/material';
 import { startGame, updateGameConfig } from '../features/gameShow/api';
 import { ContentManager } from '../features/gameShow/ContentManager';
+import { SaveManager } from '../features/gameShow/SaveManager';
 import { GameShowSharedView } from '../features/gameShow/GameShowSharedView';
 import { TeamSetup } from '../features/gameShow/TeamSetup';
 import { useGameShowState } from '../features/gameShow/useGameShowState';
 
 export const GameAdminPage = () => {
   const { state, isLoading, error } = useGameShowState();
+  const [multipliersText, setMultipliersText] = useState('');
+  const multipliersFieldFocused = useRef(false);
 
-  const controls = useMemo(() => {
-    if (!state) {
-      return null;
+  useEffect(() => {
+    if (!multipliersFieldFocused.current && state) {
+      setMultipliersText(state.rules.roundMultipliers.join(', '));
     }
+  }, [state?.rules.roundMultipliers]);
 
-    return (
+  const controls = !state ? null : (
       <Stack spacing={2}>
         <Card>
           <CardContent>
@@ -67,8 +71,11 @@ export const GameAdminPage = () => {
               <TextField
                 label="Round multipliers"
                 size="small"
-                value={state.rules.roundMultipliers.join(', ')}
+                value={multipliersText}
+                onChange={(event) => setMultipliersText(event.target.value)}
+                onFocus={() => { multipliersFieldFocused.current = true; }}
                 onBlur={(event) => {
+                  multipliersFieldFocused.current = false;
                   const values = event.target.value
                     .split(',')
                     .map((value) => Number(value.trim()))
@@ -100,9 +107,10 @@ export const GameAdminPage = () => {
             void updateGameConfig({ questions });
           }}
         />
+
+        <SaveManager />
       </Stack>
-    );
-  }, [state]);
+  );
 
   return (
     <GameShowSharedView

@@ -39,19 +39,17 @@ export const GameShowSharedView = ({ title, subtitle, state, isLoading, error, c
   return (
     <GameShowStandaloneShell>
       <Box sx={{ p: 4 }}>
-        <Stack spacing={3}>
-        <Box>
-          <Typography variant="h3" gutterBottom>{title}</Typography>
-          <Typography variant="h6" color="text.secondary">{subtitle}</Typography>
-        </Box>
-
-        <Stack direction="row" spacing={1} flexWrap="wrap">
-          <Chip label={`Status: ${state.status}`} color={state.status === 'live' ? 'success' : 'default'} />
-          <Chip label={`Round ${state.currentRound}`} />
-          <Chip label={`x${state.multiplier} multiplier`} />
-          <Chip label={chooserTeam ? `Chooser: ${chooserTeam.name}` : 'Chooser pending'} />
-          <Chip label={state.practiceMode ? 'Practice mode' : 'Scored game'} color={state.practiceMode ? 'warning' : 'primary'} />
-          <Chip label={state.hostLocked ? 'Host locked' : 'Host unlocked'} color={state.hostLocked ? 'error' : 'success'} />
+        <Stack spacing={2}>
+        <Stack direction="row" alignItems="center" spacing={2} flexWrap="wrap" useFlexGap>
+          <Typography variant="h5" sx={{ fontWeight: 700, flexShrink: 0 }}>{title}</Typography>
+          <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap alignItems="center">
+            <Chip label={`Status: ${state.status}`} color={state.status === 'live' ? 'success' : 'default'} size="small" />
+            <Chip label={`Round ${state.currentRound}`} size="small" />
+            <Chip label={`×${state.multiplier}`} size="small" />
+            {chooserTeam && <Chip label={`${chooserTeam.name}'s pick`} color="warning" size="small" />}
+            <Chip label={state.practiceMode ? 'Practice' : 'Scored'} color={state.practiceMode ? 'warning' : 'primary'} size="small" />
+            <Chip label={state.hostLocked ? 'Locked' : 'Unlocked'} color={state.hostLocked ? 'error' : 'success'} size="small" />
+          </Stack>
         </Stack>
 
         {controls}
