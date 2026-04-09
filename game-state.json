@@ -53,7 +53,7 @@
         "Bradley"
       ],
       "score": 0,
-      "eliminated": false
+      "eliminated": true
     },
     {
       "id": "team-c",
@@ -66,7 +66,7 @@
         "Name 2"
       ],
       "score": 0,
-      "eliminated": true
+      "eliminated": false
     },
     {
       "id": "team-d",
@@ -447,7 +447,7 @@
     "clipState": "idle",
     "buzzWinnerTeamId": null,
     "attemptedTeamIds": [
-      "team-c"
+      "team-b"
     ],
     "stealingTeamId": null,
     "answerState": "pending",
@@ -456,42 +456,6 @@
     "artistBonusUsed": false
   },
   "eventLog": [
-    {
-      "action": "update_config",
-      "at": "2026-04-09T03:39:41.043Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-09T03:39:41.322Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-09T03:39:41.652Z"
-    },
-    {
-      "action": "reset_scores",
-      "at": "2026-04-09T03:39:49.927Z"
-    },
-    {
-      "action": "toggle_show_intro",
-      "at": "2026-04-09T03:39:51.605Z"
-    },
-    {
-      "action": "toggle_show_rules",
-      "at": "2026-04-09T03:39:51.609Z"
-    },
-    {
-      "action": "start_game",
-      "at": "2026-04-09T03:39:51.611Z"
-    },
-    {
-      "action": "select_question",
-      "at": "2026-04-09T03:39:53.643Z"
-    },
-    {
-      "action": "select_song",
-      "at": "2026-04-09T03:39:55.118Z"
-    },
     {
       "action": "select_song",
       "at": "2026-04-09T03:42:51.244Z"
@@ -855,9 +819,45 @@
     {
       "action": "eliminate_team",
       "at": "2026-04-09T13:03:25.661Z"
+    },
+    {
+      "action": "reset_scores",
+      "at": "2026-04-09T13:18:59.989Z"
+    },
+    {
+      "action": "toggle_show_intro",
+      "at": "2026-04-09T13:19:03.359Z"
+    },
+    {
+      "action": "toggle_show_rules",
+      "at": "2026-04-09T13:19:03.363Z"
+    },
+    {
+      "action": "start_game",
+      "at": "2026-04-09T13:19:03.367Z"
+    },
+    {
+      "action": "eliminate_team",
+      "at": "2026-04-09T13:19:12.392Z"
+    },
+    {
+      "action": "reinstate_team",
+      "at": "2026-04-09T13:19:21.452Z"
+    },
+    {
+      "action": "eliminate_team",
+      "at": "2026-04-09T13:21:18.790Z"
+    },
+    {
+      "action": "reinstate_team",
+      "at": "2026-04-09T13:21:30.520Z"
+    },
+    {
+      "action": "eliminate_team",
+      "at": "2026-04-09T13:21:40.311Z"
     }
   ],
-  "updatedAt": "2026-04-09T13:03:25.661Z",
+  "updatedAt": "2026-04-09T13:21:40.311Z",
   "showIntro": false,
   "randomizerSeq": 28,
   "showRules": false,

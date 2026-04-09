@@ -27,6 +27,7 @@ export const EliminationScreen = ({ team, onDone, duration = 4500 }: Props) => {
       sx={{
         position: 'fixed',
         inset: 0,
+        zIndex: 9999,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
