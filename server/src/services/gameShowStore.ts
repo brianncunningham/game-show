@@ -505,10 +505,11 @@ class GameShowStore extends EventEmitter {
       ? [...new Set([...this.state.roundState.usedQuestionIds, this.state.roundState.selectedQuestionId!])]
       : this.state.roundState.usedQuestionIds;
 
-    // Alternate chooser only when a theme was completed (not on a plain back-to-themes bail)
+    // Alternate chooser when a theme was completed: either answer resolved, or all songs were played through
     const answerResolved = this.state.roundState.answerState === 'correct' || this.state.roundState.stealState === 'resolved';
+    const allSongsPlayed = this.state.roundState.activeSongIndex !== null && this.state.roundState.activeSongIndex >= 2;
     let nextChooserId = this.state.chooserTeamId;
-    if (completedTheme && answerResolved) {
+    if (completedTheme && (answerResolved || allSongsPlayed)) {
       const idx = this.state.teams.findIndex(t => t.id === this.state.chooserTeamId);
       nextChooserId = this.state.teams[(idx + 1) % this.state.teams.length]?.id ?? this.state.chooserTeamId;
     }
