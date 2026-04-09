@@ -72,24 +72,25 @@ export const HostPage = () => {
   const canJudgeAnswer = hasQuestion && hasBuzzWinner && !answerResolved && !stealAvailable;
   const canArtistBonus = state?.roundState.answerState === 'correct' && Boolean(state?.roundState.buzzWinnerTeamId) && !state?.roundState.artistBonusUsed;
   const canRevealBoth = Boolean(state?.roundState.selectedQuestionId) && state?.roundState.activeSongIndex != null;
-  const canAdvance = !hasQuestion || answerResolved;
   const isSuddenDeath = state?.status === 'sudden_death';
 
   const selectedQuestion = state?.questions.find(q => q.id === state.roundState.selectedQuestionId);
   const usedQuestionIds = state?.roundState.usedQuestionIds ?? [];
   const activeSongIndex = state?.roundState.activeSongIndex ?? null;
   const currentRoundQuestions = state?.questions.filter(q => q.round === state.currentRound) ?? [];
+  const activeTeams = state?.teams.filter(t => !t.eliminated) ?? [];
+  const attemptedTeamIds = state?.roundState.attemptedTeamIds ?? [];
+  const eligibleStealers = activeTeams.filter(t => !attemptedTeamIds.includes(t.id));
 
   const allSongsDone = activeSongIndex === SONG_COUNT - 1;
-  const canPickSong = hasQuestion && !stealAvailable && !allSongsDone;
+  const stealBlocked = stealAvailable && eligibleStealers.length > 0;
+  const canPickSong = hasQuestion && !stealBlocked && !allSongsDone;
+  const canAdvance = !hasQuestion || answerResolved || (stealAvailable && eligibleStealers.length === 0);
 
   const multiplier = state?.multiplier ?? 1;
   const basePoints = 100;
   const expectedPoints = basePoints * multiplier;
   const chooserTeam = state?.teams.find(t => t.id === state.chooserTeamId) ?? null;
-  const activeTeams = state?.teams.filter(t => !t.eliminated) ?? [];
-  const attemptedTeamIds = state?.roundState.attemptedTeamIds ?? [];
-  const eligibleStealers = activeTeams.filter(t => !attemptedTeamIds.includes(t.id));
   const stealingTeamId = state?.roundState.stealingTeamId ?? null;
   const stealingTeam = stealingTeamId ? state?.teams.find(t => t.id === stealingTeamId) : null;
   const eliminationEnabled = state?.eliminationEnabled ?? false;

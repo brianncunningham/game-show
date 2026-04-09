@@ -1,5 +1,6 @@
 import { Box, Typography } from '@mui/material';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import type { GameShowQuestion } from './types';
 
 interface RevealScreenProps {
@@ -10,13 +11,22 @@ interface RevealScreenProps {
   duration?: number;
 }
 
+const SHOW_DELAY = 600;
+
 export const RevealScreen = ({ mode, question, songIndex, onDone, duration = 4500 }: RevealScreenProps) => {
   const song = question.songs[songIndex] ?? question.songs[0];
+  const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    const t = window.setTimeout(onDone, duration);
-    return () => window.clearTimeout(t);
+    const showTimer = window.setTimeout(() => setVisible(true), SHOW_DELAY);
+    const doneTimer = window.setTimeout(onDone, duration + SHOW_DELAY);
+    return () => {
+      window.clearTimeout(showTimer);
+      window.clearTimeout(doneTimer);
+    };
   }, [mode, duration, onDone]);
+
+  if (!visible) return null;
 
   const showTitle = mode === 'title' || mode === 'both';
   const showArtist = mode === 'artist' || mode === 'both';
@@ -34,7 +44,7 @@ export const RevealScreen = ({ mode, question, songIndex, onDone, duration = 450
   const accentColor =
     mode === 'artist' ? '#c060ff' : mode === 'both' ? '#ffb830' : '#ffd740';
 
-  return (
+  return createPortal(
     <Box
       sx={{
         position: 'fixed',
@@ -171,6 +181,7 @@ export const RevealScreen = ({ mode, question, songIndex, onDone, duration = 450
           </Typography>
         </Box>
       )}
-    </Box>
+    </Box>,
+    document.body
   );
 };
