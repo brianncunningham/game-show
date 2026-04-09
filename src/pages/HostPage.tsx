@@ -55,6 +55,7 @@ export const HostPage = () => {
   const [gameOpen, setGameOpen] = useState(false);
   const [showScreenOpen, setShowScreenOpen] = useState(false);
   const [spotifyPaused, setSpotifyPaused] = useState(false);
+  const [spotifyTesting, setSpotifyTesting] = useState(false);
   const spotify = useSpotify();
 
   const hasQuestion = Boolean(state?.roundState.selectedQuestionId);
@@ -107,6 +108,24 @@ export const HostPage = () => {
               <IconButton size="small" onClick={() => void spotify.fetchDevices()} title="Refresh devices">
                 <RefreshIcon fontSize="small" />
               </IconButton>
+              <Button
+                size="small"
+                variant="text"
+                color={spotifyTesting ? 'warning' : 'inherit'}
+                sx={{ opacity: 0.8, minWidth: 0 }}
+                onClick={() => {
+                  if (spotifyTesting) {
+                    void spotify.pause();
+                    setSpotifyTesting(false);
+                  } else {
+                    void spotify.play('3BQHpFgAp4l80e1XslIjNI', 0);
+                    setSpotifyTesting(true);
+                    setSpotifyPaused(false);
+                  }
+                }}
+              >
+                {spotifyTesting ? 'End Test' : 'Test'}
+              </Button>
               <Button size="small" variant="text" color="inherit" sx={{ opacity: 0.6, minWidth: 0 }} onClick={() => spotify.disconnect()}>Disconnect</Button>
             </>
           ) : (

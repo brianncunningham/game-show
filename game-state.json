@@ -1,6 +1,6 @@
 {
   "id": "default-game",
-  "status": "live",
+  "status": "setup",
   "currentRound": 1,
   "chooserTeamId": "team-a",
   "multiplier": 1,
@@ -56,7 +56,7 @@
           "title": "Sweet Child O’ Mine",
           "artist": "Guns N’ Roses",
           "spotifyTrackId": "7snQQk1zcKl8gZ92AnueZW",
-          "clipStartMs": 60000
+          "clipStartMs": 0
         },
         {
           "title": "Billie Jean",
@@ -395,10 +395,10 @@
     }
   ],
   "roundState": {
-    "selectedQuestionId": "csv-r1q1",
-    "activeSongIndex": 0,
+    "selectedQuestionId": null,
+    "activeSongIndex": null,
     "usedQuestionIds": [],
-    "clipState": "active",
+    "clipState": "idle",
     "buzzWinnerTeamId": null,
     "answerState": "pending",
     "stealState": "idle",
@@ -406,30 +406,6 @@
     "artistBonusUsed": false
   },
   "eventLog": [
-    {
-      "action": "random_first_pick",
-      "at": "2026-04-08T22:11:44.857Z"
-    },
-    {
-      "action": "dismiss_first_pick",
-      "at": "2026-04-08T22:11:51.412Z"
-    },
-    {
-      "action": "toggle_show_intro",
-      "at": "2026-04-08T22:11:58.414Z"
-    },
-    {
-      "action": "toggle_show_intro",
-      "at": "2026-04-08T22:12:02.097Z"
-    },
-    {
-      "action": "toggle_show_rules",
-      "at": "2026-04-08T22:12:02.099Z"
-    },
-    {
-      "action": "toggle_show_intro",
-      "at": "2026-04-08T22:12:08.186Z"
-    },
     {
       "action": "toggle_show_rules",
       "at": "2026-04-08T22:12:08.189Z"
@@ -805,9 +781,33 @@
     {
       "action": "select_song",
       "at": "2026-04-09T04:27:36.017Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-09T04:46:19.060Z"
+    },
+    {
+      "action": "update_config",
+      "at": "2026-04-09T04:46:36.568Z"
+    },
+    {
+      "action": "update_config",
+      "at": "2026-04-09T04:46:38.378Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-09T04:46:56.239Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-09T04:46:59.496Z"
+    },
+    {
+      "action": "reset_scores",
+      "at": "2026-04-09T04:47:48.891Z"
     }
   ],
-  "updatedAt": "2026-04-09T04:27:36.017Z",
+  "updatedAt": "2026-04-09T04:47:48.891Z",
   "showIntro": false,
   "randomizerSeq": 20,
   "showRules": false,
