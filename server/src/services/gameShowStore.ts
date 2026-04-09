@@ -444,6 +444,7 @@ class GameShowStore extends EventEmitter {
     if (!team || team.eliminated || this.state.roundState.attemptedTeamIds.includes(teamId)) {
       return this.state;
     }
+    console.log(`[setStealingTeam] setting stealingTeamId to ${teamId} (${team.name})`);
     return this.commit('set_stealing_team', {
       ...this.state,
       roundState: { ...this.state.roundState, stealingTeamId: teamId },
@@ -463,6 +464,7 @@ class GameShowStore extends EventEmitter {
     const stealingTeamId = this.state.roundState.stealingTeamId;
     const stealingTeam = stealingTeamId ? this.state.teams.find(t => t.id === stealingTeamId) ?? null : null;
     const awardedPoints = success && selectedQuestion ? selectedQuestion.basePoints * this.state.multiplier : 0;
+    console.log(`[resolveSteal] success=${success} stealingTeamId=${stealingTeamId} stealingTeam=${stealingTeam?.name} awardedPoints=${awardedPoints}`);
 
     const usedIds = this.state.roundState.selectedQuestionId
       ? [...new Set([...this.state.roundState.usedQuestionIds, this.state.roundState.selectedQuestionId])]
