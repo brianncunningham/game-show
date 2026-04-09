@@ -3,6 +3,7 @@ export interface GameShowTeam {
   name: string;
   players: string[];
   score: number;
+  eliminated?: boolean;
 }
 
 export interface GameShowSong {
@@ -35,6 +36,8 @@ export interface GameShowRoundState {
   usedQuestionIds: string[];
   clipState: 'idle' | 'active' | 'resolved';
   buzzWinnerTeamId: string | null;
+  attemptedTeamIds: string[];
+  stealingTeamId: string | null;
   answerState: 'pending' | 'correct' | 'wrong';
   stealState: 'idle' | 'available' | 'resolved';
   lastPointsAwarded: number | null;
@@ -55,6 +58,8 @@ export interface GameShowState {
   firstPickSeq: number;
   firstPickTeamId: string | null;
   playerPool: string[];
+  teamCount: 2 | 3 | 4;
+  eliminationEnabled: boolean;
   teams: GameShowTeam[];
   rules: GameShowRules;
   questions: GameShowQuestion[];

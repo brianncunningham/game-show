@@ -19,9 +19,9 @@
       "id": "team-a",
       "name": "Team Popcorn",
       "players": [
+        "Monica",
         "Bradley",
-        "Sutton",
-        "Charlie"
+        "Sutton"
       ],
       "score": 0
     },
@@ -29,8 +29,8 @@
       "id": "team-b",
       "name": "Team M&Ms",
       "players": [
+        "Charlie",
         "Abby",
-        "Monica",
         "Abbey"
       ],
       "score": 0
@@ -406,18 +406,6 @@
     "artistBonusUsed": false
   },
   "eventLog": [
-    {
-      "action": "toggle_show_rules",
-      "at": "2026-04-08T22:12:08.189Z"
-    },
-    {
-      "action": "random_assign_players",
-      "at": "2026-04-08T22:12:08.192Z"
-    },
-    {
-      "action": "toggle_show_intro",
-      "at": "2026-04-08T22:12:22.386Z"
-    },
     {
       "action": "toggle_show_rules",
       "at": "2026-04-08T22:12:22.388Z"
@@ -805,11 +793,23 @@
     {
       "action": "reset_scores",
       "at": "2026-04-09T04:47:48.891Z"
+    },
+    {
+      "action": "toggle_show_intro",
+      "at": "2026-04-09T11:36:07.931Z"
+    },
+    {
+      "action": "toggle_show_rules",
+      "at": "2026-04-09T11:36:07.933Z"
+    },
+    {
+      "action": "random_assign_players",
+      "at": "2026-04-09T11:36:07.938Z"
     }
   ],
-  "updatedAt": "2026-04-09T04:47:48.891Z",
+  "updatedAt": "2026-04-09T11:36:07.938Z",
   "showIntro": false,
-  "randomizerSeq": 20,
+  "randomizerSeq": 21,
   "showRules": false,
   "firstPickSeq": 0,
   "firstPickTeamId": "team-b"

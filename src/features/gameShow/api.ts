@@ -83,8 +83,11 @@ export const markCorrect = () => postAction('/answer/correct', 'Failed to mark a
 export const awardArtistBonus = () => postAction('/answer/artist-bonus', 'Failed to award artist bonus');
 export const triggerSuddenDeath = () => postAction('/sudden-death', 'Failed to trigger sudden death');
 export const markWrong = () => postAction('/answer/wrong', 'Failed to mark answer wrong');
+export const setStealingTeam = (teamId: string) => postAction(`/steal/team/${teamId}`, 'Failed to set stealing team');
 export const markStealSuccess = () => postAction('/steal/success', 'Failed to award steal');
 export const markStealFail = () => postAction('/steal/fail', 'Failed to resolve failed steal');
+export const eliminateTeam = (teamId: string) => postAction(`/teams/${teamId}/eliminate`, 'Failed to eliminate team');
+export const reinstateTeam = (teamId: string) => postAction(`/teams/${teamId}/reinstate`, 'Failed to reinstate team');
 export const nextRound = () => postAction('/round/next', 'Failed to advance round');
 export const resetRound = () => postAction('/round/reset', 'Failed to reset round');
 export const resetScores = () => postAction('/scores/reset', 'Failed to reset scores');
@@ -157,6 +160,8 @@ export const updateGameConfig = async (payload: {
   practiceMode?: boolean;
   hostLocked?: boolean;
   playerPool?: string[];
+  teamCount?: 2 | 3 | 4;
+  eliminationEnabled?: boolean;
   teams?: GameShowTeam[];
   questions?: GameShowQuestion[];
   rules?: GameShowRules;

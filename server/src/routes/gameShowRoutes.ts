@@ -48,12 +48,24 @@ router.post('/answer/wrong', (_req, res) => {
   res.json(gameShowStore.markWrong());
 });
 
+router.post('/steal/team/:teamId', (req, res) => {
+  res.json(gameShowStore.setStealingTeam(req.params.teamId));
+});
+
 router.post('/steal/success', (_req, res) => {
   res.json(gameShowStore.resolveSteal(true));
 });
 
 router.post('/steal/fail', (_req, res) => {
   res.json(gameShowStore.resolveSteal(false));
+});
+
+router.post('/teams/:teamId/eliminate', (req, res) => {
+  res.json(gameShowStore.eliminateTeam(req.params.teamId));
+});
+
+router.post('/teams/:teamId/reinstate', (req, res) => {
+  res.json(gameShowStore.reinstateTeam(req.params.teamId));
 });
 
 router.post('/round/next', (_req, res) => {

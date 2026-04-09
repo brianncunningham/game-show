@@ -4,6 +4,7 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import type {
   GameShowQuestion,
+  GameShowRoundState,
   GameShowSocketMessage,
   GameShowState,
   GameShowTeam,
@@ -33,9 +34,23 @@ const persistState = (state: GameShowState): void => {
 };
 
 const DEFAULT_TEAMS: GameShowTeam[] = [
-  { id: 'team-a', name: 'Team A', players: [], score: 0 },
-  { id: 'team-b', name: 'Team B', players: [], score: 0 },
+  { id: 'team-a', name: 'Team A', players: [], score: 0, eliminated: false },
+  { id: 'team-b', name: 'Team B', players: [], score: 0, eliminated: false },
 ];
+
+const EMPTY_ROUND_STATE = (): GameShowRoundState => ({
+  selectedQuestionId: null,
+  activeSongIndex: null,
+  usedQuestionIds: [],
+  clipState: 'idle',
+  buzzWinnerTeamId: null,
+  attemptedTeamIds: [],
+  stealingTeamId: null,
+  answerState: 'pending',
+  stealState: 'idle',
+  lastPointsAwarded: null,
+  artistBonusUsed: false,
+});
 
 const EMPTY_SONGS = [
   { title: '', artist: '' },
@@ -84,6 +99,8 @@ const createInitialState = (): GameShowState => ({
   firstPickSeq: 0,
   firstPickTeamId: null,
   playerPool: [],
+  teamCount: 2,
+  eliminationEnabled: false,
   teams: DEFAULT_TEAMS,
   rules: {
     allowSteal: true,
@@ -91,32 +108,26 @@ const createInitialState = (): GameShowState => ({
     roundMultipliers: [1, 1, 2, 2, 3],
   },
   questions: DEFAULT_QUESTIONS,
-  roundState: {
-    selectedQuestionId: null,
-    activeSongIndex: null,
-    usedQuestionIds: [],
-    clipState: 'idle',
-    buzzWinnerTeamId: null,
-    answerState: 'pending',
-    stealState: 'idle',
-    lastPointsAwarded: null,
-    artistBonusUsed: false,
-  },
+  roundState: EMPTY_ROUND_STATE(),
   eventLog: [],
   updatedAt: new Date().toISOString(),
 });
 
 const migrateState = (state: GameShowState): GameShowState => ({
   ...state,
+  teamCount: state.teamCount ?? (state.teams?.length as 2 | 3 | 4) ?? 2,
+  eliminationEnabled: state.eliminationEnabled ?? false,
+  teams: (state.teams ?? DEFAULT_TEAMS).map(t => ({ ...t, eliminated: t.eliminated ?? false })),
   questions: state.questions.map((q) => ({
     ...q,
     round: q.round ?? 1,
     songs: q.songs?.length ? q.songs : [{ title: '', artist: '' }, { title: '', artist: '' }, { title: '', artist: '' }],
   })),
   roundState: {
+    ...EMPTY_ROUND_STATE(),
     ...state.roundState,
-    activeSongIndex: state.roundState.activeSongIndex ?? null,
-    usedQuestionIds: state.roundState.usedQuestionIds ?? [],
+    attemptedTeamIds: state.roundState.attemptedTeamIds ?? [],
+    stealingTeamId: state.roundState.stealingTeamId ?? null,
   },
 });
 
@@ -172,24 +183,15 @@ class GameShowStore extends EventEmitter {
   }
 
   resetScores(): GameShowState {
+    const activeTeams = this.state.teams.filter(t => !t.eliminated);
     return this.commit('reset_scores', {
       ...this.state,
       status: 'setup',
       currentRound: 1,
-      chooserTeamId: this.state.teams[0]?.id ?? null,
+      chooserTeamId: activeTeams[0]?.id ?? this.state.teams[0]?.id ?? null,
       multiplier: this.state.rules.roundMultipliers[0] ?? 1,
-      teams: this.state.teams.map((team) => ({ ...team, score: 0 })),
-      roundState: {
-        selectedQuestionId: null,
-        activeSongIndex: null,
-        usedQuestionIds: [],
-        clipState: 'idle',
-        buzzWinnerTeamId: null,
-        answerState: 'pending',
-        stealState: 'idle',
-        lastPointsAwarded: null,
-        artistBonusUsed: false,
-      },
+      teams: this.state.teams.map((team) => ({ ...team, score: 0, eliminated: false })),
+      roundState: EMPTY_ROUND_STATE(),
     });
   }
 
@@ -209,8 +211,8 @@ class GameShowStore extends EventEmitter {
 
   randomAssignPlayers(): GameShowState {
     const randomized = shuffle(this.state.playerPool.filter(Boolean));
-    const teamCount = Math.max(this.state.teams.length, 1);
-    const nextTeams = this.state.teams.map((team) => ({ ...team, players: [] as string[] }));
+    const teamCount = Math.max(this.state.teamCount ?? this.state.teams.length, 1);
+    const nextTeams = this.buildTeamsForCount(teamCount).map((team) => ({ ...team, players: [] as string[], score: 0, eliminated: false }));
 
     randomized.forEach((player, index) => {
       nextTeams[index % teamCount].players.push(player);
@@ -222,20 +224,18 @@ class GameShowStore extends EventEmitter {
       currentRound: 1,
       multiplier: this.state.rules.roundMultipliers[0] ?? 1,
       chooserTeamId: nextTeams[0]?.id ?? null,
-      teams: nextTeams.map(t => ({ ...t, score: 0 })),
+      teams: nextTeams,
       randomizerSeq: (this.state.randomizerSeq ?? 0) + 1,
-      roundState: {
-        selectedQuestionId: null,
-        activeSongIndex: null,
-        usedQuestionIds: [],
-        clipState: 'idle',
-        buzzWinnerTeamId: null,
-        answerState: 'pending',
-        stealState: 'idle',
-        lastPointsAwarded: null,
-        artistBonusUsed: false,
-      },
+      roundState: EMPTY_ROUND_STATE(),
     });
+  }
+
+  private buildTeamsForCount(count: number): GameShowTeam[] {
+    const ids = ['team-a', 'team-b', 'team-c', 'team-d'];
+    const names = ['Team A', 'Team B', 'Team C', 'Team D'];
+    return Array.from({ length: count }, (_, i) => (
+      this.state.teams[i] ?? { id: ids[i], name: names[i], players: [], score: 0, eliminated: false }
+    ));
   }
 
   startGame(): GameShowState {
@@ -258,14 +258,9 @@ class GameShowStore extends EventEmitter {
     return this.commit('select_question', {
       ...this.state,
       roundState: {
-        ...this.state.roundState,
+        ...EMPTY_ROUND_STATE(),
         selectedQuestionId: questionId,
-        activeSongIndex: null,
-        clipState: 'idle',
-        buzzWinnerTeamId: null,
-        answerState: 'pending',
-        stealState: 'idle',
-        lastPointsAwarded: null,
+        usedQuestionIds: this.state.roundState.usedQuestionIds,
       },
     });
   }
@@ -282,14 +277,11 @@ class GameShowStore extends EventEmitter {
     return this.commit('select_song', {
       ...this.state,
       roundState: {
-        ...this.state.roundState,
+        ...EMPTY_ROUND_STATE(),
+        selectedQuestionId: this.state.roundState.selectedQuestionId,
+        usedQuestionIds: this.state.roundState.usedQuestionIds,
         activeSongIndex: songIndex,
         clipState: 'active',
-        buzzWinnerTeamId: null,
-        answerState: 'pending',
-        stealState: 'idle',
-        lastPointsAwarded: null,
-        artistBonusUsed: false,
       },
     });
   }
@@ -330,14 +322,8 @@ class GameShowStore extends EventEmitter {
       ...this.state,
       status: 'sudden_death',
       roundState: {
-        ...this.state.roundState,
-        selectedQuestionId: null,
-        activeSongIndex: null,
-        clipState: 'idle',
-        buzzWinnerTeamId: null,
-        answerState: 'pending',
-        stealState: 'idle',
-        lastPointsAwarded: null,
+        ...EMPTY_ROUND_STATE(),
+        usedQuestionIds: this.state.roundState.usedQuestionIds,
       },
     });
   }
@@ -347,8 +333,8 @@ class GameShowStore extends EventEmitter {
       return this.state;
     }
 
-    const teamExists = this.state.teams.some((team) => team.id === teamId);
-    if (!teamExists || this.state.roundState.buzzWinnerTeamId) {
+    const team = this.state.teams.find((t) => t.id === teamId);
+    if (!team || team.eliminated || this.state.roundState.buzzWinnerTeamId) {
       return this.state;
     }
 
@@ -357,6 +343,7 @@ class GameShowStore extends EventEmitter {
       roundState: {
         ...this.state.roundState,
         buzzWinnerTeamId: teamId,
+        attemptedTeamIds: [teamId],
       },
     });
   }
@@ -409,6 +396,13 @@ class GameShowStore extends EventEmitter {
     const selectedQuestion = this.state.questions.find((item) => item.id === this.state.roundState.selectedQuestionId);
     const penalty = this.state.rules.wrongBuzzPenalty && selectedQuestion ? selectedQuestion.basePoints * this.state.multiplier : 0;
     const buzzWinnerTeamId = this.state.roundState.buzzWinnerTeamId;
+    const attemptedTeamIds = [...new Set([...this.state.roundState.attemptedTeamIds, buzzWinnerTeamId])];
+
+    // Check if any active, non-attempted teams remain for stealing
+    const eligibleStealers = this.state.teams.filter(
+      t => !t.eliminated && !attemptedTeamIds.includes(t.id)
+    );
+    const stealAvailable = shouldAllowSteal && eligibleStealers.length > 0;
 
     return this.commit('mark_wrong', {
       ...this.state,
@@ -420,9 +414,25 @@ class GameShowStore extends EventEmitter {
       roundState: {
         ...this.state.roundState,
         answerState: 'wrong',
-        stealState: shouldAllowSteal ? 'available' : 'resolved',
+        attemptedTeamIds,
+        stealState: stealAvailable ? 'available' : 'resolved',
+        stealingTeamId: null,
         lastPointsAwarded: penalty ? -penalty : null,
       },
+    });
+  }
+
+  setStealingTeam(teamId: string): GameShowState {
+    if (!this.canMutate() || this.state.roundState.stealState !== 'available') {
+      return this.state;
+    }
+    const team = this.state.teams.find(t => t.id === teamId);
+    if (!team || team.eliminated || this.state.roundState.attemptedTeamIds.includes(teamId)) {
+      return this.state;
+    }
+    return this.commit('set_stealing_team', {
+      ...this.state,
+      roundState: { ...this.state.roundState, stealingTeamId: teamId },
     });
   }
 
@@ -436,28 +446,96 @@ class GameShowStore extends EventEmitter {
     }
 
     const selectedQuestion = this.state.questions.find((item) => item.id === this.state.roundState.selectedQuestionId);
-    const buzzWinnerTeamId = this.state.roundState.buzzWinnerTeamId;
-    const stealingTeam = this.state.teams.find((team) => team.id !== buzzWinnerTeamId) ?? null;
+    const stealingTeamId = this.state.roundState.stealingTeamId;
+    const stealingTeam = stealingTeamId ? this.state.teams.find(t => t.id === stealingTeamId) ?? null : null;
     const awardedPoints = success && selectedQuestion ? selectedQuestion.basePoints * this.state.multiplier : 0;
 
     const usedIds = this.state.roundState.selectedQuestionId
       ? [...new Set([...this.state.roundState.usedQuestionIds, this.state.roundState.selectedQuestionId])]
       : this.state.roundState.usedQuestionIds;
 
-    return this.commit(success ? 'steal_success' : 'steal_fail', {
+    if (success) {
+      return this.commit('steal_success', {
+        ...this.state,
+        teams: this.state.teams.map((team) =>
+          stealingTeam && team.id === stealingTeam.id && !this.state.practiceMode
+            ? { ...team, score: team.score + awardedPoints }
+            : team,
+        ),
+        roundState: {
+          ...this.state.roundState,
+          stealState: 'resolved',
+          clipState: 'resolved',
+          stealingTeamId: null,
+          lastPointsAwarded: awardedPoints,
+          usedQuestionIds: usedIds,
+        },
+      });
+    }
+
+    // Steal failed — add stealer to attempted, check if more teams can steal
+    const attemptedTeamIds = stealingTeamId
+      ? [...new Set([...this.state.roundState.attemptedTeamIds, stealingTeamId])]
+      : this.state.roundState.attemptedTeamIds;
+
+    const eligibleStealers = this.state.teams.filter(
+      t => !t.eliminated && !attemptedTeamIds.includes(t.id)
+    );
+
+    return this.commit('steal_fail', {
       ...this.state,
-      teams: this.state.teams.map((team) =>
-        success && stealingTeam && team.id === stealingTeam.id && !this.state.practiceMode
-          ? { ...team, score: team.score + awardedPoints }
-          : team,
-      ),
       roundState: {
         ...this.state.roundState,
-        stealState: 'resolved',
-        clipState: 'resolved',
-        lastPointsAwarded: awardedPoints,
-        usedQuestionIds: usedIds,
+        stealState: eligibleStealers.length > 0 ? 'available' : 'resolved',
+        clipState: eligibleStealers.length > 0 ? this.state.roundState.clipState : 'resolved',
+        attemptedTeamIds,
+        stealingTeamId: null,
+        lastPointsAwarded: null,
+        usedQuestionIds: eligibleStealers.length > 0 ? this.state.roundState.usedQuestionIds : usedIds,
       },
+    });
+  }
+
+  eliminateTeam(teamId: string): GameShowState {
+    if (!this.canMutate()) return this.state;
+    const team = this.state.teams.find(t => t.id === teamId);
+    if (!team || team.eliminated) return this.state;
+
+    // If eliminated mid-round, add to attemptedTeamIds so they can't steal
+    const attemptedTeamIds = [...new Set([...this.state.roundState.attemptedTeamIds, teamId])];
+    const eligibleStealers = this.state.teams.filter(
+      t => t.id !== teamId && !t.eliminated && !attemptedTeamIds.includes(t.id)
+    );
+    const stealState = this.state.roundState.stealState === 'available' && eligibleStealers.length === 0
+      ? 'resolved' as const
+      : this.state.roundState.stealState;
+
+    // Advance chooser if eliminated team is current chooser
+    const activeTeams = this.state.teams.map(t => t.id === teamId ? { ...t, eliminated: true } : t).filter(t => !t.eliminated);
+    let chooserTeamId = this.state.chooserTeamId;
+    if (chooserTeamId === teamId) {
+      const idx = this.state.teams.findIndex(t => t.id === teamId);
+      chooserTeamId = activeTeams[idx % activeTeams.length]?.id ?? activeTeams[0]?.id ?? null;
+    }
+
+    return this.commit('eliminate_team', {
+      ...this.state,
+      chooserTeamId,
+      teams: this.state.teams.map(t => t.id === teamId ? { ...t, eliminated: true } : t),
+      roundState: {
+        ...this.state.roundState,
+        attemptedTeamIds,
+        stealState,
+        stealingTeamId: this.state.roundState.stealingTeamId === teamId ? null : this.state.roundState.stealingTeamId,
+      },
+    });
+  }
+
+  reinstateTeam(teamId: string): GameShowState {
+    if (!this.canMutate()) return this.state;
+    return this.commit('reinstate_team', {
+      ...this.state,
+      teams: this.state.teams.map(t => t.id === teamId ? { ...t, eliminated: false } : t),
     });
   }
 
@@ -473,25 +551,16 @@ class GameShowStore extends EventEmitter {
 
     const nextRound = this.state.currentRound + 1;
     const nextMultiplier = this.state.rules.roundMultipliers[nextRound - 1] ?? this.state.multiplier;
-    const currentChooserIndex = this.state.teams.findIndex((team) => team.id === this.state.chooserTeamId);
-    const nextChooser = this.state.teams[(currentChooserIndex + 1) % this.state.teams.length] ?? this.state.teams[0];
+    const activeTeams = this.state.teams.filter(t => !t.eliminated);
+    const currentChooserIndex = activeTeams.findIndex((team) => team.id === this.state.chooserTeamId);
+    const nextChooser = activeTeams[(currentChooserIndex + 1) % activeTeams.length] ?? activeTeams[0];
 
     return this.commit('next_round', {
       ...this.state,
       currentRound: nextRound,
       multiplier: nextMultiplier,
       chooserTeamId: nextChooser?.id ?? null,
-      roundState: {
-        selectedQuestionId: null,
-        activeSongIndex: null,
-        usedQuestionIds: [],
-        clipState: 'idle',
-        buzzWinnerTeamId: null,
-        answerState: 'pending',
-        stealState: 'idle',
-        lastPointsAwarded: null,
-        artistBonusUsed: false,
-      },
+      roundState: EMPTY_ROUND_STATE(),
     });
   }
 
@@ -510,24 +579,15 @@ class GameShowStore extends EventEmitter {
     const allSongsPlayed = this.state.roundState.activeSongIndex !== null && this.state.roundState.activeSongIndex >= 2;
     let nextChooserId = this.state.chooserTeamId;
     if (completedTheme && (answerResolved || allSongsPlayed)) {
-      const idx = this.state.teams.findIndex(t => t.id === this.state.chooserTeamId);
-      nextChooserId = this.state.teams[(idx + 1) % this.state.teams.length]?.id ?? this.state.chooserTeamId;
+      const activeTeams = this.state.teams.filter(t => !t.eliminated);
+      const idx = activeTeams.findIndex(t => t.id === this.state.chooserTeamId);
+      nextChooserId = activeTeams[(idx + 1) % activeTeams.length]?.id ?? this.state.chooserTeamId;
     }
 
     return this.commit('reset_round', {
       ...this.state,
       chooserTeamId: nextChooserId,
-      roundState: {
-        selectedQuestionId: null,
-        activeSongIndex: null,
-        usedQuestionIds: usedIds,
-        clipState: 'idle',
-        buzzWinnerTeamId: null,
-        answerState: 'pending',
-        stealState: 'idle',
-        lastPointsAwarded: null,
-        artistBonusUsed: false,
-      },
+      roundState: { ...EMPTY_ROUND_STATE(), usedQuestionIds: usedIds },
     });
   }
 
@@ -548,8 +608,9 @@ class GameShowStore extends EventEmitter {
   }
 
   randomFirstPick(): GameShowState {
-    const teams = this.state.teams.filter(t => t.players.length > 0);
-    const pool = teams.length > 0 ? teams : this.state.teams;
+    const activeTeams = this.state.teams.filter(t => !t.eliminated);
+    const teamsWithPlayers = activeTeams.filter(t => t.players.length > 0);
+    const pool = teamsWithPlayers.length > 0 ? teamsWithPlayers : activeTeams;
     const winner = pool[Math.floor(Math.random() * pool.length)];
     return this.commit('random_first_pick', {
       ...this.state,
