@@ -522,7 +522,7 @@ export const ShowBoard = ({ state }: { state: GameShowState }) => {
                 <Typography sx={{ color: 'white', fontWeight: 900, fontSize: 'clamp(0.9rem, 1.6vw, 2rem)', letterSpacing: '0.14em', textTransform: 'uppercase', textShadow: '0 0 10px rgba(255,255,255,0.35)' }}>
                   {selectedQuestion?.category ?? 'Theme'}
                 </Typography>
-                <Box sx={{ flex: 1, minHeight: 0, display: 'flex', gap: 2, alignItems: 'stretch' }}>
+                <Box sx={{ flex: 1, minHeight: 0, width: '100%', display: 'flex', gap: 2, alignItems: 'stretch' }}>
                   {Array.from({ length: SONG_COUNT }, (_, i) => {
                     const isActive = activeSongIndex === i;
                     const isPast = activeSongIndex !== null && i < activeSongIndex;
