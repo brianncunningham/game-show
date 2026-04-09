@@ -2,7 +2,7 @@
   "id": "default-game",
   "status": "live",
   "currentRound": 1,
-  "chooserTeamId": "team-b",
+  "chooserTeamId": "team-a",
   "multiplier": 1,
   "practiceMode": false,
   "hostLocked": false,
@@ -54,7 +54,9 @@
       "songs": [
         {
           "title": "Sweet Child O’ Mine",
-          "artist": "Guns N’ Roses"
+          "artist": "Guns N’ Roses",
+          "spotifyTrackId": "7snQQk1zcKl8gZ92AnueZW",
+          "clipStartMs": 60000
         },
         {
           "title": "Billie Jean",
@@ -393,10 +395,10 @@
     }
   ],
   "roundState": {
-    "selectedQuestionId": null,
-    "activeSongIndex": null,
+    "selectedQuestionId": "csv-r1q1",
+    "activeSongIndex": 0,
     "usedQuestionIds": [],
-    "clipState": "idle",
+    "clipState": "active",
     "buzzWinnerTeamId": null,
     "answerState": "pending",
     "stealState": "idle",
@@ -404,146 +406,6 @@
     "artistBonusUsed": false
   },
   "eventLog": [
-    {
-      "action": "random_assign_players",
-      "at": "2026-04-08T21:28:37.200Z"
-    },
-    {
-      "action": "random_assign_players",
-      "at": "2026-04-08T21:28:37.364Z"
-    },
-    {
-      "action": "random_assign_players",
-      "at": "2026-04-08T21:30:19.595Z"
-    },
-    {
-      "action": "random_assign_players",
-      "at": "2026-04-08T21:30:19.702Z"
-    },
-    {
-      "action": "random_assign_players",
-      "at": "2026-04-08T21:30:27.890Z"
-    },
-    {
-      "action": "random_assign_players",
-      "at": "2026-04-08T21:30:27.984Z"
-    },
-    {
-      "action": "toggle_show_intro",
-      "at": "2026-04-08T21:32:30.911Z"
-    },
-    {
-      "action": "random_assign_players",
-      "at": "2026-04-08T21:32:30.914Z"
-    },
-    {
-      "action": "toggle_show_intro",
-      "at": "2026-04-08T21:32:39.806Z"
-    },
-    {
-      "action": "start_game",
-      "at": "2026-04-08T21:32:39.809Z"
-    },
-    {
-      "action": "toggle_show_intro",
-      "at": "2026-04-08T21:32:42.145Z"
-    },
-    {
-      "action": "toggle_show_intro",
-      "at": "2026-04-08T21:32:47.445Z"
-    },
-    {
-      "action": "random_assign_players",
-      "at": "2026-04-08T21:32:47.447Z"
-    },
-    {
-      "action": "toggle_show_intro",
-      "at": "2026-04-08T21:33:05.011Z"
-    },
-    {
-      "action": "start_game",
-      "at": "2026-04-08T21:33:05.013Z"
-    },
-    {
-      "action": "select_question",
-      "at": "2026-04-08T21:33:27.294Z"
-    },
-    {
-      "action": "select_song",
-      "at": "2026-04-08T21:33:29.029Z"
-    },
-    {
-      "action": "set_buzz_winner",
-      "at": "2026-04-08T21:33:30.533Z"
-    },
-    {
-      "action": "mark_correct",
-      "at": "2026-04-08T21:33:32.452Z"
-    },
-    {
-      "action": "award_artist_bonus",
-      "at": "2026-04-08T21:33:34.786Z"
-    },
-    {
-      "action": "select_song",
-      "at": "2026-04-08T21:33:39.723Z"
-    },
-    {
-      "action": "set_buzz_winner",
-      "at": "2026-04-08T21:33:45.372Z"
-    },
-    {
-      "action": "mark_wrong",
-      "at": "2026-04-08T21:33:47.472Z"
-    },
-    {
-      "action": "steal_success",
-      "at": "2026-04-08T21:33:50.279Z"
-    },
-    {
-      "action": "select_song",
-      "at": "2026-04-08T21:33:58.420Z"
-    },
-    {
-      "action": "set_buzz_winner",
-      "at": "2026-04-08T21:34:02.031Z"
-    },
-    {
-      "action": "mark_wrong",
-      "at": "2026-04-08T21:34:03.350Z"
-    },
-    {
-      "action": "steal_success",
-      "at": "2026-04-08T21:34:05.646Z"
-    },
-    {
-      "action": "reset_round",
-      "at": "2026-04-08T21:34:17.980Z"
-    },
-    {
-      "action": "toggle_show_intro",
-      "at": "2026-04-08T21:45:50.676Z"
-    },
-    {
-      "action": "toggle_show_rules",
-      "at": "2026-04-08T21:45:50.682Z"
-    },
-    {
-      "action": "toggle_show_intro",
-      "at": "2026-04-08T22:01:33.828Z"
-    },
-    {
-      "action": "toggle_show_intro",
-      "at": "2026-04-08T22:01:35.256Z"
-    },
-    {
-      "action": "toggle_show_rules",
-      "at": "2026-04-08T22:01:35.259Z"
-    },
-    {
-      "action": "toggle_show_intro",
-      "at": "2026-04-08T22:01:36.585Z"
-    },
     {
       "action": "toggle_show_rules",
       "at": "2026-04-08T22:01:36.587Z"
@@ -803,9 +665,149 @@
     {
       "action": "show_board",
       "at": "2026-04-08T22:18:18.009Z"
+    },
+    {
+      "action": "select_question",
+      "at": "2026-04-09T03:31:43.698Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-09T03:31:45.347Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-09T03:32:54.171Z"
+    },
+    {
+      "action": "reset_round",
+      "at": "2026-04-09T03:34:07.292Z"
+    },
+    {
+      "action": "reset_scores",
+      "at": "2026-04-09T03:34:14.452Z"
+    },
+    {
+      "action": "toggle_show_intro",
+      "at": "2026-04-09T03:34:16.297Z"
+    },
+    {
+      "action": "toggle_show_rules",
+      "at": "2026-04-09T03:34:16.299Z"
+    },
+    {
+      "action": "start_game",
+      "at": "2026-04-09T03:34:16.300Z"
+    },
+    {
+      "action": "select_question",
+      "at": "2026-04-09T03:34:43.704Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-09T03:34:45.195Z"
+    },
+    {
+      "action": "reset_scores",
+      "at": "2026-04-09T03:35:23.253Z"
+    },
+    {
+      "action": "toggle_show_intro",
+      "at": "2026-04-09T03:35:26.028Z"
+    },
+    {
+      "action": "toggle_show_rules",
+      "at": "2026-04-09T03:35:26.032Z"
+    },
+    {
+      "action": "start_game",
+      "at": "2026-04-09T03:35:26.033Z"
+    },
+    {
+      "action": "update_config",
+      "at": "2026-04-09T03:37:28.628Z"
+    },
+    {
+      "action": "update_config",
+      "at": "2026-04-09T03:37:32.371Z"
+    },
+    {
+      "action": "select_question",
+      "at": "2026-04-09T03:37:38.776Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-09T03:37:40.206Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-09T03:37:45.078Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-09T03:37:52.480Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-09T03:37:53.417Z"
+    },
+    {
+      "action": "update_config",
+      "at": "2026-04-09T03:39:36.145Z"
+    },
+    {
+      "action": "update_config",
+      "at": "2026-04-09T03:39:39.367Z"
+    },
+    {
+      "action": "update_config",
+      "at": "2026-04-09T03:39:39.627Z"
+    },
+    {
+      "action": "update_config",
+      "at": "2026-04-09T03:39:41.043Z"
+    },
+    {
+      "action": "update_config",
+      "at": "2026-04-09T03:39:41.322Z"
+    },
+    {
+      "action": "update_config",
+      "at": "2026-04-09T03:39:41.652Z"
+    },
+    {
+      "action": "reset_scores",
+      "at": "2026-04-09T03:39:49.927Z"
+    },
+    {
+      "action": "toggle_show_intro",
+      "at": "2026-04-09T03:39:51.605Z"
+    },
+    {
+      "action": "toggle_show_rules",
+      "at": "2026-04-09T03:39:51.609Z"
+    },
+    {
+      "action": "start_game",
+      "at": "2026-04-09T03:39:51.611Z"
+    },
+    {
+      "action": "select_question",
+      "at": "2026-04-09T03:39:53.643Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-09T03:39:55.118Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-09T03:42:51.244Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-09T03:42:56.486Z"
     }
   ],
-  "updatedAt": "2026-04-08T22:18:18.009Z",
+  "updatedAt": "2026-04-09T03:42:56.486Z",
   "showIntro": false,
   "randomizerSeq": 20,
   "showRules": false,

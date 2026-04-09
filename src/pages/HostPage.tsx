@@ -304,26 +304,39 @@ export const HostPage = () => {
                     const songMeta = selectedQuestion?.songs?.[i];
                     return (
                       <Grid item xs={4} key={i}>
-                        <Button
-                          fullWidth
-                          variant={isActive ? 'contained' : 'outlined'}
-                          color={isActive && !isResolved ? 'primary' : 'inherit'}
-                          sx={{ ...bigBtnSx, opacity: isPast || isResolved ? 0.45 : 1, flexDirection: 'column', alignItems: 'center', gap: 0.25 }}
-                          disabled={!canPickSong || isPast || isResolved}
-                          onClick={() => {
-                            void selectSong(i);
-                            const trackId = songMeta?.spotifyTrackId;
-                            const startMs = songMeta?.clipStartMs ?? 0;
-                            if (trackId && spotify.isConnected) void spotify.play(trackId, startMs);
-                          }}
-                        >
-                          <span>{isResolved ? '✓ Song ' + (i + 1) : 'Song ' + (i + 1)}</span>
-                          {isActive && songMeta?.title && (
-                            <span style={{ fontSize: '0.78em', opacity: 0.85, fontWeight: 400 }}>
-                              {songMeta.title}{songMeta.artist ? ` — ${songMeta.artist}` : ''}
-                            </span>
+                        <Stack spacing={0.5}>
+                          <Button
+                            fullWidth
+                            variant={isActive ? 'contained' : 'outlined'}
+                            color={isActive && !isResolved ? 'primary' : 'inherit'}
+                            sx={{ ...bigBtnSx, opacity: isPast || isResolved ? 0.45 : 1, flexDirection: 'column', alignItems: 'center', gap: 0.25 }}
+                            disabled={!canPickSong || isPast || isResolved}
+                            onClick={() => {
+                              void selectSong(i);
+                              const trackId = songMeta?.spotifyTrackId;
+                              const startMs = songMeta?.clipStartMs ?? 0;
+                              if (trackId && spotify.isConnected) void spotify.play(trackId, startMs);
+                            }}
+                          >
+                            <span>{isResolved ? '✓ Song ' + (i + 1) : 'Song ' + (i + 1)}</span>
+                            {isActive && songMeta?.title && (
+                              <span style={{ fontSize: '0.78em', opacity: 0.85, fontWeight: 400 }}>
+                                {songMeta.title}{songMeta.artist ? ` — ${songMeta.artist}` : ''}
+                              </span>
+                            )}
+                          </Button>
+                          {isActive && spotify.isConnected && (
+                            <Button
+                              fullWidth
+                              variant="outlined"
+                              color="warning"
+                              size="small"
+                              onClick={() => void spotify.pause()}
+                            >
+                              ⏸ Pause
+                            </Button>
                           )}
-                        </Button>
+                        </Stack>
                       </Grid>
                     );
                   })}

@@ -52,7 +52,7 @@ export const ContentManager = ({ questions, onChange }: ContentManagerProps) => 
       .map((line) => line.trim())
       .filter(Boolean)
       .map((line, index) => {
-        const [roundStr = '1', category = '', basePoints = '100', t1 = '', a1 = '', t2 = '', a2 = '', t3 = '', a3 = ''] = line.split(',').map(s => s.trim());
+        const [roundStr = '1', category = '', basePoints = '100', t1 = '', a1 = '', id1 = '', ms1 = '', t2 = '', a2 = '', id2 = '', ms2 = '', t3 = '', a3 = '', id3 = '', ms3 = ''] = line.split(',').map(s => s.trim());
         const round = Number(roundStr) || 1;
         return {
           id: `csv-r${round}q${index + 1}`,
@@ -60,9 +60,9 @@ export const ContentManager = ({ questions, onChange }: ContentManagerProps) => 
           category,
           songLabel: '',
           songs: [
-            { title: t1, artist: a1 },
-            { title: t2, artist: a2 },
-            { title: t3, artist: a3 },
+            { title: t1, artist: a1, ...(id1 ? { spotifyTrackId: id1 } : {}), ...(ms1 ? { clipStartMs: Number(ms1) } : {}) },
+            { title: t2, artist: a2, ...(id2 ? { spotifyTrackId: id2 } : {}), ...(ms2 ? { clipStartMs: Number(ms2) } : {}) },
+            { title: t3, artist: a3, ...(id3 ? { spotifyTrackId: id3 } : {}), ...(ms3 ? { clipStartMs: Number(ms3) } : {}) },
           ],
           clipStart: 0,
           clipDuration: 0,
@@ -158,6 +158,29 @@ export const ContentManager = ({ questions, onChange }: ContentManagerProps) => 
                                 updateQuestion(question.id, { songs: updated });
                               }}
                             />
+                            <TextField
+                              label="Spotify Track ID"
+                              size="small"
+                              sx={{ flex: 1.2 }}
+                              value={song.spotifyTrackId ?? ''}
+                              onChange={(event) => {
+                                const updated = [...(question.songs ?? emptySongs())];
+                                updated[si] = { ...updated[si], spotifyTrackId: event.target.value || undefined };
+                                updateQuestion(question.id, { songs: updated });
+                              }}
+                            />
+                            <TextField
+                              label="Clip start (ms)"
+                              size="small"
+                              type="number"
+                              sx={{ width: 120 }}
+                              value={song.clipStartMs ?? ''}
+                              onChange={(event) => {
+                                const updated = [...(question.songs ?? emptySongs())];
+                                updated[si] = { ...updated[si], clipStartMs: event.target.value ? Number(event.target.value) : undefined };
+                                updateQuestion(question.id, { songs: updated });
+                              }}
+                            />
                           </Stack>
                         ))}
                       </Stack>
@@ -175,12 +198,12 @@ export const ContentManager = ({ questions, onChange }: ContentManagerProps) => 
 
           <Typography variant="subtitle1">Quick CSV import</Typography>
           <Typography variant="body2" color="text.secondary">
-            Format per line: round, category, basePoints, song1 title, song1 artist, song2 title, song2 artist, song3 title, song3 artist
+            Format per line: round, category, basePoints, song1 title, song1 artist, song1 spotifyId, song1 clipStartMs, song2 title, song2 artist, song2 spotifyId, song2 clipStartMs, song3 title, song3 artist, song3 spotifyId, song3 clipStartMs
           </Typography>
           <TextField
             multiline
             minRows={4}
-            placeholder={'1, Warmup, 100, Never Gonna Give You Up, Rick Astley, Bohemian Rhapsody, Queen, Sweet Child O Mine, Guns N Roses\n1, TV Themes, 100, ...'}
+            placeholder={'1, The 80s, 100, Sweet Child O Mine, Guns N Roses, 7snQQk1zcKl8gZ92AnueZW, 0, Billie Jean, Michael Jackson, , , Livin on a Prayer, Bon Jovi, ,'}
             value={csvText}
             onChange={(event) => setCsvText(event.target.value)}
           />
