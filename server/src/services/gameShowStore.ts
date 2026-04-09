@@ -500,12 +500,22 @@ class GameShowStore extends EventEmitter {
       return this.state;
     }
 
-    const usedIds = this.state.roundState.selectedQuestionId
-      ? [...new Set([...this.state.roundState.usedQuestionIds, this.state.roundState.selectedQuestionId])]
+    const completedTheme = Boolean(this.state.roundState.selectedQuestionId);
+    const usedIds = completedTheme
+      ? [...new Set([...this.state.roundState.usedQuestionIds, this.state.roundState.selectedQuestionId!])]
       : this.state.roundState.usedQuestionIds;
+
+    // Alternate chooser only when a theme was completed (not on a plain back-to-themes bail)
+    const answerResolved = this.state.roundState.answerState === 'correct' || this.state.roundState.stealState === 'resolved';
+    let nextChooserId = this.state.chooserTeamId;
+    if (completedTheme && answerResolved) {
+      const idx = this.state.teams.findIndex(t => t.id === this.state.chooserTeamId);
+      nextChooserId = this.state.teams[(idx + 1) % this.state.teams.length]?.id ?? this.state.chooserTeamId;
+    }
 
     return this.commit('reset_round', {
       ...this.state,
+      chooserTeamId: nextChooserId,
       roundState: {
         selectedQuestionId: null,
         activeSongIndex: null,

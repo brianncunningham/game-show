@@ -1,4 +1,7 @@
-import { Box, Button, Card, CardContent, Chip, Divider, Grid, Stack, Typography } from '@mui/material';
+import { Box, Button, Card, CardContent, Chip, Collapse, Divider, Grid, IconButton, Stack, Typography } from '@mui/material';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { useState } from 'react';
 import {
   awardArtistBonus,
   endGame,
@@ -47,6 +50,8 @@ const SONG_COUNT = 3;
 
 export const HostPage = () => {
   const { state, isLoading, error } = useGameShowState();
+  const [gameOpen, setGameOpen] = useState(false);
+  const [showScreenOpen, setShowScreenOpen] = useState(false);
 
   const hasQuestion = Boolean(state?.roundState.selectedQuestionId);
   const hasBuzzWinner = Boolean(state?.roundState.buzzWinnerTeamId);
@@ -84,8 +89,13 @@ export const HostPage = () => {
 
           {/* Game controls */}
           <Card>
-            <CardContent>
-              <Typography sx={sectionLabelSx}>Game</Typography>
+            <CardContent sx={{ pb: gameOpen ? undefined : '12px !important' }}>
+              <Stack direction="row" alignItems="center" justifyContent="space-between" onClick={() => setGameOpen(o => !o)} sx={{ cursor: 'pointer', userSelect: 'none' }}>
+                <Typography sx={sectionLabelSx}>Game</Typography>
+                <IconButton size="small">{gameOpen ? <ExpandLessIcon /> : <ExpandMoreIcon />}</IconButton>
+              </Stack>
+              <Collapse in={gameOpen}>
+              <Box sx={{ mt: 1 }}>
               <Grid container spacing={1.5}>
                 <Grid item xs={6} sm={4} md="auto">
                   <Button fullWidth variant="contained" sx={bigBtnSx} onClick={() => { void showIntroOff(); void showRulesOff(); void startGame(); }} disabled={state?.status === 'live' || state?.status === 'sudden_death' || state?.status === 'complete'}>
@@ -138,13 +148,20 @@ export const HostPage = () => {
                   </Button>
                 </Grid>
               </Grid>
+              </Box>
+              </Collapse>
             </CardContent>
           </Card>
 
           {/* Show Screen Controls */}
           <Card variant="outlined">
-            <CardContent>
-              <Typography sx={sectionLabelSx}>Show Screen</Typography>
+            <CardContent sx={{ pb: showScreenOpen ? undefined : '12px !important' }}>
+              <Stack direction="row" alignItems="center" justifyContent="space-between" onClick={() => setShowScreenOpen(o => !o)} sx={{ cursor: 'pointer', userSelect: 'none' }}>
+                <Typography sx={sectionLabelSx}>Show Screen</Typography>
+                <IconButton size="small">{showScreenOpen ? <ExpandLessIcon /> : <ExpandMoreIcon />}</IconButton>
+              </Stack>
+              <Collapse in={showScreenOpen}>
+              <Box sx={{ mt: 1 }}>
               <Stack direction="row" spacing={1} flexWrap="nowrap">
                 {[
                   { label: '🎬 Show Intro', color: 'secondary' as const, onClick: () => { void showIntroOn(); } },
@@ -158,6 +175,8 @@ export const HostPage = () => {
                   </Button>
                 ))}
               </Stack>
+              </Box>
+              </Collapse>
             </CardContent>
           </Card>
 
