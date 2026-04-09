@@ -2,7 +2,7 @@
   "id": "default-game",
   "status": "live",
   "currentRound": 1,
-  "chooserTeamId": "team-b",
+  "chooserTeamId": "team-c",
   "multiplier": 1,
   "practiceMode": false,
   "hostLocked": false,
@@ -52,7 +52,7 @@
         "Name 9",
         "Bradley"
       ],
-      "score": 300,
+      "score": 450,
       "eliminated": false
     },
     {
@@ -78,7 +78,7 @@
         "Name 14",
         "Monica"
       ],
-      "score": 150,
+      "score": 300,
       "eliminated": false
     }
   ],
@@ -529,11 +529,12 @@
     }
   ],
   "roundState": {
-    "selectedQuestionId": "csv-r1q3",
-    "activeSongIndex": 2,
+    "selectedQuestionId": "csv-r1q4",
+    "activeSongIndex": 1,
     "usedQuestionIds": [
       "csv-r1q2",
-      "csv-r1q3"
+      "csv-r1q3",
+      "csv-r1q4"
     ],
     "clipState": "resolved",
     "buzzWinnerTeamId": "team-d",
@@ -541,57 +542,13 @@
       "team-d"
     ],
     "stealingTeamId": null,
-    "answerState": "wrong",
+    "answerState": "correct",
     "stealState": "resolved",
-    "lastPointsAwarded": 100,
-    "artistBonusUsed": false,
+    "lastPointsAwarded": 50,
+    "artistBonusUsed": true,
     "revealState": "both"
   },
   "eventLog": [
-    {
-      "action": "eliminate_team",
-      "at": "2026-04-09T13:19:12.392Z"
-    },
-    {
-      "action": "reinstate_team",
-      "at": "2026-04-09T13:19:21.452Z"
-    },
-    {
-      "action": "eliminate_team",
-      "at": "2026-04-09T13:21:18.790Z"
-    },
-    {
-      "action": "reinstate_team",
-      "at": "2026-04-09T13:21:30.520Z"
-    },
-    {
-      "action": "eliminate_team",
-      "at": "2026-04-09T13:21:40.311Z"
-    },
-    {
-      "action": "reinstate_team",
-      "at": "2026-04-09T13:22:46.743Z"
-    },
-    {
-      "action": "eliminate_team",
-      "at": "2026-04-09T13:22:48.351Z"
-    },
-    {
-      "action": "reinstate_team",
-      "at": "2026-04-09T13:22:57.196Z"
-    },
-    {
-      "action": "eliminate_team",
-      "at": "2026-04-09T13:23:04.564Z"
-    },
-    {
-      "action": "reinstate_team",
-      "at": "2026-04-09T13:25:27.017Z"
-    },
-    {
-      "action": "eliminate_team",
-      "at": "2026-04-09T13:25:32.244Z"
-    },
     {
       "action": "sudden_death",
       "at": "2026-04-09T13:25:46.256Z"
@@ -947,9 +904,53 @@
     {
       "action": "set_reveal_state",
       "at": "2026-04-09T17:15:42.791Z"
+    },
+    {
+      "action": "reset_round",
+      "at": "2026-04-09T17:17:40.923Z"
+    },
+    {
+      "action": "select_question",
+      "at": "2026-04-09T17:17:50.075Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-09T17:17:52.464Z"
+    },
+    {
+      "action": "set_buzz_winner",
+      "at": "2026-04-09T17:17:59.127Z"
+    },
+    {
+      "action": "mark_correct",
+      "at": "2026-04-09T17:18:01.696Z"
+    },
+    {
+      "action": "award_artist_bonus",
+      "at": "2026-04-09T17:18:08.175Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-09T17:18:13.847Z"
+    },
+    {
+      "action": "set_buzz_winner",
+      "at": "2026-04-09T17:18:35.905Z"
+    },
+    {
+      "action": "mark_correct",
+      "at": "2026-04-09T17:19:19.009Z"
+    },
+    {
+      "action": "award_artist_bonus",
+      "at": "2026-04-09T17:19:32.130Z"
+    },
+    {
+      "action": "set_reveal_state",
+      "at": "2026-04-09T17:19:38.560Z"
     }
   ],
-  "updatedAt": "2026-04-09T17:15:42.791Z",
+  "updatedAt": "2026-04-09T17:19:38.560Z",
   "showIntro": false,
   "randomizerSeq": 28,
   "showRules": false,

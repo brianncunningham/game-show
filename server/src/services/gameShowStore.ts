@@ -483,7 +483,7 @@ class GameShowStore extends EventEmitter {
           stealingTeamId: null,
           lastPointsAwarded: awardedPoints,
           usedQuestionIds: usedIds,
-          revealState: 'title',
+          revealState: 'both',
         },
       });
     }

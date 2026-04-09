@@ -203,8 +203,9 @@ export const ShowBoard = ({ state }: { state: GameShowState }) => {
         overflow: 'hidden',
         display: 'flex',
         flexDirection: 'column',
-        px: { xs: 2, md: 5 },
-        py: { xs: 2, md: 3 },
+        px: { xs: 1, md: 2 },
+        py: { xs: 1, md: 2 },
+        width: '100%',
         background: isWrongPhase
           ? 'radial-gradient(circle at top, rgba(160,10,10,0.45), transparent 55%), linear-gradient(180deg, #1a0303 0%, #200505 45%, #140202 100%)'
           : stealSuccessFlash
@@ -215,7 +216,6 @@ export const ShowBoard = ({ state }: { state: GameShowState }) => {
                 ? 'radial-gradient(circle at top, rgba(255,200,40,0.38), transparent 50%), radial-gradient(circle at bottom, rgba(40,200,255,0.28), transparent 45%), linear-gradient(180deg, #0d0e03 0%, #141206 45%, #080b05 100%)'
                 : 'radial-gradient(circle at top, rgba(40,80,180,0.28), transparent 35%), linear-gradient(180deg, #070d1f 0%, #0b1228 45%, #070b18 100%)',
         transition: 'background 320ms ease',
-        boxSizing: 'border-box',
       }}
     >
       <Box
@@ -223,8 +223,8 @@ export const ShowBoard = ({ state }: { state: GameShowState }) => {
           flex: 1,
           display: 'flex',
           flexDirection: 'column',
-          borderRadius: 6,
-          p: { xs: 2, md: 4 },
+          borderRadius: 4,
+          p: { xs: 1, md: 2 },
           border: isWrongPhase
             ? '3px solid rgba(220, 30, 30, 0.95)'
             : stealSuccessFlash
