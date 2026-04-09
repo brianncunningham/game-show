@@ -39,7 +39,7 @@
         "Charlie",
         "Name 8"
       ],
-      "score": 100,
+      "score": 250,
       "eliminated": false
     },
     {
@@ -78,7 +78,7 @@
         "Name 14",
         "Monica"
       ],
-      "score": 0,
+      "score": 150,
       "eliminated": false
     }
   ],
@@ -530,53 +530,24 @@
   ],
   "roundState": {
     "selectedQuestionId": "csv-r1q2",
-    "activeSongIndex": 0,
+    "activeSongIndex": 2,
     "usedQuestionIds": [
-      "csv-r1q5"
+      "csv-r1q5",
+      "csv-r1q2"
     ],
-    "clipState": "active",
-    "buzzWinnerTeamId": null,
-    "attemptedTeamIds": [],
+    "clipState": "resolved",
+    "buzzWinnerTeamId": "team-a",
+    "attemptedTeamIds": [
+      "team-a"
+    ],
     "stealingTeamId": null,
-    "answerState": "pending",
-    "stealState": "idle",
-    "lastPointsAwarded": null,
-    "artistBonusUsed": false,
-    "revealState": "none"
+    "answerState": "correct",
+    "stealState": "resolved",
+    "lastPointsAwarded": 50,
+    "artistBonusUsed": true,
+    "revealState": "artist"
   },
   "eventLog": [
-    {
-      "action": "start_game",
-      "at": "2026-04-09T16:49:01.667Z"
-    },
-    {
-      "action": "select_question",
-      "at": "2026-04-09T16:49:07.277Z"
-    },
-    {
-      "action": "select_song",
-      "at": "2026-04-09T16:49:09.286Z"
-    },
-    {
-      "action": "set_buzz_winner",
-      "at": "2026-04-09T16:49:14.396Z"
-    },
-    {
-      "action": "mark_correct",
-      "at": "2026-04-09T16:49:18.174Z"
-    },
-    {
-      "action": "award_artist_bonus",
-      "at": "2026-04-09T16:50:49.557Z"
-    },
-    {
-      "action": "set_reveal_state",
-      "at": "2026-04-09T16:51:16.146Z"
-    },
-    {
-      "action": "set_reveal_state",
-      "at": "2026-04-09T16:51:16.295Z"
-    },
     {
       "action": "select_song",
       "at": "2026-04-09T16:51:24.056Z"
@@ -944,9 +915,41 @@
     {
       "action": "select_song",
       "at": "2026-04-09T17:24:25.303Z"
+    },
+    {
+      "action": "set_buzz_winner",
+      "at": "2026-04-09T17:24:30.182Z"
+    },
+    {
+      "action": "mark_correct",
+      "at": "2026-04-09T17:24:32.780Z"
+    },
+    {
+      "action": "award_artist_bonus",
+      "at": "2026-04-09T17:24:39.198Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-09T17:24:50.913Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-09T17:25:49.001Z"
+    },
+    {
+      "action": "set_buzz_winner",
+      "at": "2026-04-09T17:25:54.271Z"
+    },
+    {
+      "action": "mark_correct",
+      "at": "2026-04-09T17:25:56.717Z"
+    },
+    {
+      "action": "award_artist_bonus",
+      "at": "2026-04-09T17:26:03.306Z"
     }
   ],
-  "updatedAt": "2026-04-09T17:24:25.303Z",
+  "updatedAt": "2026-04-09T17:26:03.306Z",
   "showIntro": false,
   "randomizerSeq": 28,
   "showRules": false,

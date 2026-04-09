@@ -342,7 +342,7 @@ export const ShowBoard = ({ state }: { state: GameShowState }) => {
             <GraphicEqIcon sx={{ fontSize: 'clamp(48px, 7vw, 140px)', color: '#ffd54a', filter: 'drop-shadow(0 0 14px rgba(255,213,74,0.8))' }} />
           </Stack>
 
-          <Grid container spacing={2} alignItems="stretch">
+          <Grid container spacing={2} alignItems="stretch" sx={{ width: '100%', m: 0 }}>
             {state.teams.map((team, index) => {
               const TEAM_ACCENTS = ['#56d7ff', '#ff9e3d', '#c88cff', '#50ffa0'];
               const TEAM_GLOWS = ['rgba(86,215,255,0.45)', 'rgba(255,158,61,0.45)', 'rgba(200,140,255,0.45)', 'rgba(80,255,160,0.45)'];
