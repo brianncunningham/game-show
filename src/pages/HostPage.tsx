@@ -354,7 +354,7 @@ export const HostPage = () => {
                             variant={isActive ? 'contained' : 'outlined'}
                             color={isActive && !isResolved ? 'primary' : 'inherit'}
                             sx={{ ...bigBtnSx, opacity: isPast || isResolved ? 0.45 : 1, flexDirection: 'column', alignItems: 'center', gap: 0.25 }}
-                            disabled={!canPickSong || isPast || isResolved}
+                            disabled={(!canPickSong && !isActive) || isPast || isResolved}
                             onClick={() => {
                               void selectSong(i);
                               const trackId = songMeta?.spotifyTrackId;
