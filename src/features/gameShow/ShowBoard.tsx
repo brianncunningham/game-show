@@ -52,6 +52,7 @@ export const ShowBoard = ({ state }: { state: GameShowState }) => {
   const [stealFailFlash, setStealFailFlash] = useState(false);
   const [stealOriginalBuzzerId, setStealOriginalBuzzerId] = useState<string | null>(null);
   const prevStealStateRef = useRef<string>('idle');
+  const prevStealingTeamIdRef = useRef<string | null>(null);
 
   // Derived: show the wrong-answer ✕ either for a plain wrong, or during the 2s steal-wrong window
   const isWrongPhase = (isRawWrongPhase && state.roundState.stealState === 'idle') || stealWrongFlash;
@@ -118,6 +119,20 @@ export const ShowBoard = ({ state }: { state: GameShowState }) => {
 
     prevStealStateRef.current = curr;
   }, [state.roundState.stealState, state.roundState.lastPointsAwarded, buzzWinnerTeamId, state.teams]);
+
+  // Mid-steal fail: stealingTeamId goes non-null -> null while stealState stays 'available'
+  useEffect(() => {
+    const prevTeamId = prevStealingTeamIdRef.current;
+    const currTeamId = state.roundState.stealingTeamId;
+    const currStealState = state.roundState.stealState;
+    prevStealingTeamIdRef.current = currTeamId;
+
+    if (prevTeamId !== null && currTeamId === null && currStealState === 'available') {
+      setStealFailFlash(true);
+      const t = window.setTimeout(() => setStealFailFlash(false), 2000);
+      return () => window.clearTimeout(t);
+    }
+  }, [state.roundState.stealingTeamId, state.roundState.stealState]);
 
   useEffect(() => {
     if (state.roundState.artistBonusUsed) {
