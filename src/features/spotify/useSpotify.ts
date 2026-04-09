@@ -158,6 +158,12 @@ export const useSpotify = () => {
     await spotifyFetch(token, '/me/player/pause', { method: 'PUT' });
   }, [token]);
 
+  const resume = useCallback(async () => {
+    if (!token) return;
+    const deviceParam = activeDeviceId ? `?device_id=${activeDeviceId}` : '';
+    await spotifyFetch(token, `/me/player/play${deviceParam}`, { method: 'PUT' });
+  }, [token, activeDeviceId]);
+
   const stop = useCallback(async () => {
     await pause();
   }, [pause]);
@@ -171,5 +177,5 @@ export const useSpotify = () => {
     setActiveDeviceId(null);
   }, []);
 
-  return { isConnected, devices, activeDeviceId, setActiveDeviceId, fetchDevices, play, pause, stop, disconnect };
+  return { isConnected, devices, activeDeviceId, setActiveDeviceId, fetchDevices, play, pause, resume, stop, disconnect };
 };

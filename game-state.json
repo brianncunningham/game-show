@@ -407,22 +407,6 @@
   },
   "eventLog": [
     {
-      "action": "toggle_show_intro",
-      "at": "2026-04-08T22:11:36.941Z"
-    },
-    {
-      "action": "toggle_show_intro",
-      "at": "2026-04-08T22:11:42.212Z"
-    },
-    {
-      "action": "toggle_show_intro",
-      "at": "2026-04-08T22:11:44.852Z"
-    },
-    {
-      "action": "toggle_show_rules",
-      "at": "2026-04-08T22:11:44.855Z"
-    },
-    {
       "action": "random_first_pick",
       "at": "2026-04-08T22:11:44.857Z"
     },
@@ -805,9 +789,25 @@
     {
       "action": "select_song",
       "at": "2026-04-09T04:27:02.467Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-09T04:27:19.980Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-09T04:27:22.864Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-09T04:27:32.086Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-09T04:27:36.017Z"
     }
   ],
-  "updatedAt": "2026-04-09T04:27:02.467Z",
+  "updatedAt": "2026-04-09T04:27:36.017Z",
   "showIntro": false,
   "randomizerSeq": 20,
   "showRules": false,

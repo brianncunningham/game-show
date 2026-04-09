@@ -54,6 +54,7 @@ export const HostPage = () => {
   const { state, isLoading, error } = useGameShowState();
   const [gameOpen, setGameOpen] = useState(false);
   const [showScreenOpen, setShowScreenOpen] = useState(false);
+  const [spotifyPaused, setSpotifyPaused] = useState(false);
   const spotify = useSpotify();
 
   const hasQuestion = Boolean(state?.roundState.selectedQuestionId);
@@ -326,7 +327,10 @@ export const HostPage = () => {
                               void selectSong(i);
                               const trackId = songMeta?.spotifyTrackId;
                               const startMs = songMeta?.clipStartMs ?? 0;
-                              if (trackId && spotify.isConnected) void spotify.play(trackId, startMs);
+                              if (trackId && spotify.isConnected) {
+                                void spotify.play(trackId, startMs);
+                                setSpotifyPaused(false);
+                              }
                             }}
                           >
                             <span>{isResolved ? '✓ Song ' + (i + 1) : 'Song ' + (i + 1)}</span>
@@ -342,9 +346,17 @@ export const HostPage = () => {
                               variant="outlined"
                               color="warning"
                               size="small"
-                              onClick={() => void spotify.pause()}
+                              onClick={() => {
+                                if (spotifyPaused) {
+                                  void spotify.resume();
+                                  setSpotifyPaused(false);
+                                } else {
+                                  void spotify.pause();
+                                  setSpotifyPaused(true);
+                                }
+                              }}
                             >
-                              ⏸ Pause
+                              {spotifyPaused ? '▶ Resume' : '⏸ Pause'}
                             </Button>
                           )}
                         </Stack>
