@@ -128,19 +128,21 @@ export const useSpotify = () => {
     })();
   }, []);
 
+  const fetchDevices = useCallback(async () => {
+    if (!token) return;
+    const res = await spotifyFetch(token, '/me/player/devices');
+    if (!res.ok) return;
+    const data = await res.json() as { devices: SpotifyDevice[] };
+    setDevices(data.devices ?? []);
+    setActiveDeviceId(prev => prev ?? data.devices.find(d => d.is_active)?.id ?? data.devices[0]?.id ?? null);
+  }, [token]);
+
   // Fetch devices when token is available
   useEffect(() => {
     if (!token) { setIsConnected(false); return; }
     setIsConnected(true);
-    void (async () => {
-      const res = await spotifyFetch(token, '/me/player/devices');
-      if (!res.ok) return;
-      const data = await res.json() as { devices: SpotifyDevice[] };
-      setDevices(data.devices ?? []);
-      const active = data.devices.find(d => d.is_active);
-      setActiveDeviceId(active?.id ?? data.devices[0]?.id ?? null);
-    })();
-  }, [token]);
+    void fetchDevices();
+  }, [token, fetchDevices]);
 
   const play = useCallback(async (trackId: string, positionMs: number) => {
     if (!token || !activeDeviceId) return;
@@ -168,5 +170,5 @@ export const useSpotify = () => {
     setActiveDeviceId(null);
   }, []);
 
-  return { isConnected, devices, activeDeviceId, setActiveDeviceId, play, pause, stop, disconnect };
+  return { isConnected, devices, activeDeviceId, setActiveDeviceId, fetchDevices, play, pause, stop, disconnect };
 };

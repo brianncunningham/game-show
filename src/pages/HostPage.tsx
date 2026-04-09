@@ -1,6 +1,7 @@
 import { Box, Button, Card, CardContent, Chip, Collapse, Divider, Grid, IconButton, MenuItem, Select, Stack, Typography } from '@mui/material';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import RefreshIcon from '@mui/icons-material/Refresh';
 import { useState } from 'react';
 import { initiateSpotifyLogin, useSpotify } from '../features/spotify/useSpotify';
 import {
@@ -88,20 +89,23 @@ export const HostPage = () => {
           {spotify.isConnected ? (
             <>
               <Chip label="Spotify ●" color="success" size="small" />
-              {spotify.devices.length > 0 && (
-                <Select
-                  size="small"
-                  value={spotify.activeDeviceId ?? ''}
-                  onChange={(e) => spotify.setActiveDeviceId(e.target.value)}
-                  sx={{ fontSize: '0.8rem', minWidth: 140 }}
-                >
-                  {spotify.devices.map(d => (
-                    <MenuItem key={d.id} value={d.id}>
-                      {d.name}{d.is_active ? ' ●' : ''}
-                    </MenuItem>
-                  ))}
-                </Select>
-              )}
+              <Select
+                size="small"
+                value={spotify.activeDeviceId ?? ''}
+                onChange={(e) => spotify.setActiveDeviceId(e.target.value)}
+                sx={{ fontSize: '0.8rem', minWidth: 140 }}
+                displayEmpty
+              >
+                {spotify.devices.length === 0 && <MenuItem value="">No devices</MenuItem>}
+                {spotify.devices.map(d => (
+                  <MenuItem key={d.id} value={d.id}>
+                    {d.name}{d.is_active ? ' ●' : ''}
+                  </MenuItem>
+                ))}
+              </Select>
+              <IconButton size="small" onClick={() => void spotify.fetchDevices()} title="Refresh devices">
+                <RefreshIcon fontSize="small" />
+              </IconButton>
               <Button size="small" variant="text" color="inherit" sx={{ opacity: 0.6, minWidth: 0 }} onClick={() => spotify.disconnect()}>Disconnect</Button>
             </>
           ) : (
