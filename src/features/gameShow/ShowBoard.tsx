@@ -835,9 +835,11 @@ export const ShowBoard = ({ state }: { state: GameShowState }) => {
                   </Typography>
                 ) : (
                   <>
-                    <Typography sx={{ color: '#ffb14a', fontWeight: 900, fontSize: 'clamp(1rem, 2vw, 3rem)', letterSpacing: '0.08em', textTransform: 'uppercase', textShadow: '0 0 14px rgba(255,177,74,0.65)' }}>
-                      {chooserTeam ? `${chooserTeam.name}: Select your next theme` : 'Waiting for the next selection'}
-                    </Typography>
+                    {!hasActiveTheme && (
+                      <Typography sx={{ color: '#ffb14a', fontWeight: 900, fontSize: 'clamp(1rem, 2vw, 3rem)', letterSpacing: '0.08em', textTransform: 'uppercase', textShadow: '0 0 14px rgba(255,177,74,0.65)' }}>
+                        {chooserTeam ? `${chooserTeam.name}: Select your next theme` : 'Waiting for the next selection'}
+                      </Typography>
+                    )}
                     {selectedQuestion && (
                       <Typography sx={{ mt: 1, color: 'rgba(255,255,255,0.78)', fontSize: 'clamp(0.85rem, 1.2vw, 1.8rem)' }}>
                         Now playing: {selectedQuestion.songLabel}
