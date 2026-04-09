@@ -50,6 +50,7 @@ const EMPTY_ROUND_STATE = (): GameShowRoundState => ({
   stealState: 'idle',
   lastPointsAwarded: null,
   artistBonusUsed: false,
+  revealState: 'none',
 });
 
 const EMPTY_SONGS = [
@@ -309,6 +310,18 @@ class GameShowStore extends EventEmitter {
         ...this.state.roundState,
         lastPointsAwarded: bonus,
         artistBonusUsed: true,
+        revealState: 'artist',
+      },
+    });
+  }
+
+  setRevealState(mode: 'none' | 'title' | 'artist' | 'both'): GameShowState {
+    if (!this.canMutate()) return this.state;
+    return this.commit('set_reveal_state', {
+      ...this.state,
+      roundState: {
+        ...this.state.roundState,
+        revealState: mode,
       },
     });
   }
@@ -379,6 +392,7 @@ class GameShowStore extends EventEmitter {
         clipState: 'resolved',
         lastPointsAwarded: awardedPoints,
         usedQuestionIds: usedIds,
+        revealState: 'title',
       },
     });
   }
@@ -469,6 +483,7 @@ class GameShowStore extends EventEmitter {
           stealingTeamId: null,
           lastPointsAwarded: awardedPoints,
           usedQuestionIds: usedIds,
+          revealState: 'title',
         },
       });
     }

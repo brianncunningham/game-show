@@ -1,8 +1,8 @@
 {
   "id": "default-game",
-  "status": "complete",
+  "status": "live",
   "currentRound": 1,
-  "chooserTeamId": "team-c",
+  "chooserTeamId": "team-a",
   "multiplier": 1,
   "practiceMode": false,
   "hostLocked": false,
@@ -52,8 +52,8 @@
         "Name 9",
         "Bradley"
       ],
-      "score": 0,
-      "eliminated": true
+      "score": 150,
+      "eliminated": false
     },
     {
       "id": "team-c",
@@ -441,91 +441,23 @@
     }
   ],
   "roundState": {
-    "selectedQuestionId": null,
-    "activeSongIndex": null,
-    "usedQuestionIds": [],
-    "clipState": "idle",
-    "buzzWinnerTeamId": null,
-    "attemptedTeamIds": [],
+    "selectedQuestionId": "csv-r1q1",
+    "activeSongIndex": 0,
+    "usedQuestionIds": [
+      "csv-r1q1"
+    ],
+    "clipState": "resolved",
+    "buzzWinnerTeamId": "team-b",
+    "attemptedTeamIds": [
+      "team-b"
+    ],
     "stealingTeamId": null,
-    "answerState": "pending",
-    "stealState": "idle",
-    "lastPointsAwarded": null,
-    "artistBonusUsed": false
+    "answerState": "correct",
+    "stealState": "resolved",
+    "lastPointsAwarded": 50,
+    "artistBonusUsed": true
   },
   "eventLog": [
-    {
-      "action": "select_song",
-      "at": "2026-04-09T04:17:23.024Z"
-    },
-    {
-      "action": "select_song",
-      "at": "2026-04-09T04:17:24.201Z"
-    },
-    {
-      "action": "select_song",
-      "at": "2026-04-09T04:17:34.886Z"
-    },
-    {
-      "action": "select_song",
-      "at": "2026-04-09T04:17:36.469Z"
-    },
-    {
-      "action": "select_song",
-      "at": "2026-04-09T04:18:05.960Z"
-    },
-    {
-      "action": "select_song",
-      "at": "2026-04-09T04:18:07.114Z"
-    },
-    {
-      "action": "select_song",
-      "at": "2026-04-09T04:20:03.379Z"
-    },
-    {
-      "action": "select_song",
-      "at": "2026-04-09T04:20:04.894Z"
-    },
-    {
-      "action": "select_song",
-      "at": "2026-04-09T04:20:19.994Z"
-    },
-    {
-      "action": "select_song",
-      "at": "2026-04-09T04:20:21.390Z"
-    },
-    {
-      "action": "select_song",
-      "at": "2026-04-09T04:25:36.920Z"
-    },
-    {
-      "action": "select_song",
-      "at": "2026-04-09T04:25:41.019Z"
-    },
-    {
-      "action": "select_song",
-      "at": "2026-04-09T04:26:46.882Z"
-    },
-    {
-      "action": "select_song",
-      "at": "2026-04-09T04:26:51.581Z"
-    },
-    {
-      "action": "select_song",
-      "at": "2026-04-09T04:27:02.467Z"
-    },
-    {
-      "action": "select_song",
-      "at": "2026-04-09T04:27:19.980Z"
-    },
-    {
-      "action": "select_song",
-      "at": "2026-04-09T04:27:22.864Z"
-    },
-    {
-      "action": "select_song",
-      "at": "2026-04-09T04:27:32.086Z"
-    },
     {
       "action": "select_song",
       "at": "2026-04-09T04:27:36.017Z"
@@ -853,9 +785,81 @@
     {
       "action": "end_game",
       "at": "2026-04-09T13:25:52.354Z"
+    },
+    {
+      "action": "reset_scores",
+      "at": "2026-04-09T16:30:29.506Z"
+    },
+    {
+      "action": "toggle_show_intro",
+      "at": "2026-04-09T16:30:32.217Z"
+    },
+    {
+      "action": "start_game",
+      "at": "2026-04-09T16:30:32.219Z"
+    },
+    {
+      "action": "toggle_show_rules",
+      "at": "2026-04-09T16:30:32.221Z"
+    },
+    {
+      "action": "select_question",
+      "at": "2026-04-09T16:30:34.812Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-09T16:30:37.699Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-09T16:31:15.656Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-09T16:31:34.192Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-09T16:31:56.040Z"
+    },
+    {
+      "action": "reset_scores",
+      "at": "2026-04-09T16:32:00.837Z"
+    },
+    {
+      "action": "toggle_show_rules",
+      "at": "2026-04-09T16:32:05.604Z"
+    },
+    {
+      "action": "start_game",
+      "at": "2026-04-09T16:32:05.607Z"
+    },
+    {
+      "action": "toggle_show_intro",
+      "at": "2026-04-09T16:32:05.610Z"
+    },
+    {
+      "action": "select_question",
+      "at": "2026-04-09T16:32:07.885Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-09T16:32:09.658Z"
+    },
+    {
+      "action": "set_buzz_winner",
+      "at": "2026-04-09T16:32:30.569Z"
+    },
+    {
+      "action": "mark_correct",
+      "at": "2026-04-09T16:32:32.117Z"
+    },
+    {
+      "action": "award_artist_bonus",
+      "at": "2026-04-09T16:33:17.635Z"
     }
   ],
-  "updatedAt": "2026-04-09T13:25:52.354Z",
+  "updatedAt": "2026-04-09T16:33:17.635Z",
   "showIntro": false,
   "randomizerSeq": 28,
   "showRules": false,

@@ -32,6 +32,7 @@ import {
   toggleHostLock,
   triggerSuddenDeath,
   undoLastAction,
+  setRevealState,
 } from '../features/gameShow/api';
 import { GameShowSharedView } from '../features/gameShow/GameShowSharedView';
 import { useGameShowState } from '../features/gameShow/useGameShowState';
@@ -70,6 +71,7 @@ export const HostPage = () => {
   const canBuzz = state?.roundState.clipState === 'active' && !hasBuzzWinner;
   const canJudgeAnswer = hasQuestion && hasBuzzWinner && !answerResolved && !stealAvailable;
   const canArtistBonus = state?.roundState.answerState === 'correct' && Boolean(state?.roundState.buzzWinnerTeamId) && !state?.roundState.artistBonusUsed;
+  const canRevealBoth = Boolean(state?.roundState.selectedQuestionId) && state?.roundState.activeSongIndex != null;
   const canAdvance = !hasQuestion || answerResolved;
   const isSuddenDeath = state?.status === 'sudden_death';
 
@@ -447,6 +449,16 @@ export const HostPage = () => {
                   onClick={() => void awardArtistBonus()}
                 >
                   + Artist bonus (+{50 * multiplier} pts)
+                </Button>
+                <Button
+                  fullWidth
+                  color="warning"
+                  variant="outlined"
+                  sx={{ ...bigBtnSx, flex: 1, fontSize: { xs: '0.7rem', md: '0.75rem' } }}
+                  disabled={!canRevealBoth}
+                  onClick={() => void setRevealState('both')}
+                >
+                  ♪★ Reveal Both
                 </Button>
               </Stack>
             </CardContent>

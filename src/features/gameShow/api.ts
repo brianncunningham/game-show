@@ -86,6 +86,7 @@ export const markWrong = () => postAction('/answer/wrong', 'Failed to mark answe
 export const setStealingTeam = (teamId: string) => postAction(`/steal/team/${teamId}`, 'Failed to set stealing team');
 export const markStealSuccess = () => postAction('/steal/success', 'Failed to award steal');
 export const markStealFail = () => postAction('/steal/fail', 'Failed to resolve failed steal');
+export const setRevealState = (mode: 'none' | 'title' | 'artist' | 'both') => postAction(`/reveal/${mode}`, 'Failed to set reveal state');
 export const eliminateTeam = (teamId: string) => postAction(`/teams/${teamId}/eliminate`, 'Failed to eliminate team');
 export const reinstateTeam = (teamId: string) => postAction(`/teams/${teamId}/reinstate`, 'Failed to reinstate team');
 export const nextRound = () => postAction('/round/next', 'Failed to advance round');

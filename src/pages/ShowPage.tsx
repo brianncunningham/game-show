@@ -2,6 +2,7 @@ import { Box, Typography } from '@mui/material';
 import { useEffect, useRef, useState } from 'react';
 import { GameShowStandaloneShell } from '../features/gameShow/GameShowStandaloneShell';
 import { EliminationScreen } from '../features/gameShow/EliminationScreen';
+import { RevealScreen } from '../features/gameShow/RevealScreen';
 import { FirstPickScreen } from '../features/gameShow/FirstPickScreen';
 import { IntroScreen } from '../features/gameShow/IntroScreen';
 import { RulesScreen } from '../features/gameShow/RulesScreen';
@@ -16,9 +17,11 @@ export const ShowPage = () => {
   const [showRandomizer, setShowRandomizer] = useState(false);
   const [showFirstPick, setShowFirstPick] = useState(false);
   const [eliminatedTeam, setEliminatedTeam] = useState<GameShowTeam | null>(null);
+  const [revealMode, setRevealMode] = useState<'title' | 'artist' | 'both' | null>(null);
   const prevSeqRef = useRef<number>(-1);
   const prevFirstPickSeqRef = useRef<number>(-1);
   const prevEliminatedIdsRef = useRef<Set<string>>(new Set());
+  const prevRevealStateRef = useRef<string>('none');
 
   // Show randomizer on every randomize press; also clears intro
   useEffect(() => {
@@ -55,6 +58,17 @@ export const ShowPage = () => {
   useEffect(() => {
     if ((state?.firstPickSeq ?? 0) > 0) setShowRandomizer(false);
   }, [state?.firstPickSeq]);
+
+  // Detect revealState transitions
+  useEffect(() => {
+    if (!state) return;
+    const next = state.roundState.revealState;
+    const prev = prevRevealStateRef.current;
+    if (next !== 'none' && next !== prev) {
+      setRevealMode(next);
+    }
+    prevRevealStateRef.current = next;
+  }, [state?.roundState.revealState]);
 
   // Detect newly eliminated teams
   useEffect(() => {
@@ -150,6 +164,18 @@ export const ShowPage = () => {
             onDone={() => setEliminatedTeam(null)}
           />
         )}
+        {revealMode && state.roundState.selectedQuestionId && (() => {
+          const q = state.questions.find(q => q.id === state.roundState.selectedQuestionId);
+          const idx = state.roundState.activeSongIndex ?? 0;
+          return q ? (
+            <RevealScreen
+              mode={revealMode}
+              question={q}
+              songIndex={idx}
+              onDone={() => setRevealMode(null)}
+            />
+          ) : null;
+        })()}
       </Box>
     </GameShowStandaloneShell>
   );

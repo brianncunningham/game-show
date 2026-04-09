@@ -60,6 +60,11 @@ router.post('/steal/fail', (_req, res) => {
   res.json(gameShowStore.resolveSteal(false));
 });
 
+router.post('/reveal/:mode', (req, res) => {
+  const mode = req.params.mode as 'none' | 'title' | 'artist' | 'both';
+  res.json(gameShowStore.setRevealState(mode));
+});
+
 router.post('/teams/:teamId/eliminate', (req, res) => {
   res.json(gameShowStore.eliminateTeam(req.params.teamId));
 });

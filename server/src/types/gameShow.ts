@@ -42,6 +42,7 @@ export interface GameShowRoundState {
   stealState: 'idle' | 'available' | 'resolved';
   lastPointsAwarded: number | null;
   artistBonusUsed: boolean;
+  revealState: 'none' | 'title' | 'artist' | 'both';
 }
 
 export interface GameShowState {
