@@ -408,30 +408,6 @@
   "eventLog": [
     {
       "action": "toggle_show_rules",
-      "at": "2026-04-08T22:01:36.587Z"
-    },
-    {
-      "action": "random_assign_players",
-      "at": "2026-04-08T22:01:36.591Z"
-    },
-    {
-      "action": "toggle_show_intro",
-      "at": "2026-04-08T22:02:32.035Z"
-    },
-    {
-      "action": "toggle_show_rules",
-      "at": "2026-04-08T22:02:32.040Z"
-    },
-    {
-      "action": "start_game",
-      "at": "2026-04-08T22:02:32.044Z"
-    },
-    {
-      "action": "toggle_show_intro",
-      "at": "2026-04-08T22:06:39.908Z"
-    },
-    {
-      "action": "toggle_show_rules",
       "at": "2026-04-08T22:06:39.912Z"
     },
     {
@@ -805,9 +781,33 @@
     {
       "action": "select_song",
       "at": "2026-04-09T03:42:56.486Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-09T04:10:55.173Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-09T04:10:57.307Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-09T04:11:18.733Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-09T04:11:19.808Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-09T04:16:07.304Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-09T04:16:08.493Z"
     }
   ],
-  "updatedAt": "2026-04-09T03:42:56.486Z",
+  "updatedAt": "2026-04-09T04:16:08.493Z",
   "showIntro": false,
   "randomizerSeq": 20,
   "showRules": false,

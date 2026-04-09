@@ -145,17 +145,18 @@ export const useSpotify = () => {
   }, [token, fetchDevices]);
 
   const play = useCallback(async (trackId: string, positionMs: number) => {
-    if (!token || !activeDeviceId) return;
-    await spotifyFetch(token, `/me/player/play?device_id=${activeDeviceId}`, {
+    if (!token) return;
+    const deviceParam = activeDeviceId ? `?device_id=${activeDeviceId}` : '';
+    await spotifyFetch(token, `/me/player/play${deviceParam}`, {
       method: 'PUT',
       body: JSON.stringify({ uris: [`spotify:track:${trackId}`], position_ms: positionMs }),
     });
   }, [token, activeDeviceId]);
 
   const pause = useCallback(async () => {
-    if (!token || !activeDeviceId) return;
-    await spotifyFetch(token, `/me/player/pause?device_id=${activeDeviceId}`, { method: 'PUT' });
-  }, [token, activeDeviceId]);
+    if (!token) return;
+    await spotifyFetch(token, '/me/player/pause', { method: 'PUT' });
+  }, [token]);
 
   const stop = useCallback(async () => {
     await pause();
