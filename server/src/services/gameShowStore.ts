@@ -1,5 +1,5 @@
 import { EventEmitter } from 'events';
-import { existsSync, readFileSync, writeFileSync } from 'fs';
+import { existsSync, readFileSync, writeFileSync, renameSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import type {
@@ -19,17 +19,19 @@ const loadPersistedState = (): GameShowState | null => {
       const raw = readFileSync(PERSIST_PATH, 'utf-8');
       return JSON.parse(raw) as GameShowState;
     }
-  } catch {
-    console.warn('Could not load persisted state, using defaults.');
+  } catch (e) {
+    console.warn('Could not load persisted state, using defaults.', e);
   }
   return null;
 };
 
 const persistState = (state: GameShowState): void => {
+  const tmpPath = PERSIST_PATH + '.tmp';
   try {
-    writeFileSync(PERSIST_PATH, JSON.stringify(state, null, 2));
-  } catch {
-    console.warn('Could not persist state to disk.');
+    writeFileSync(tmpPath, JSON.stringify(state, null, 2));
+    renameSync(tmpPath, PERSIST_PATH);
+  } catch (e) {
+    console.warn('Could not persist state to disk.', e);
   }
 };
 
