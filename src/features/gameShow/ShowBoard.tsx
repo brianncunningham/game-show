@@ -13,7 +13,7 @@ import type { GameShowState } from './types';
 
 const themeStyles = [
   { color: '#ff4fd8', glow: 'rgba(255,79,216,0.55)', icon: <MicIcon sx={{ fontSize: 44 }} /> },
-  { color: '#63ff7a', glow: 'rgba(99,255,122,0.55)', icon: <AlbumIcon sx={{ fontSize: 44 }} /> },
+  { color: '#40d8ff', glow: 'rgba(64,216,255,0.55)', icon: <AlbumIcon sx={{ fontSize: 44 }} /> },
   { color: '#ff6548', glow: 'rgba(255,101,72,0.55)', icon: <MusicNoteIcon sx={{ fontSize: 44 }} /> },
   { color: '#5ab7ff', glow: 'rgba(90,183,255,0.55)', icon: <TheaterComedyIcon sx={{ fontSize: 44 }} /> },
   { color: '#ffd54a', glow: 'rgba(255,213,74,0.55)', icon: <OndemandVideoIcon sx={{ fontSize: 44 }} /> },
