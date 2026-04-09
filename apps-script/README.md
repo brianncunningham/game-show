@@ -18,10 +18,17 @@ Sheet tab must be named **Themes & Songs**.
 ### 1. Install clasp (if not already)
 ```bash
 npm install -g @google/clasp
-clasp login
 ```
 
-### 2. Create the Apps Script project bound to your sheet
+### 2. Login with a project-local credentials file
+This avoids overwriting global `~/.clasprc.json` if you use clasp for other projects under different accounts:
+```bash
+cd apps-script
+clasp login --creds .clasprc.json
+```
+`.clasprc.json` is gitignored — credentials stay local only.
+
+### 3. Create the Apps Script project bound to your sheet
 
 Open your Google Sheet → **Extensions → Apps Script**.  
 Copy the **Script ID** from the URL:  
@@ -35,13 +42,12 @@ Paste it into `apps-script/.clasp.json`:
 }
 ```
 
-### 3. Push the code
+### 4. Push the code
 ```bash
-cd apps-script
-clasp push
+clasp push --auth .clasprc.json
 ```
 
-### 4. Set your Spotify credentials (one time)
+### 5. Set your Spotify credentials (one time)
 
 In your Google Sheet, reload the page. A **Name That Tune** menu appears.  
 Go to **Name That Tune → Set Spotify Credentials** and enter your:
@@ -68,5 +74,5 @@ These are stored securely in Apps Script's User Properties (not in cells).
 ## Deploying updates
 ```bash
 cd apps-script
-clasp push
+clasp push --auth .clasprc.json
 ```

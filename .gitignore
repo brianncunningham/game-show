@@ -6,3 +6,4 @@ dist/
 *.log
 server/node_modules/
 server/dist/
+apps-script/.clasprc.json
