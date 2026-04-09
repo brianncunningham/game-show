@@ -225,7 +225,7 @@ export const ShowBoard = ({ state }: { state: GameShowState }) => {
           ? 'radial-gradient(circle at top, rgba(160,10,10,0.45), transparent 55%), linear-gradient(180deg, #1a0303 0%, #200505 45%, #140202 100%)'
           : stealSuccessFlash
             ? 'radial-gradient(circle at top, rgba(255,140,0,0.42), transparent 50%), radial-gradient(circle at bottom, rgba(255,200,0,0.22), transparent 45%), linear-gradient(180deg, #110800 0%, #1a0e00 45%, #0d0600 100%)'
-            : isStealAvailable
+            : isStealAvailable && !stealFailFlash
               ? 'radial-gradient(circle at top, rgba(255,120,0,0.38), transparent 50%), linear-gradient(180deg, #110800 0%, #180b00 45%, #0d0600 100%)'
               : artistBonusFlash
                 ? 'radial-gradient(circle at top, rgba(255,200,40,0.38), transparent 50%), radial-gradient(circle at bottom, rgba(40,200,255,0.28), transparent 45%), linear-gradient(180deg, #0d0e03 0%, #141206 45%, #080b05 100%)'
@@ -244,7 +244,7 @@ export const ShowBoard = ({ state }: { state: GameShowState }) => {
             ? '3px solid rgba(220, 30, 30, 0.95)'
             : stealSuccessFlash
               ? '3px solid rgba(255,160,0,0.98)'
-              : isStealAvailable
+              : isStealAvailable && !stealFailFlash
                 ? '3px solid rgba(255,130,0,0.9)'
                 : artistBonusFlash
                   ? '3px solid rgba(255,215,50,0.98)'
@@ -253,7 +253,7 @@ export const ShowBoard = ({ state }: { state: GameShowState }) => {
             ? '0 0 40px rgba(200,20,20,0.7), inset 0 0 40px rgba(180,10,10,0.25)'
             : stealSuccessFlash
               ? '0 0 50px rgba(255,160,0,0.9), 0 0 100px rgba(255,200,0,0.55), inset 0 0 40px rgba(255,150,0,0.18)'
-              : isStealAvailable
+              : isStealAvailable && !stealFailFlash
                 ? '0 0 40px rgba(255,120,0,0.75), 0 0 80px rgba(255,80,0,0.4), inset 0 0 30px rgba(255,120,0,0.12)'
                 : artistBonusFlash
                   ? '0 0 50px rgba(255,210,40,0.85), 0 0 100px rgba(255,180,30,0.5), inset 0 0 40px rgba(255,200,40,0.15)'
@@ -262,7 +262,7 @@ export const ShowBoard = ({ state }: { state: GameShowState }) => {
             ? 'radial-gradient(circle at 50% 0%, rgba(120,10,10,0.6), rgba(22,5,5,0.97) 36%), rgba(18,4,4,0.97)'
             : stealSuccessFlash
               ? 'radial-gradient(circle at 50% 0%, rgba(180,100,0,0.6), rgba(16,10,2,0.97) 36%), rgba(14,9,1,0.97)'
-              : isStealAvailable
+              : isStealAvailable && !stealFailFlash
                 ? 'radial-gradient(circle at 50% 0%, rgba(160,80,0,0.5), rgba(14,8,1,0.97) 36%), rgba(12,7,1,0.97)'
                 : artistBonusFlash
                   ? 'radial-gradient(circle at 50% 0%, rgba(180,140,10,0.55), rgba(14,13,4,0.97) 36%), rgba(12,11,3,0.97)'
@@ -739,7 +739,7 @@ export const ShowBoard = ({ state }: { state: GameShowState }) => {
               }}>
                 No Steal
               </Typography>
-            ) : isStealAvailable && !stealWrongFlash ? (() => {
+            ) : isStealAvailable && !stealWrongFlash && !stealFailFlash ? (() => {
               const stealTeam = state.teams.find(t => t.id === stealingTeamId);
               return (
                 <Typography sx={{
@@ -909,7 +909,7 @@ export const ShowBoard = ({ state }: { state: GameShowState }) => {
             </Box>
           )}
 
-          {isStealAvailable && !stealWrongFlash && (
+          {isStealAvailable && !stealWrongFlash && !stealFailFlash && (
             <Box
               sx={{
                 position: 'absolute',
