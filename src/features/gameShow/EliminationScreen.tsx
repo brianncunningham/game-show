@@ -178,38 +178,6 @@ export const EliminationScreen = ({ team, onDone, duration = 4500 }: Props) => {
           {team.name}
         </Typography>
 
-        {/* Score locked banner */}
-        <Box
-          sx={{
-            px: 4,
-            py: 1,
-            borderRadius: 99,
-            background:
-              'linear-gradient(90deg, rgba(20,10,0,0.92), rgba(40,20,0,0.92))',
-            border: '2px solid rgba(255,180,0,0.7)',
-            boxShadow:
-              '0 0 18px rgba(255,160,0,0.7), 0 0 40px rgba(200,120,0,0.45)',
-          }}
-        >
-          <Typography
-            sx={{
-              fontWeight: 900,
-              fontSize: 'clamp(0.9rem, 1.6vw, 2rem)',
-              letterSpacing: '0.18em',
-              textTransform: 'uppercase',
-              color: '#ffd54a',
-              textShadow: '0 0 12px rgba(255,200,40,0.9), 0 0 28px rgba(255,160,0,0.6)',
-              animation: 'goldFlash 700ms ease-in-out infinite',
-              '@keyframes goldFlash': {
-                '0%': { opacity: 1 },
-                '50%': { opacity: 0.6 },
-                '100%': { opacity: 1 },
-              },
-            }}
-          >
-            ★ Points Locked: {team.score} ★
-          </Typography>
-        </Box>
       </Box>
 
       {/* ELIMINATED! text */}
@@ -264,33 +232,6 @@ export const EliminationScreen = ({ team, onDone, duration = 4500 }: Props) => {
         ✦ {team.name}! ✦
       </Typography>
 
-      {/* Footer lockout banner */}
-      <Box
-        sx={{
-          position: 'absolute',
-          bottom: '4vh',
-          px: 5,
-          py: 1.5,
-          borderRadius: 2,
-          border: '2px solid rgba(255,40,40,0.6)',
-          background: 'rgba(40,0,0,0.88)',
-          boxShadow: '0 0 24px rgba(255,0,0,0.5)',
-          zIndex: 2,
-        }}
-      >
-        <Typography
-          sx={{
-            fontWeight: 900,
-            fontSize: 'clamp(0.75rem, 1.3vw, 1.6rem)',
-            letterSpacing: '0.2em',
-            textTransform: 'uppercase',
-            color: '#ff6060',
-            textShadow: '0 0 10px rgba(255,50,50,0.8)',
-          }}
-        >
-          🛑 Locked Out of Play — Next Team's Turn 🛑
-        </Typography>
-      </Box>
     </Box>
   );
 };

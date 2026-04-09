@@ -458,22 +458,6 @@
   "eventLog": [
     {
       "action": "select_song",
-      "at": "2026-04-09T03:42:51.244Z"
-    },
-    {
-      "action": "select_song",
-      "at": "2026-04-09T03:42:56.486Z"
-    },
-    {
-      "action": "select_song",
-      "at": "2026-04-09T04:10:55.173Z"
-    },
-    {
-      "action": "select_song",
-      "at": "2026-04-09T04:10:57.307Z"
-    },
-    {
-      "action": "select_song",
       "at": "2026-04-09T04:11:18.733Z"
     },
     {
@@ -855,9 +839,25 @@
     {
       "action": "eliminate_team",
       "at": "2026-04-09T13:21:40.311Z"
+    },
+    {
+      "action": "reinstate_team",
+      "at": "2026-04-09T13:22:46.743Z"
+    },
+    {
+      "action": "eliminate_team",
+      "at": "2026-04-09T13:22:48.351Z"
+    },
+    {
+      "action": "reinstate_team",
+      "at": "2026-04-09T13:22:57.196Z"
+    },
+    {
+      "action": "eliminate_team",
+      "at": "2026-04-09T13:23:04.564Z"
     }
   ],
-  "updatedAt": "2026-04-09T13:21:40.311Z",
+  "updatedAt": "2026-04-09T13:23:04.564Z",
   "showIntro": false,
   "randomizerSeq": 28,
   "showRules": false,
