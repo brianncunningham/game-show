@@ -34,7 +34,7 @@ const PHASE_DONE = 2;
 const CHAOS_DURATION = 3800;
 const SETTLE_DURATION = 1600;
 
-const TEAM_COLORS = ['#56d7ff', '#ff9e3d'];
+const TEAM_COLORS = ['#56d7ff', '#ff9e3d', '#c88cff', '#50ffa0'];
 
 export const TeamRandomizer = ({ state }: Props) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -47,7 +47,7 @@ export const TeamRandomizer = ({ state }: Props) => {
   const [settled, setSettled] = useState(false);
 
   const players = state.playerPool;
-  const teams = state.teams;
+  const teams = state.teams.filter(t => !t.eliminated);
 
   useEffect(() => {
     const W = window.innerWidth;
@@ -260,7 +260,7 @@ export const TeamRandomizer = ({ state }: Props) => {
             sx={{
               flex: 1,
               height: '62vh',
-              maxWidth: '42vw',
+              maxWidth: teams.length <= 2 ? '42vw' : teams.length === 3 ? '30vw' : '22vw',
               borderRadius: 5,
               border: `2px solid ${TEAM_COLORS[ti % TEAM_COLORS.length]}`,
               background: `radial-gradient(ellipse at 50% 10%, ${TEAM_COLORS[ti % TEAM_COLORS.length]}28 0%, rgba(5,10,25,0.97) 65%)`,

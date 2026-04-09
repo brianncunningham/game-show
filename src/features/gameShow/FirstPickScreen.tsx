@@ -6,12 +6,12 @@ interface Props {
   state: GameShowState;
 }
 
-const TEAM_COLORS = ['#56d7ff', '#ff9e3d'];
+const TEAM_COLORS = ['#56d7ff', '#ff9e3d', '#c88cff', '#50ffa0'];
 const CYCLE_DURATION = 3200;  // total bounce time
 const SETTLE_DURATION = 800;  // flash-slow down time
 
 export const FirstPickScreen = ({ state }: Props) => {
-  const teams = state.teams;
+  const teams = state.teams.filter(t => !t.eliminated);
   const winnerTeamId = state.firstPickTeamId;
   const winnerTeam = teams.find(t => t.id === winnerTeamId);
 
@@ -106,7 +106,7 @@ export const FirstPickScreen = ({ state }: Props) => {
               key={team.id}
               sx={{
                 flex: 1,
-                maxWidth: '38vw',
+                maxWidth: teams.length <= 2 ? '38vw' : teams.length === 3 ? '28vw' : '22vw',
                 minHeight: '22vh',
                 borderRadius: 5,
                 border: `3px solid ${isActive || isWinner ? color : color + '30'}`,

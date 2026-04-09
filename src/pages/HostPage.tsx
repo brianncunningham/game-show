@@ -16,6 +16,9 @@ import {
   randomFirstPick,
   dismissFirstPick,
   showBoard,
+  eliminateTeam,
+  reinstateTeam,
+  setStealingTeam,
   markStealFail,
   markStealSuccess,
   markWrong,
@@ -56,6 +59,7 @@ export const HostPage = () => {
   const [showScreenOpen, setShowScreenOpen] = useState(false);
   const [spotifyPaused, setSpotifyPaused] = useState(false);
   const [spotifyTesting, setSpotifyTesting] = useState(false);
+  const [eliminateConfirm, setEliminateConfirm] = useState<string | null>(null);
   const spotify = useSpotify();
 
   const hasQuestion = Boolean(state?.roundState.selectedQuestionId);
@@ -81,6 +85,12 @@ export const HostPage = () => {
   const basePoints = 100;
   const expectedPoints = basePoints * multiplier;
   const chooserTeam = state?.teams.find(t => t.id === state.chooserTeamId) ?? null;
+  const activeTeams = state?.teams.filter(t => !t.eliminated) ?? [];
+  const attemptedTeamIds = state?.roundState.attemptedTeamIds ?? [];
+  const eligibleStealers = activeTeams.filter(t => !attemptedTeamIds.includes(t.id));
+  const stealingTeamId = state?.roundState.stealingTeamId ?? null;
+  const stealingTeam = stealingTeamId ? state?.teams.find(t => t.id === stealingTeamId) : null;
+  const eliminationEnabled = state?.eliminationEnabled ?? false;
 
   return (
     <GameShowSharedView
@@ -243,8 +253,8 @@ export const HostPage = () => {
                   <Typography sx={{ ...sectionLabelSx, color: 'error.main' }} mb={0}>Sudden Death — Award the Win</Typography>
                 </Stack>
                 <Grid container spacing={1.5}>
-                  {state?.teams.map((team) => (
-                    <Grid item xs={6} key={team.id}>
+                  {activeTeams.map((team) => (
+                    <Grid item xs={activeTeams.length <= 2 ? 6 : 4} key={team.id}>
                       <Button
                         fullWidth
                         color="error"
@@ -396,8 +406,8 @@ export const HostPage = () => {
                 <Typography sx={sectionLabelSx} mb={0}>Pick buzz winner</Typography>
               </Stack>
               <Grid container spacing={1.5}>
-                {state?.teams.map((team) => (
-                  <Grid item xs={6} key={team.id}>
+                {activeTeams.map((team) => (
+                  <Grid item xs={activeTeams.length <= 2 ? 6 : 4} key={team.id}>
                     <Button
                       fullWidth
                       color="secondary"
@@ -447,22 +457,91 @@ export const HostPage = () => {
             <CardContent>
               <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1.5 }}>
                 <Chip label="4" size="small" color={stealAvailable ? 'warning' : 'default'} />
-                <Typography sx={sectionLabelSx} mb={0}>Resolve steal</Typography>
+                <Typography sx={sectionLabelSx} mb={0}>
+                  {stealingTeam ? `Steal: ${stealingTeam.name}` : 'Steal — pick team'}
+                </Typography>
               </Stack>
+              {stealAvailable && !stealingTeam && (
+                <Grid container spacing={1.5} sx={{ mb: 1.5 }}>
+                  {eligibleStealers.map((team) => (
+                    <Grid item xs={eligibleStealers.length <= 2 ? 6 : 4} key={team.id}>
+                      <Button
+                        fullWidth
+                        color="warning"
+                        variant="outlined"
+                        sx={bigBtnSx}
+                        onClick={() => void setStealingTeam(team.id)}
+                      >
+                        {team.name} steals
+                      </Button>
+                    </Grid>
+                  ))}
+                </Grid>
+              )}
               <Grid container spacing={1.5}>
                 <Grid item xs={6}>
-                  <Button fullWidth color="warning" variant="contained" sx={bigBtnSx} disabled={!stealAvailable} onClick={() => void markStealSuccess()}>
+                  <Button fullWidth color="warning" variant="contained" sx={bigBtnSx} disabled={!stealAvailable || !stealingTeam} onClick={() => void markStealSuccess()}>
                     Steal success
                   </Button>
                 </Grid>
                 <Grid item xs={6}>
-                  <Button fullWidth color="inherit" variant="outlined" sx={bigBtnSx} disabled={!stealAvailable} onClick={() => void markStealFail()}>
+                  <Button fullWidth color="inherit" variant="outlined" sx={bigBtnSx} disabled={!stealAvailable || !stealingTeam} onClick={() => void markStealFail()}>
                     Steal fail
                   </Button>
                 </Grid>
               </Grid>
             </CardContent>
           </Card>
+
+          {/* Eliminate team */}
+          {eliminationEnabled && (
+            <Card sx={{ border: '1px solid', borderColor: 'error.dark' }}>
+              <CardContent>
+                <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1.5 }}>
+                  <Typography sx={{ ...sectionLabelSx, color: 'error.main' }} mb={0}>Eliminate team</Typography>
+                </Stack>
+                <Grid container spacing={1.5}>
+                  {state?.teams.map((team) => {
+                    const isEliminated = team.eliminated;
+                    const isArmed = eliminateConfirm === team.id;
+                    return (
+                      <Grid item xs={state.teams.length <= 2 ? 6 : 4} key={team.id}>
+                        {isEliminated ? (
+                          <Button
+                            fullWidth
+                            color="inherit"
+                            variant="outlined"
+                            sx={{ ...bigBtnSx, opacity: 0.5 }}
+                            onClick={() => void reinstateTeam(team.id)}
+                          >
+                            ↩ Reinstate {team.name}
+                          </Button>
+                        ) : (
+                          <Button
+                            fullWidth
+                            color={isArmed ? 'error' : 'inherit'}
+                            variant={isArmed ? 'contained' : 'outlined'}
+                            sx={bigBtnSx}
+                            onClick={() => {
+                              if (isArmed) {
+                                void eliminateTeam(team.id);
+                                setEliminateConfirm(null);
+                              } else {
+                                setEliminateConfirm(team.id);
+                              }
+                            }}
+                            onBlur={() => setEliminateConfirm(null)}
+                          >
+                            {isArmed ? `Confirm: Eliminate ${team.name}` : `Eliminate ${team.name}`}
+                          </Button>
+                        )}
+                      </Grid>
+                    );
+                  })}
+                </Grid>
+              </CardContent>
+            </Card>
+          )}
 
         </Stack>
       }

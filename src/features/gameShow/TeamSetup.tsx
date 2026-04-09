@@ -1,11 +1,20 @@
 import { useEffect, useState } from 'react';
-import { Button, Card, CardContent, Stack, TextField, Typography } from '@mui/material';
+import { Button, Card, CardContent, FormControlLabel, Radio, RadioGroup, Stack, TextField, Typography } from '@mui/material';
 import { randomAssignPlayers } from './api';
 import type { GameShowTeam } from './types';
 
+const TEAM_TEMPLATES: GameShowTeam[] = [
+  { id: 'team-a', name: 'Team A', players: [], score: 0, eliminated: false },
+  { id: 'team-b', name: 'Team B', players: [], score: 0, eliminated: false },
+  { id: 'team-c', name: 'Team C', players: [], score: 0, eliminated: false },
+  { id: 'team-d', name: 'Team D', players: [], score: 0, eliminated: false },
+];
+
 interface TeamSetupProps {
+  teamCount: 2 | 3 | 4;
   teams: GameShowTeam[];
   playerPool: string[];
+  onTeamCountChange: (count: 2 | 3 | 4) => void;
   onTeamsChange: (teams: GameShowTeam[]) => void;
   onPlayerPoolChange: (players: string[]) => void;
 }
@@ -16,7 +25,7 @@ const parsePlayers = (value: string) =>
     .map((player) => player.trim())
     .filter(Boolean);
 
-export const TeamSetup = ({ teams, playerPool, onTeamsChange, onPlayerPoolChange }: TeamSetupProps) => {
+export const TeamSetup = ({ teamCount, teams, playerPool, onTeamCountChange, onTeamsChange, onPlayerPoolChange }: TeamSetupProps) => {
   const safePlayerPool = playerPool ?? [];
   const [playerPoolDraft, setPlayerPoolDraft] = useState(safePlayerPool.join(', '));
 
@@ -31,6 +40,16 @@ export const TeamSetup = ({ teams, playerPool, onTeamsChange, onPlayerPoolChange
   const commitPlayerPool = () => {
     onPlayerPoolChange(parsePlayers(playerPoolDraft));
   };
+
+  const handleTeamCountChange = (count: 2 | 3 | 4) => {
+    const nextTeams = Array.from({ length: count }, (_, i) =>
+      teams[i] ?? { ...TEAM_TEMPLATES[i] }
+    );
+    onTeamCountChange(count);
+    onTeamsChange(nextTeams);
+  };
+
+  const displayedTeams = teams.slice(0, teamCount);
 
   return (
     <Card>
@@ -49,6 +68,19 @@ export const TeamSetup = ({ teams, playerPool, onTeamsChange, onPlayerPoolChange
             </Button>
           </Stack>
 
+          <Stack direction="row" spacing={2} alignItems="center">
+            <Typography variant="body2" color="text.secondary">Number of teams:</Typography>
+            <RadioGroup
+              row
+              value={String(teamCount)}
+              onChange={(e) => handleTeamCountChange(Number(e.target.value) as 2 | 3 | 4)}
+            >
+              {([2, 3, 4] as const).map(n => (
+                <FormControlLabel key={n} value={String(n)} control={<Radio size="small" />} label={String(n)} />
+              ))}
+            </RadioGroup>
+          </Stack>
+
           <Stack direction="row" spacing={2} alignItems="flex-start" flexWrap="wrap">
             <TextField
               label="Player pool (comma separated)"
@@ -65,7 +97,7 @@ export const TeamSetup = ({ teams, playerPool, onTeamsChange, onPlayerPoolChange
             </Button>
           </Stack>
 
-          {teams.map((team) => (
+          {displayedTeams.map((team) => (
             <Stack key={team.id} direction="row" spacing={2} flexWrap="wrap">
               <TextField
                 label="Team name"

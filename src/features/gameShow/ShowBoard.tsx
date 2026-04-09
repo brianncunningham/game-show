@@ -32,10 +32,8 @@ export const ShowBoard = ({ state }: { state: GameShowState }) => {
   // isWrongPhase: true for plain wrong answers; also re-enabled during the stealWrongFlash window (see below)
   const isRawWrongPhase = state.roundState.answerState === 'wrong';
   const isStealAvailable = state.roundState.stealState === 'available';
-  // stealingTeamId is captured from the non-buzzWinner at steal time
-  const stealingTeamId = isStealAvailable
-    ? (state.teams.find(t => t.id !== buzzWinnerTeamId)?.id ?? null)
-    : null;
+  // stealingTeamId comes directly from roundState (set by setStealingTeam action)
+  const stealingTeamId = isStealAvailable ? (state.roundState.stealingTeamId ?? null) : null;
   const isSuddenDeath = state.status === 'sudden_death';
   const hasActiveTheme = Boolean(state.roundState.selectedQuestionId);
   const activeSongIndex = state.roundState.activeSongIndex;
@@ -104,7 +102,7 @@ export const ShowBoard = ({ state }: { state: GameShowState }) => {
     if (prev === 'available' && curr === 'resolved') {
       const pts = state.roundState.lastPointsAwarded;
       if (pts && pts > 0) {
-        const stolenById = state.teams.find(t => t.id !== buzzWinnerTeamId)?.id ?? null;
+        const stolenById = state.roundState.stealingTeamId ?? (state.teams.find(t => t.id !== buzzWinnerTeamId)?.id ?? null);
         setStealSuccessTeamId(stolenById);
         setStealSuccessFlash(true);
         const t = window.setTimeout(() => setStealSuccessFlash(false), 3500);
@@ -346,8 +344,11 @@ export const ShowBoard = ({ state }: { state: GameShowState }) => {
 
           <Grid container spacing={2} alignItems="stretch">
             {state.teams.map((team, index) => {
-              const accent = index === 0 ? '#56d7ff' : '#ff9e3d';
-              const glow = index === 0 ? 'rgba(86,215,255,0.45)' : 'rgba(255,158,61,0.45)';
+              const TEAM_ACCENTS = ['#56d7ff', '#ff9e3d', '#c88cff', '#50ffa0'];
+              const TEAM_GLOWS = ['rgba(86,215,255,0.45)', 'rgba(255,158,61,0.45)', 'rgba(200,140,255,0.45)', 'rgba(80,255,160,0.45)'];
+              const accent = TEAM_ACCENTS[index % TEAM_ACCENTS.length];
+              const glow = TEAM_GLOWS[index % TEAM_GLOWS.length];
+              const isEliminated = team.eliminated ?? false;
               const isBuzzWinner = buzzWinnerTeamId === team.id && !isCorrectPhase && !isWrongPhase && !isStealAvailable && !stealSuccessFlash && !stealFailFlash;
               const isWinningTeam = winningTeamId === team.id && !stealSuccessFlash;
               const isWrongTeam = wrongTeamId === team.id && (!isStealAvailable || stealWrongFlash) && !stealSuccessFlash && !stealFailFlash;
@@ -371,8 +372,9 @@ export const ShowBoard = ({ state }: { state: GameShowState }) => {
                           ? <RadioIcon sx={{ fontSize: 'clamp(40px, 5vw, 100px)' }} />
                           : <AlbumIcon sx={{ fontSize: 'clamp(40px, 5vw, 100px)' }} />;
 
+              const gridCols = state.teams.length <= 2 ? 6 : state.teams.length === 3 ? 4 : 3;
               return (
-                <Grid item xs={12} md={6} key={team.id}>
+                <Grid item xs={12} md={gridCols} key={team.id}>
                   <Box
                     sx={{
                       height: '100%',
@@ -408,7 +410,8 @@ export const ShowBoard = ({ state }: { state: GameShowState }) => {
                                 : isBuzzWinner
                                   ? 'linear-gradient(135deg, rgba(255,149,64,0.35), rgba(255,255,255,0.12), rgba(70,22,4,0.75))'
                                   : 'rgba(8, 18, 44, 0.72)',
-                      filter: isDimmed ? 'grayscale(0.85) brightness(0.6)' : isOriginalBuzzer ? 'grayscale(0.7) brightness(0.4)' : 'none',
+                      filter: isEliminated ? 'grayscale(1) brightness(0.35)' : isDimmed ? 'grayscale(0.85) brightness(0.6)' : isOriginalBuzzer ? 'grayscale(0.7) brightness(0.4)' : 'none',
+                      opacity: isEliminated ? 0.55 : 1,
                       transform: isWrongTeam ? 'scale(1.02)' : isArtistBonusTeam ? 'scale(1.05)' : isStealWinner || isStealingTeam ? 'scale(1.04)' : isWinningTeam || isBuzzWinner ? 'scale(1.03)' : 'scale(1)',
                       animation: isWrongTeam ? 'wrongPulse 700ms ease-in-out infinite' : isArtistBonusTeam ? 'artistPulse 600ms ease-in-out infinite' : isStealWinner || isStealingTeam ? 'stealPulse 550ms ease-in-out infinite' : isWinningTeam ? 'winPulse 1100ms ease-in-out infinite' : isBuzzWinner ? 'buzzPulse 900ms ease-in-out infinite' : 'none',
                       transition: 'all 220ms ease',
@@ -441,9 +444,16 @@ export const ShowBoard = ({ state }: { state: GameShowState }) => {
                   >
                     <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2}>
                       <Stack spacing={1}>
-                        <Typography sx={{ color: isWrongTeam ? '#ff6060' : isArtistBonusTeam ? '#ffe566' : isStealWinner || isStealingTeam ? '#ffb347' : isOriginalBuzzer ? 'rgba(255,255,255,0.25)' : isWinningTeam ? '#fff6dd' : isBuzzWinner ? '#fff6dd' : accent, fontWeight: 900, fontSize: 'clamp(1.2rem, 2.2vw, 3.5rem)', textTransform: 'uppercase', textShadow: isWrongTeam ? '0 0 14px rgba(255,60,60,0.95), 0 0 28px rgba(200,0,0,0.8)' : isArtistBonusTeam ? '0 0 14px rgba(255,230,60,0.98), 0 0 30px rgba(40,210,255,0.7)' : isWinningTeam ? '0 0 14px rgba(218,255,159,0.95), 0 0 28px rgba(255,214,74,0.88)' : isBuzzWinner ? '0 0 14px rgba(255,255,255,0.95), 0 0 28px rgba(255,164,58,0.88)' : `0 0 12px ${glow}` }}>
+                        <Box sx={{ position: 'relative', display: 'inline-flex', flexDirection: 'column', gap: 0.5 }}>
+                        <Typography sx={{ color: isEliminated ? 'rgba(255,255,255,0.35)' : isWrongTeam ? '#ff6060' : isArtistBonusTeam ? '#ffe566' : isStealWinner || isStealingTeam ? '#ffb347' : isOriginalBuzzer ? 'rgba(255,255,255,0.25)' : isWinningTeam ? '#fff6dd' : isBuzzWinner ? '#fff6dd' : accent, fontWeight: 900, fontSize: 'clamp(1.2rem, 2.2vw, 3.5rem)', textTransform: 'uppercase', textShadow: isWrongTeam ? '0 0 14px rgba(255,60,60,0.95), 0 0 28px rgba(200,0,0,0.8)' : isArtistBonusTeam ? '0 0 14px rgba(255,230,60,0.98), 0 0 30px rgba(40,210,255,0.7)' : isWinningTeam ? '0 0 14px rgba(218,255,159,0.95), 0 0 28px rgba(255,214,74,0.88)' : isBuzzWinner ? '0 0 14px rgba(255,255,255,0.95), 0 0 28px rgba(255,164,58,0.88)' : `0 0 12px ${glow}`, textDecoration: isEliminated ? 'line-through' : 'none' }}>
                           {team.name}
                         </Typography>
+                        {isEliminated && (
+                          <Typography sx={{ color: '#ff4444', fontWeight: 900, fontSize: 'clamp(0.6rem, 0.9vw, 1.1rem)', letterSpacing: '0.18em', textTransform: 'uppercase' }}>
+                            ELIMINATED
+                          </Typography>
+                        )}
+                        </Box>
                         <Typography sx={{ color: isWrongTeam ? '#888' : isOriginalBuzzer ? 'rgba(255,255,255,0.2)' : isArtistBonusTeam || isScoreAnimating ? '#fff' : 'white', fontWeight: 900, fontSize: 'clamp(2.5rem, 6vw, 9rem)', lineHeight: 1, textShadow: isWrongTeam ? 'none' : isArtistBonusTeam ? '0 0 10px rgba(255,255,255,1), 0 0 24px rgba(255,230,60,0.95), 0 0 50px rgba(40,210,255,0.7)' : isWinningTeam ? '0 0 14px rgba(255,223,115,0.9), 0 0 28px rgba(147,255,80,0.7)' : isBuzzWinner ? '0 0 14px rgba(255,255,255,0.9), 0 0 28px rgba(255,175,80,0.65)' : 'none', opacity: isWrongTeam ? 0.55 : 1, animation: isArtistBonusTeam ? 'artistScoreFlash 300ms ease-in-out infinite' : isScoreAnimating ? 'scoreFlash 260ms ease-in-out infinite' : isWinningTeam ? 'scoreFlash 900ms ease-in-out infinite' : 'none', transition: 'color 300ms ease, opacity 300ms ease', '@keyframes artistScoreFlash': { '0%': { color: '#ffffff', transform: 'scale(1)' }, '50%': { color: '#ffe566', transform: 'scale(1.06)' }, '100%': { color: '#ffffff', transform: 'scale(1)' } }, '@keyframes scoreFlash': { '0%': { color: '#ffffff' }, '50%': { color: '#ffe98b' }, '100%': { color: '#ffffff' } } }}>
                           {scoreMap[team.id]}
                         </Typography>

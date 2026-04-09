@@ -66,6 +66,17 @@ export const GameAdminPage = () => {
                   }
                   label="Wrong buzz penalty"
                 />
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={state.eliminationEnabled ?? false}
+                      onChange={(_event, checked) => {
+                        void updateGameConfig({ eliminationEnabled: checked });
+                      }}
+                    />
+                  }
+                  label="Elimination enabled"
+                />
               </Stack>
 
               <TextField
@@ -91,8 +102,12 @@ export const GameAdminPage = () => {
         </Card>
 
         <TeamSetup
+          teamCount={state.teamCount ?? 2}
           teams={state.teams}
           playerPool={state.playerPool ?? []}
+          onTeamCountChange={(teamCount) => {
+            void updateGameConfig({ teamCount });
+          }}
           onTeamsChange={(teams) => {
             void updateGameConfig({ teams });
           }}
