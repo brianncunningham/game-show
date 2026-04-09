@@ -408,42 +408,6 @@
   "eventLog": [
     {
       "action": "toggle_show_intro",
-      "at": "2026-04-08T22:11:13.568Z"
-    },
-    {
-      "action": "toggle_show_rules",
-      "at": "2026-04-08T22:11:13.572Z"
-    },
-    {
-      "action": "random_first_pick",
-      "at": "2026-04-08T22:11:13.573Z"
-    },
-    {
-      "action": "toggle_show_intro",
-      "at": "2026-04-08T22:11:15.547Z"
-    },
-    {
-      "action": "toggle_show_rules",
-      "at": "2026-04-08T22:11:15.550Z"
-    },
-    {
-      "action": "random_first_pick",
-      "at": "2026-04-08T22:11:15.551Z"
-    },
-    {
-      "action": "toggle_show_intro",
-      "at": "2026-04-08T22:11:21.855Z"
-    },
-    {
-      "action": "toggle_show_intro",
-      "at": "2026-04-08T22:11:30.855Z"
-    },
-    {
-      "action": "dismiss_first_pick",
-      "at": "2026-04-08T22:11:34.599Z"
-    },
-    {
-      "action": "toggle_show_intro",
       "at": "2026-04-08T22:11:36.941Z"
     },
     {
@@ -805,9 +769,45 @@
     {
       "action": "select_song",
       "at": "2026-04-09T04:18:07.114Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-09T04:20:03.379Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-09T04:20:04.894Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-09T04:20:19.994Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-09T04:20:21.390Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-09T04:25:36.920Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-09T04:25:41.019Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-09T04:26:46.882Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-09T04:26:51.581Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-09T04:27:02.467Z"
     }
   ],
-  "updatedAt": "2026-04-09T04:18:07.114Z",
+  "updatedAt": "2026-04-09T04:27:02.467Z",
   "showIntro": false,
   "randomizerSeq": 20,
   "showRules": false,

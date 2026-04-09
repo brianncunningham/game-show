@@ -146,23 +146,11 @@ export const useSpotify = () => {
 
   const play = useCallback(async (trackId: string, positionMs: number) => {
     if (!token) return;
-    if (activeDeviceId) {
-      // Explicit device selected in dropdown — send directly to it
-      await spotifyFetch(token, `/me/player/play?device_id=${activeDeviceId}`, {
-        method: 'PUT',
-        body: JSON.stringify({ uris: [`spotify:track:${trackId}`], position_ms: positionMs }),
-      });
-    } else {
-      // No device selected — add to queue on whatever is currently active (e.g. Sonos via Connect)
-      // then skip to it so it plays immediately from the right position
-      await spotifyFetch(token, `/me/player/queue?uri=spotify:track:${trackId}`, { method: 'POST' });
-      await new Promise(r => setTimeout(r, 300));
-      await spotifyFetch(token, '/me/player/next', { method: 'POST' });
-      if (positionMs > 0) {
-        await new Promise(r => setTimeout(r, 800));
-        await spotifyFetch(token, '/me/player/seek?position_ms=' + positionMs, { method: 'PUT' });
-      }
-    }
+    const deviceParam = activeDeviceId ? `?device_id=${activeDeviceId}` : '';
+    await spotifyFetch(token, `/me/player/play${deviceParam}`, {
+      method: 'PUT',
+      body: JSON.stringify({ uris: [`spotify:track:${trackId}`], position_ms: positionMs }),
+    });
   }, [token, activeDeviceId]);
 
   const pause = useCallback(async () => {
