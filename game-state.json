@@ -31,7 +31,7 @@
   "teams": [
     {
       "id": "team-a",
-      "name": "Team Popcorn",
+      "name": "Brass",
       "players": [
         "Name 14",
         "Name 6",
@@ -44,7 +44,7 @@
     },
     {
       "id": "team-b",
-      "name": "Team M&Ms",
+      "name": "Strings",
       "players": [
         "Name 8",
         "Charlie",
@@ -57,7 +57,7 @@
     },
     {
       "id": "team-c",
-      "name": "Team C",
+      "name": "Percussion",
       "players": [
         "Name 2",
         "Name 12",
@@ -70,7 +70,7 @@
     },
     {
       "id": "team-d",
-      "name": "Team D",
+      "name": "Woodwinds",
       "players": [
         "Abbey",
         "Name 5",
@@ -953,5 +953,5 @@
   "firstPickSeq": 0,
   "firstPickTeamId": "team-b",
   "teamCount": 4,
-  "eliminationEnabled": true
+  "eliminationEnabled": false
 }

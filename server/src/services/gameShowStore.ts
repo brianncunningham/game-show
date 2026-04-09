@@ -36,8 +36,10 @@ const persistState = (state: GameShowState): void => {
 };
 
 const DEFAULT_TEAMS: GameShowTeam[] = [
-  { id: 'team-a', name: 'Team A', players: [], score: 0, eliminated: false },
-  { id: 'team-b', name: 'Team B', players: [], score: 0, eliminated: false },
+  { id: 'team-a', name: 'Brass', players: [], score: 0, eliminated: false },
+  { id: 'team-b', name: 'Strings', players: [], score: 0, eliminated: false },
+  { id: 'team-c', name: 'Percussion', players: [], score: 0, eliminated: false },
+  { id: 'team-d', name: 'Woodwinds', players: [], score: 0, eliminated: false },
 ];
 
 const EMPTY_ROUND_STATE = (): GameShowRoundState => ({
@@ -102,7 +104,7 @@ const createInitialState = (): GameShowState => ({
   firstPickSeq: 0,
   firstPickTeamId: null,
   playerPool: [],
-  teamCount: 2,
+  teamCount: 4,
   eliminationEnabled: false,
   teams: DEFAULT_TEAMS,
   rules: {
