@@ -4,7 +4,8 @@ export const GameShowStandaloneShell = ({ children, hideCursor }: { children: Re
   return (
     <Box
       sx={{
-        minHeight: '100vh',
+        height: '100vh',
+        overflow: 'hidden',
         bgcolor: '#0b1020',
         color: 'white',
         ...(hideCursor && { cursor: 'none', '& *': { cursor: 'none !important' } }),
