@@ -247,6 +247,7 @@ export const TeamRandomizer = ({ state }: Props) => {
         flex: 1,
         width: '100%',
         display: 'flex',
+        flexWrap: teams.length === 4 ? 'wrap' : 'nowrap',
         alignItems: 'center',
         justifyContent: 'center',
         px: '4vw',
@@ -258,9 +259,9 @@ export const TeamRandomizer = ({ state }: Props) => {
             key={team.id}
             ref={(el: HTMLDivElement | null) => { teamPanelRefs.current[ti] = el; }}
             sx={{
-              flex: 1,
-              height: '62vh',
-              maxWidth: teams.length <= 2 ? '42vw' : teams.length === 3 ? '30vw' : '22vw',
+              flex: teams.length === 4 ? '0 0 calc(50% - 1.5vw)' : 1,
+              height: teams.length === 4 ? '40vh' : '62vh',
+              maxWidth: teams.length <= 2 ? '42vw' : teams.length === 3 ? '30vw' : 'calc(50% - 1.5vw)',
               borderRadius: 5,
               border: `2px solid ${TEAM_COLORS[ti % TEAM_COLORS.length]}`,
               background: `radial-gradient(ellipse at 50% 10%, ${TEAM_COLORS[ti % TEAM_COLORS.length]}28 0%, rgba(5,10,25,0.97) 65%)`,
@@ -281,10 +282,12 @@ export const TeamRandomizer = ({ state }: Props) => {
               fontSize: 'clamp(1.3rem, 3vw, 4rem)',
               textTransform: 'uppercase',
               letterSpacing: '0.12em',
+              textAlign: 'center',
               color: TEAM_COLORS[ti % TEAM_COLORS.length],
               textShadow: `0 0 16px ${TEAM_COLORS[ti % TEAM_COLORS.length]}, 0 0 36px ${TEAM_COLORS[ti % TEAM_COLORS.length]}88`,
               mb: settled ? 3 : 0,
               transition: 'margin 400ms ease',
+              px: 2,
             }}>
               {team.name}
             </Typography>

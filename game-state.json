@@ -19,21 +19,39 @@
       "id": "team-a",
       "name": "Team Popcorn",
       "players": [
-        "Monica",
-        "Bradley",
-        "Sutton"
+        "Charlie",
+        "Abbey"
       ],
-      "score": 0
+      "score": 0,
+      "eliminated": false
     },
     {
       "id": "team-b",
       "name": "Team M&Ms",
       "players": [
-        "Charlie",
-        "Abby",
-        "Abbey"
+        "Monica",
+        "Bradley"
       ],
-      "score": 0
+      "score": 0,
+      "eliminated": false
+    },
+    {
+      "id": "team-c",
+      "name": "Team C",
+      "players": [
+        "Abby"
+      ],
+      "score": 0,
+      "eliminated": false
+    },
+    {
+      "id": "team-d",
+      "name": "Team D",
+      "players": [
+        "Sutton"
+      ],
+      "score": 0,
+      "eliminated": false
     }
   ],
   "rules": {
@@ -400,52 +418,14 @@
     "usedQuestionIds": [],
     "clipState": "idle",
     "buzzWinnerTeamId": null,
+    "attemptedTeamIds": [],
+    "stealingTeamId": null,
     "answerState": "pending",
     "stealState": "idle",
     "lastPointsAwarded": null,
     "artistBonusUsed": false
   },
   "eventLog": [
-    {
-      "action": "toggle_show_rules",
-      "at": "2026-04-08T22:12:22.388Z"
-    },
-    {
-      "action": "random_first_pick",
-      "at": "2026-04-08T22:12:22.389Z"
-    },
-    {
-      "action": "reset_scores",
-      "at": "2026-04-08T22:12:46.332Z"
-    },
-    {
-      "action": "dismiss_first_pick",
-      "at": "2026-04-08T22:13:03.015Z"
-    },
-    {
-      "action": "toggle_show_intro",
-      "at": "2026-04-08T22:15:13.127Z"
-    },
-    {
-      "action": "toggle_show_rules",
-      "at": "2026-04-08T22:15:13.128Z"
-    },
-    {
-      "action": "start_game",
-      "at": "2026-04-08T22:15:13.130Z"
-    },
-    {
-      "action": "toggle_show_intro",
-      "at": "2026-04-08T22:15:14.557Z"
-    },
-    {
-      "action": "toggle_show_intro",
-      "at": "2026-04-08T22:15:20.430Z"
-    },
-    {
-      "action": "toggle_show_rules",
-      "at": "2026-04-08T22:15:20.433Z"
-    },
     {
       "action": "toggle_show_intro",
       "at": "2026-04-08T22:15:48.779Z"
@@ -805,12 +785,54 @@
     {
       "action": "random_assign_players",
       "at": "2026-04-09T11:36:07.938Z"
+    },
+    {
+      "action": "update_config",
+      "at": "2026-04-09T12:33:23.131Z"
+    },
+    {
+      "action": "update_config",
+      "at": "2026-04-09T12:33:23.135Z"
+    },
+    {
+      "action": "toggle_show_intro",
+      "at": "2026-04-09T12:34:32.169Z"
+    },
+    {
+      "action": "toggle_show_rules",
+      "at": "2026-04-09T12:34:32.173Z"
+    },
+    {
+      "action": "random_assign_players",
+      "at": "2026-04-09T12:34:32.177Z"
+    },
+    {
+      "action": "update_config",
+      "at": "2026-04-09T12:35:13.452Z"
+    },
+    {
+      "action": "update_config",
+      "at": "2026-04-09T12:35:13.457Z"
+    },
+    {
+      "action": "toggle_show_intro",
+      "at": "2026-04-09T12:35:20.699Z"
+    },
+    {
+      "action": "toggle_show_rules",
+      "at": "2026-04-09T12:35:20.704Z"
+    },
+    {
+      "action": "random_assign_players",
+      "at": "2026-04-09T12:35:20.706Z"
     }
   ],
-  "updatedAt": "2026-04-09T11:36:07.938Z",
+  "updatedAt": "2026-04-09T12:35:20.706Z",
   "showIntro": false,
-  "randomizerSeq": 21,
+  "randomizerSeq": 23,
   "showRules": false,
   "firstPickSeq": 0,
-  "firstPickTeamId": "team-b"
+  "firstPickTeamId": "team-b",
+  "teamCount": 4,
+  "eliminationEnabled": false
 }
