@@ -263,7 +263,6 @@ export const TeamRandomizer = ({ state }: Props) => {
               flex: teams.length === 4 ? '0 0 calc(50% - 1.5vw)' : 1,
               minHeight: teams.length === 4 ? '36vh' : '58vh',
               maxWidth: teams.length <= 2 ? '42vw' : teams.length === 3 ? '30vw' : 'calc(50% - 1.5vw)',
-              overflow: 'hidden',
               borderRadius: 5,
               border: `2px solid ${TEAM_COLORS[ti % TEAM_COLORS.length]}`,
               background: `radial-gradient(ellipse at 50% 10%, ${TEAM_COLORS[ti % TEAM_COLORS.length]}28 0%, rgba(5,10,25,0.97) 65%)`,
@@ -295,16 +294,19 @@ export const TeamRandomizer = ({ state }: Props) => {
             </Typography>
 
             {settled && (
-              <Box sx={{ overflowY: 'auto', maxHeight: teams.length === 4 ? '22vh' : '40vh', width: '100%', px: 2 }}>
-              <Stack spacing={team.players.length > 4 ? 0.5 : 1.5} alignItems="center">
+              <Stack spacing={team.players.length > 5 ? 0.5 : team.players.length > 3 ? 1 : 1.5} alignItems="center" sx={{ width: '100%', px: 2 }}>
                 {team.players.map((p, pi) => (
                   <Typography key={p} sx={{
                     color: '#fff',
-                    fontSize: team.players.length > 6
-                      ? 'clamp(0.75rem, 1.2vw, 1.4rem)'
-                      : team.players.length > 4
-                        ? 'clamp(0.9rem, 1.5vw, 2rem)'
-                        : 'clamp(1rem, 2vw, 2.8rem)',
+                    fontSize: team.players.length > 7
+                      ? 'clamp(0.65rem, 1vw, 1.2rem)'
+                      : team.players.length > 5
+                        ? 'clamp(0.8rem, 1.3vw, 1.7rem)'
+                        : team.players.length > 3
+                          ? 'clamp(0.95rem, 1.6vw, 2.2rem)'
+                          : teams.length === 4
+                            ? 'clamp(1rem, 1.8vw, 2.6rem)'
+                            : 'clamp(1rem, 2vw, 2.8rem)',
                     fontWeight: 700,
                     letterSpacing: '0.06em',
                     textAlign: 'center',
@@ -320,7 +322,6 @@ export const TeamRandomizer = ({ state }: Props) => {
                   </Typography>
                 ))}
               </Stack>
-              </Box>
             )}
           </Box>
         ))}
