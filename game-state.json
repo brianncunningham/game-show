@@ -1,8 +1,8 @@
 {
   "id": "default-game",
-  "status": "live",
+  "status": "setup",
   "currentRound": 1,
-  "chooserTeamId": "team-b",
+  "chooserTeamId": "team-a",
   "multiplier": 1,
   "practiceMode": false,
   "hostLocked": false,
@@ -39,7 +39,7 @@
         "Charlie",
         "Name 8"
       ],
-      "score": 250,
+      "score": 0,
       "eliminated": false
     },
     {
@@ -52,7 +52,7 @@
         "Name 9",
         "Bradley"
       ],
-      "score": 150,
+      "score": 0,
       "eliminated": false
     },
     {
@@ -65,7 +65,7 @@
         "Name 11",
         "Name 2"
       ],
-      "score": 150,
+      "score": 0,
       "eliminated": false
     },
     {
@@ -78,7 +78,7 @@
         "Name 14",
         "Monica"
       ],
-      "score": 150,
+      "score": 0,
       "eliminated": false
     }
   ],
@@ -529,33 +529,20 @@
     }
   ],
   "roundState": {
-    "selectedQuestionId": "csv-r1q2",
-    "activeSongIndex": 2,
-    "usedQuestionIds": [
-      "csv-r1q5",
-      "csv-r1q2"
-    ],
-    "clipState": "resolved",
-    "buzzWinnerTeamId": "team-a",
-    "attemptedTeamIds": [
-      "team-a"
-    ],
+    "selectedQuestionId": null,
+    "activeSongIndex": null,
+    "usedQuestionIds": [],
+    "clipState": "idle",
+    "buzzWinnerTeamId": null,
+    "attemptedTeamIds": [],
     "stealingTeamId": null,
-    "answerState": "correct",
-    "stealState": "resolved",
-    "lastPointsAwarded": 50,
-    "artistBonusUsed": true,
-    "revealState": "artist"
+    "answerState": "pending",
+    "stealState": "idle",
+    "lastPointsAwarded": null,
+    "artistBonusUsed": false,
+    "revealState": "none"
   },
   "eventLog": [
-    {
-      "action": "select_song",
-      "at": "2026-04-09T16:51:24.056Z"
-    },
-    {
-      "action": "set_buzz_winner",
-      "at": "2026-04-09T16:51:27.398Z"
-    },
     {
       "action": "mark_wrong",
       "at": "2026-04-09T16:51:32.377Z"
@@ -947,9 +934,17 @@
     {
       "action": "award_artist_bonus",
       "at": "2026-04-09T17:26:03.306Z"
+    },
+    {
+      "action": "reset_round",
+      "at": "2026-04-09T17:32:04.080Z"
+    },
+    {
+      "action": "reset_scores",
+      "at": "2026-04-09T17:32:10.634Z"
     }
   ],
-  "updatedAt": "2026-04-09T17:26:03.306Z",
+  "updatedAt": "2026-04-09T17:32:10.634Z",
   "showIntro": false,
   "randomizerSeq": 28,
   "showRules": false,

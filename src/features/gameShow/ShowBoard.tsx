@@ -522,14 +522,14 @@ export const ShowBoard = ({ state }: { state: GameShowState }) => {
                 <Typography sx={{ color: 'white', fontWeight: 900, fontSize: 'clamp(0.9rem, 1.6vw, 2rem)', letterSpacing: '0.14em', textTransform: 'uppercase', textShadow: '0 0 10px rgba(255,255,255,0.35)' }}>
                   {selectedQuestion?.category ?? 'Theme'}
                 </Typography>
-                <Grid container spacing={2} sx={{ flex: 1, minHeight: 0, alignItems: 'stretch', width: '100%', m: 0 }}>
+                <Box sx={{ flex: 1, minHeight: 0, display: 'flex', gap: 2, alignItems: 'stretch' }}>
                   {Array.from({ length: SONG_COUNT }, (_, i) => {
                     const isActive = activeSongIndex === i;
                     const isPast = activeSongIndex !== null && i < activeSongIndex;
                     const songStyle = themeStyles[i % themeStyles.length];
                     const showPointsBubble = floatingPoints && floatingPoints.teamId === winningTeamId && isCorrectPhase && isActive;
                     return (
-                      <Grid item xs={4} key={i} sx={{ display: 'flex' }}>
+                      <Box key={i} sx={{ flex: 1, display: 'flex' }}>
                         <Box sx={{
                           flex: 1,
                           borderRadius: 4,
@@ -582,10 +582,10 @@ export const ShowBoard = ({ state }: { state: GameShowState }) => {
                             </Typography>
                           )}
                         </Box>
-                      </Grid>
+                      </Box>
                     );
                   })}
-                </Grid>
+                </Box>
               </>
             ) : (
               <>
