@@ -39,7 +39,7 @@
         "Charlie",
         "Name 8"
       ],
-      "score": 0,
+      "score": 100,
       "eliminated": false
     },
     {
@@ -534,27 +534,19 @@
     "usedQuestionIds": [
       "csv-r1q2"
     ],
-    "clipState": "active",
+    "clipState": "resolved",
     "buzzWinnerTeamId": "team-c",
     "attemptedTeamIds": [
       "team-c"
     ],
     "stealingTeamId": null,
     "answerState": "wrong",
-    "stealState": "available",
-    "lastPointsAwarded": null,
+    "stealState": "resolved",
+    "lastPointsAwarded": 100,
     "artistBonusUsed": false,
-    "revealState": "none"
+    "revealState": "title"
   },
   "eventLog": [
-    {
-      "action": "select_song",
-      "at": "2026-04-09T12:54:12.195Z"
-    },
-    {
-      "action": "select_song",
-      "at": "2026-04-09T12:56:55.702Z"
-    },
     {
       "action": "set_buzz_winner",
       "at": "2026-04-09T12:57:02.567Z"
@@ -946,9 +938,17 @@
     {
       "action": "mark_wrong",
       "at": "2026-04-09T16:57:22.850Z"
+    },
+    {
+      "action": "set_stealing_team",
+      "at": "2026-04-09T16:57:33.883Z"
+    },
+    {
+      "action": "steal_success",
+      "at": "2026-04-09T16:57:36.317Z"
     }
   ],
-  "updatedAt": "2026-04-09T16:57:22.850Z",
+  "updatedAt": "2026-04-09T16:57:36.317Z",
   "showIntro": false,
   "randomizerSeq": 28,
   "showRules": false,

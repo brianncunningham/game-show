@@ -81,18 +81,18 @@ export const HostPage = () => {
   const activeTeams = state?.teams.filter(t => !t.eliminated) ?? [];
   const attemptedTeamIds = state?.roundState.attemptedTeamIds ?? [];
   const eligibleStealers = activeTeams.filter(t => !attemptedTeamIds.includes(t.id));
+  const stealingTeamId = state?.roundState.stealingTeamId ?? null;
+  const stealingTeam = stealingTeamId ? state?.teams.find(t => t.id === stealingTeamId) : null;
 
   const allSongsDone = activeSongIndex === SONG_COUNT - 1;
-  const stealBlocked = stealAvailable && eligibleStealers.length > 0;
-  const canPickSong = hasQuestion && !stealBlocked && !allSongsDone;
-  const canAdvance = !hasQuestion || answerResolved || (stealAvailable && eligibleStealers.length === 0);
+  const stealInProgress = stealAvailable && Boolean(stealingTeamId);
+  const canPickSong = hasQuestion && !stealInProgress && !allSongsDone;
+  const canAdvance = !hasQuestion || answerResolved || (stealAvailable && !stealInProgress);
 
   const multiplier = state?.multiplier ?? 1;
   const basePoints = 100;
   const expectedPoints = basePoints * multiplier;
   const chooserTeam = state?.teams.find(t => t.id === state.chooserTeamId) ?? null;
-  const stealingTeamId = state?.roundState.stealingTeamId ?? null;
-  const stealingTeam = stealingTeamId ? state?.teams.find(t => t.id === stealingTeamId) : null;
   const eliminationEnabled = state?.eliminationEnabled ?? false;
 
   return (
