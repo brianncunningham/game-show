@@ -2,7 +2,7 @@
   "id": "default-game",
   "status": "live",
   "currentRound": 1,
-  "chooserTeamId": "team-d",
+  "chooserTeamId": "team-a",
   "multiplier": 1,
   "practiceMode": false,
   "hostLocked": false,
@@ -39,7 +39,7 @@
         "Charlie",
         "Name 8"
       ],
-      "score": 100,
+      "score": 0,
       "eliminated": false
     },
     {
@@ -441,12 +441,10 @@
     }
   ],
   "roundState": {
-    "selectedQuestionId": "csv-r1q1",
-    "activeSongIndex": 1,
-    "usedQuestionIds": [
-      "csv-r1q1"
-    ],
-    "clipState": "active",
+    "selectedQuestionId": null,
+    "activeSongIndex": null,
+    "usedQuestionIds": [],
+    "clipState": "idle",
     "buzzWinnerTeamId": null,
     "attemptedTeamIds": [],
     "stealingTeamId": null,
@@ -456,30 +454,6 @@
     "artistBonusUsed": false
   },
   "eventLog": [
-    {
-      "action": "select_song",
-      "at": "2026-04-09T03:37:40.206Z"
-    },
-    {
-      "action": "select_song",
-      "at": "2026-04-09T03:37:45.078Z"
-    },
-    {
-      "action": "select_song",
-      "at": "2026-04-09T03:37:52.480Z"
-    },
-    {
-      "action": "select_song",
-      "at": "2026-04-09T03:37:53.417Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-09T03:39:36.145Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-09T03:39:39.367Z"
-    },
     {
       "action": "update_config",
       "at": "2026-04-09T03:39:39.627Z"
@@ -855,14 +829,38 @@
     {
       "action": "select_song",
       "at": "2026-04-09T12:57:43.336Z"
+    },
+    {
+      "action": "end_game",
+      "at": "2026-04-09T13:00:39.313Z"
+    },
+    {
+      "action": "reset_scores",
+      "at": "2026-04-09T13:00:44.460Z"
+    },
+    {
+      "action": "update_config",
+      "at": "2026-04-09T13:00:48.036Z"
+    },
+    {
+      "action": "toggle_show_intro",
+      "at": "2026-04-09T13:00:54.415Z"
+    },
+    {
+      "action": "toggle_show_rules",
+      "at": "2026-04-09T13:00:54.417Z"
+    },
+    {
+      "action": "start_game",
+      "at": "2026-04-09T13:00:54.420Z"
     }
   ],
-  "updatedAt": "2026-04-09T12:57:43.336Z",
+  "updatedAt": "2026-04-09T13:00:54.420Z",
   "showIntro": false,
   "randomizerSeq": 28,
   "showRules": false,
   "firstPickSeq": 0,
   "firstPickTeamId": "team-d",
   "teamCount": 4,
-  "eliminationEnabled": false
+  "eliminationEnabled": true
 }

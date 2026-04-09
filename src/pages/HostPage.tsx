@@ -254,7 +254,7 @@ export const HostPage = () => {
                 </Stack>
                 <Grid container spacing={1.5}>
                   {activeTeams.map((team) => (
-                    <Grid item xs={activeTeams.length <= 2 ? 6 : 4} key={team.id}>
+                    <Grid item xs={activeTeams.length <= 2 ? 6 : activeTeams.length === 3 ? 4 : 3} key={team.id}>
                       <Button
                         fullWidth
                         color="error"
@@ -407,7 +407,7 @@ export const HostPage = () => {
               </Stack>
               <Grid container spacing={1.5}>
                 {activeTeams.map((team) => (
-                  <Grid item xs={activeTeams.length <= 2 ? 6 : 4} key={team.id}>
+                  <Grid item xs={activeTeams.length <= 2 ? 6 : activeTeams.length === 3 ? 4 : 3} key={team.id}>
                     <Button
                       fullWidth
                       color="secondary"
@@ -464,7 +464,7 @@ export const HostPage = () => {
               {stealAvailable && !stealingTeam && (
                 <Grid container spacing={1.5} sx={{ mb: 1.5 }}>
                   {eligibleStealers.map((team) => (
-                    <Grid item xs={eligibleStealers.length <= 2 ? 6 : 4} key={team.id}>
+                    <Grid item xs={eligibleStealers.length <= 2 ? 6 : eligibleStealers.length === 3 ? 4 : 3} key={team.id}>
                       <Button
                         fullWidth
                         color="warning"
@@ -505,7 +505,7 @@ export const HostPage = () => {
                     const isEliminated = team.eliminated;
                     const isArmed = eliminateConfirm === team.id;
                     return (
-                      <Grid item xs={state.teams.length <= 2 ? 6 : 4} key={team.id}>
+                      <Grid item xs={state.teams.length <= 2 ? 6 : state.teams.length === 3 ? 4 : 3} key={team.id}>
                         {isEliminated ? (
                           <Button
                             fullWidth
