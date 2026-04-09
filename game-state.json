@@ -19,7 +19,7 @@
       "id": "team-a",
       "name": "Team Popcorn",
       "players": [
-        "Charlie",
+        "Sutton",
         "Abbey"
       ],
       "score": 0,
@@ -29,7 +29,7 @@
       "id": "team-b",
       "name": "Team M&Ms",
       "players": [
-        "Monica",
+        "Charlie",
         "Bradley"
       ],
       "score": 0,
@@ -39,7 +39,7 @@
       "id": "team-c",
       "name": "Team C",
       "players": [
-        "Abby"
+        "Monica"
       ],
       "score": 0,
       "eliminated": false
@@ -48,7 +48,7 @@
       "id": "team-d",
       "name": "Team D",
       "players": [
-        "Sutton"
+        "Abby"
       ],
       "score": 0,
       "eliminated": false
@@ -427,34 +427,6 @@
   },
   "eventLog": [
     {
-      "action": "toggle_show_intro",
-      "at": "2026-04-08T22:15:48.779Z"
-    },
-    {
-      "action": "toggle_show_rules",
-      "at": "2026-04-08T22:15:48.780Z"
-    },
-    {
-      "action": "random_assign_players",
-      "at": "2026-04-08T22:15:48.781Z"
-    },
-    {
-      "action": "toggle_show_intro",
-      "at": "2026-04-08T22:16:05.090Z"
-    },
-    {
-      "action": "toggle_show_rules",
-      "at": "2026-04-08T22:16:05.092Z"
-    },
-    {
-      "action": "random_first_pick",
-      "at": "2026-04-08T22:16:05.094Z"
-    },
-    {
-      "action": "dismiss_first_pick",
-      "at": "2026-04-08T22:16:12.346Z"
-    },
-    {
       "action": "sudden_death",
       "at": "2026-04-08T22:16:31.969Z"
     },
@@ -825,11 +797,39 @@
     {
       "action": "random_assign_players",
       "at": "2026-04-09T12:35:20.706Z"
+    },
+    {
+      "action": "toggle_show_intro",
+      "at": "2026-04-09T12:38:13.875Z"
+    },
+    {
+      "action": "toggle_show_rules",
+      "at": "2026-04-09T12:38:13.889Z"
+    },
+    {
+      "action": "random_assign_players",
+      "at": "2026-04-09T12:38:13.902Z"
+    },
+    {
+      "action": "toggle_show_intro",
+      "at": "2026-04-09T12:38:17.796Z"
+    },
+    {
+      "action": "toggle_show_intro",
+      "at": "2026-04-09T12:38:20.275Z"
+    },
+    {
+      "action": "toggle_show_rules",
+      "at": "2026-04-09T12:38:20.277Z"
+    },
+    {
+      "action": "random_assign_players",
+      "at": "2026-04-09T12:38:20.278Z"
     }
   ],
-  "updatedAt": "2026-04-09T12:35:20.706Z",
+  "updatedAt": "2026-04-09T12:38:20.278Z",
   "showIntro": false,
-  "randomizerSeq": 23,
+  "randomizerSeq": 25,
   "showRules": false,
   "firstPickSeq": 0,
   "firstPickTeamId": "team-b",

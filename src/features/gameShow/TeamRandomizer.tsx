@@ -204,7 +204,7 @@ export const TeamRandomizer = ({ state }: Props) => {
     <Box sx={{
       position: 'fixed',
       inset: 0,
-      overflow: 'hidden',
+      overflow: 'auto',
       background: 'radial-gradient(ellipse 90% 70% at 50% 40%, rgba(8,25,65,0.95) 0%, rgba(2,6,18,1) 65%), linear-gradient(180deg, #010510 0%, #020a1a 100%)',
       display: 'flex',
       flexDirection: 'column',
@@ -248,10 +248,11 @@ export const TeamRandomizer = ({ state }: Props) => {
         width: '100%',
         display: 'flex',
         flexWrap: teams.length === 4 ? 'wrap' : 'nowrap',
-        alignItems: 'center',
+        alignItems: teams.length === 4 ? 'flex-start' : 'center',
         justifyContent: 'center',
         px: '4vw',
-        py: '3vh',
+        pt: '2vh',
+        pb: '4vh',
         gap: '3vw',
       }}>
         {teams.map((team, ti) => (
@@ -260,8 +261,9 @@ export const TeamRandomizer = ({ state }: Props) => {
             ref={(el: HTMLDivElement | null) => { teamPanelRefs.current[ti] = el; }}
             sx={{
               flex: teams.length === 4 ? '0 0 calc(50% - 1.5vw)' : 1,
-              height: teams.length === 4 ? '40vh' : '62vh',
+              minHeight: teams.length === 4 ? '36vh' : '58vh',
               maxWidth: teams.length <= 2 ? '42vw' : teams.length === 3 ? '30vw' : 'calc(50% - 1.5vw)',
+              overflow: 'hidden',
               borderRadius: 5,
               border: `2px solid ${TEAM_COLORS[ti % TEAM_COLORS.length]}`,
               background: `radial-gradient(ellipse at 50% 10%, ${TEAM_COLORS[ti % TEAM_COLORS.length]}28 0%, rgba(5,10,25,0.97) 65%)`,
@@ -293,13 +295,19 @@ export const TeamRandomizer = ({ state }: Props) => {
             </Typography>
 
             {settled && (
-              <Stack spacing={1.5} alignItems="center">
+              <Box sx={{ overflowY: 'auto', maxHeight: teams.length === 4 ? '22vh' : '40vh', width: '100%', px: 2 }}>
+              <Stack spacing={team.players.length > 4 ? 0.5 : 1.5} alignItems="center">
                 {team.players.map((p, pi) => (
                   <Typography key={p} sx={{
                     color: '#fff',
-                    fontSize: 'clamp(1rem, 2vw, 2.8rem)',
+                    fontSize: team.players.length > 6
+                      ? 'clamp(0.75rem, 1.2vw, 1.4rem)'
+                      : team.players.length > 4
+                        ? 'clamp(0.9rem, 1.5vw, 2rem)'
+                        : 'clamp(1rem, 2vw, 2.8rem)',
                     fontWeight: 700,
                     letterSpacing: '0.06em',
+                    textAlign: 'center',
                     textShadow: `0 0 10px ${TEAM_COLORS[ti % TEAM_COLORS.length]}88`,
                     opacity: 0,
                     animation: `fadeInPlayer 500ms ease ${pi * 120}ms forwards`,
@@ -312,6 +320,7 @@ export const TeamRandomizer = ({ state }: Props) => {
                   </Typography>
                 ))}
               </Stack>
+              </Box>
             )}
           </Box>
         ))}
