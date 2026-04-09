@@ -1,7 +1,7 @@
 import type { Server as HttpServer } from 'http';
 import { WebSocketServer, WebSocket } from 'ws';
-import { gameShowStore } from './gameShowStore';
-import type { GameShowSocketMessage } from '../types/gameShow';
+import { gameShowStore } from './gameShowStore.js';
+import type { GameShowSocketMessage } from '../types/gameShow.js';
 
 const sockets = new Set<WebSocket>();
 
@@ -17,7 +17,7 @@ const broadcast = (message: GameShowSocketMessage) => {
 export const attachGameShowSocket = (server: HttpServer) => {
   const wss = new WebSocketServer({ server, path: '/ws/game-show' });
 
-  gameShowStore.subscribe((message) => {
+  gameShowStore.subscribe((message: GameShowSocketMessage) => {
     broadcast(message);
   });
 
