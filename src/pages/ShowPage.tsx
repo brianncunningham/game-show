@@ -1,20 +1,24 @@
 import { Box, Typography } from '@mui/material';
 import { useEffect, useRef, useState } from 'react';
 import { GameShowStandaloneShell } from '../features/gameShow/GameShowStandaloneShell';
+import { EliminationScreen } from '../features/gameShow/EliminationScreen';
 import { FirstPickScreen } from '../features/gameShow/FirstPickScreen';
 import { IntroScreen } from '../features/gameShow/IntroScreen';
 import { RulesScreen } from '../features/gameShow/RulesScreen';
 import { ShowBoard } from '../features/gameShow/ShowBoard';
 import { TeamRandomizer } from '../features/gameShow/TeamRandomizer';
 import { VictoryScreen } from '../features/gameShow/VictoryScreen';
+import type { GameShowTeam } from '../features/gameShow/types';
 import { useGameShowState } from '../features/gameShow/useGameShowState';
 
 export const ShowPage = () => {
   const { state, isLoading, error } = useGameShowState();
   const [showRandomizer, setShowRandomizer] = useState(false);
   const [showFirstPick, setShowFirstPick] = useState(false);
+  const [eliminatedTeam, setEliminatedTeam] = useState<GameShowTeam | null>(null);
   const prevSeqRef = useRef<number>(-1);
   const prevFirstPickSeqRef = useRef<number>(-1);
+  const prevEliminatedIdsRef = useRef<Set<string>>(new Set());
 
   // Show randomizer on every randomize press; also clears intro
   useEffect(() => {
@@ -51,6 +55,18 @@ export const ShowPage = () => {
   useEffect(() => {
     if ((state?.firstPickSeq ?? 0) > 0) setShowRandomizer(false);
   }, [state?.firstPickSeq]);
+
+  // Detect newly eliminated teams
+  useEffect(() => {
+    if (!state) return;
+    const prev = prevEliminatedIdsRef.current;
+    for (const team of state.teams) {
+      if (team.eliminated && !prev.has(team.id)) {
+        setEliminatedTeam(team);
+      }
+    }
+    prevEliminatedIdsRef.current = new Set(state.teams.filter(t => t.eliminated).map(t => t.id));
+  }, [state?.teams]);
 
   // Show/dismiss first pick screen based on seq
   useEffect(() => {
@@ -128,6 +144,12 @@ export const ShowPage = () => {
     <GameShowStandaloneShell hideCursor>
       <Box sx={{ position: 'relative' }}>
         <ShowBoard state={state} />
+        {eliminatedTeam && (
+          <EliminationScreen
+            team={eliminatedTeam}
+            onDone={() => setEliminatedTeam(null)}
+          />
+        )}
       </Box>
     </GameShowStandaloneShell>
   );

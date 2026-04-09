@@ -66,7 +66,7 @@
         "Name 2"
       ],
       "score": 0,
-      "eliminated": false
+      "eliminated": true
     },
     {
       "id": "team-d",
@@ -446,7 +446,9 @@
     "usedQuestionIds": [],
     "clipState": "idle",
     "buzzWinnerTeamId": null,
-    "attemptedTeamIds": [],
+    "attemptedTeamIds": [
+      "team-c"
+    ],
     "stealingTeamId": null,
     "answerState": "pending",
     "stealState": "idle",
@@ -454,10 +456,6 @@
     "artistBonusUsed": false
   },
   "eventLog": [
-    {
-      "action": "update_config",
-      "at": "2026-04-09T03:39:39.627Z"
-    },
     {
       "action": "update_config",
       "at": "2026-04-09T03:39:41.043Z"
@@ -853,9 +851,13 @@
     {
       "action": "start_game",
       "at": "2026-04-09T13:00:54.420Z"
+    },
+    {
+      "action": "eliminate_team",
+      "at": "2026-04-09T13:03:25.661Z"
     }
   ],
-  "updatedAt": "2026-04-09T13:00:54.420Z",
+  "updatedAt": "2026-04-09T13:03:25.661Z",
   "showIntro": false,
   "randomizerSeq": 28,
   "showRules": false,
