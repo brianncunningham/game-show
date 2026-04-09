@@ -126,14 +126,16 @@ export const FirstPickScreen = ({ state }: Props) => {
             >
               <Typography sx={{
                 fontWeight: 900,
-                fontSize: 'clamp(1.4rem, 3.5vw, 5rem)',
+                fontSize: `clamp(0.7rem, ${Math.min(3.5, 14 / (team.name.length || 1))}vw, 5rem)`,
                 textTransform: 'uppercase',
                 letterSpacing: '0.1em',
                 color: isActive || isWinner ? color : color + '55',
                 textShadow: isActive || isWinner ? `0 0 18px ${color}, 0 0 40px ${color}88` : 'none',
                 transition: 'color 120ms ease, text-shadow 120ms ease',
                 textAlign: 'center',
-                px: 2,
+                px: 1,
+                wordBreak: 'break-word',
+                lineHeight: 1.1,
               }}>
                 {team.name}
               </Typography>
