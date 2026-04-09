@@ -103,7 +103,11 @@ export const ShowBoard = ({ state }: { state: GameShowState }) => {
     if (prev === 'available' && curr === 'resolved') {
       const pts = state.roundState.lastPointsAwarded;
       if (pts && pts > 0) {
-        const stolenById = state.roundState.stealingTeamId ?? (state.teams.find(t => t.id !== buzzWinnerTeamId)?.id ?? null);
+        // stealingTeamId is cleared in the same commit as steal_success, so find winner by score increase
+        const prevScores = previousScoresRef.current;
+        const stolenById = state.teams.find(t => t.score > (prevScores[t.id] ?? 0))?.id
+          ?? state.teams.find(t => t.id !== buzzWinnerTeamId)?.id
+          ?? null;
         setStealSuccessTeamId(stolenById);
         setStealSuccessFlash(true);
         const t = window.setTimeout(() => setStealSuccessFlash(false), 3500);
