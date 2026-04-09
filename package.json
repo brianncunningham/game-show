@@ -10,7 +10,8 @@
     "build:all": "npm run build && npm run build:server",
     "start": "node server/dist/index.js",
     "preview": "vite preview",
-    "gas:deploy": "cd apps-script && bash deploy.sh"
+    "gas:deploy": "cd apps-script && bash deploy.sh",
+    "gas:pull": "cd apps-script && bash pull.sh"
   },
   "dependencies": {
     "@emotion/react": "^11.11.3",
