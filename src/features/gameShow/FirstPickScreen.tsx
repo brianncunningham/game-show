@@ -95,7 +95,15 @@ export const FirstPickScreen = ({ state }: Props) => {
       </Box>
 
       {/* Team boxes */}
-      <Stack direction="row" spacing={{ xs: 3, md: 6 }} justifyContent="center" sx={{ width: '100%', px: '5vw' }}>
+      <Box sx={{
+        display: 'grid',
+        gridTemplateColumns: teams.length === 4 ? '1fr 1fr' : `repeat(${teams.length}, 1fr)`,
+        gridTemplateRows: teams.length === 4 ? '1fr 1fr' : '1fr',
+        gap: teams.length === 4 ? '3vh 4vw' : '0 3vw',
+        width: teams.length === 4 ? 'min(80vw, 88vh)' : '90vw',
+        px: teams.length === 4 ? 0 : '5vw',
+        aspectRatio: teams.length === 4 ? '2 / 1' : undefined,
+      }}>
         {teams.map((team, ti) => {
           const color = TEAM_COLORS[ti % TEAM_COLORS.length];
           const isActive = activeIndex === ti;
@@ -105,9 +113,6 @@ export const FirstPickScreen = ({ state }: Props) => {
             <Box
               key={team.id}
               sx={{
-                flex: 1,
-                maxWidth: teams.length <= 2 ? '38vw' : teams.length === 3 ? '28vw' : '22vw',
-                minHeight: '22vh',
                 borderRadius: 5,
                 border: `3px solid ${isActive || isWinner ? color : color + '30'}`,
                 background: isWinner
@@ -122,18 +127,19 @@ export const FirstPickScreen = ({ state }: Props) => {
                   : isActive
                     ? `0 0 35px ${color}88, 0 0 70px ${color}33, inset 0 0 20px ${color}12`
                     : `0 0 6px ${color}11`,
+                overflow: 'hidden',
+                p: 2,
               }}
             >
               <Typography sx={{
                 fontWeight: 900,
-                fontSize: `clamp(0.7rem, ${Math.min(3.5, 14 / (team.name.length || 1))}vw, 5rem)`,
+                fontSize: 'clamp(1rem, 3.5vw, 5rem)',
                 textTransform: 'uppercase',
                 letterSpacing: '0.1em',
                 color: isActive || isWinner ? color : color + '55',
                 textShadow: isActive || isWinner ? `0 0 18px ${color}, 0 0 40px ${color}88` : 'none',
                 transition: 'color 120ms ease, text-shadow 120ms ease',
                 textAlign: 'center',
-                px: 1,
                 wordBreak: 'break-word',
                 lineHeight: 1.1,
               }}>
@@ -142,7 +148,7 @@ export const FirstPickScreen = ({ state }: Props) => {
             </Box>
           );
         })}
-      </Stack>
+      </Box>
 
       {/* Winner overlay message */}
       <Box sx={{
