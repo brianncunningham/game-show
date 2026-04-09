@@ -320,7 +320,7 @@ export const ShowBoard = ({ state }: { state: GameShowState }) => {
           </>
         )}
 
-        <Stack spacing={2} sx={{ position: 'relative', zIndex: 1, flex: 1, justifyContent: 'space-between', overflow: 'hidden', minHeight: 0 }}>
+        <Stack spacing={2} sx={{ position: 'relative', zIndex: 1, flex: 1, justifyContent: 'space-between', minHeight: 0 }}>
           <Stack direction="row" alignItems="center" justifyContent="space-between" gap={2}>
             <Stack spacing={0.5} sx={{ flex: 1, alignItems: 'center' }}>
               <Typography
