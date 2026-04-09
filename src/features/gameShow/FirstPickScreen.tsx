@@ -99,10 +99,12 @@ export const FirstPickScreen = ({ state }: Props) => {
         display: 'grid',
         gridTemplateColumns: teams.length === 4 ? '1fr 1fr' : `repeat(${teams.length}, 1fr)`,
         gridTemplateRows: teams.length === 4 ? '1fr 1fr' : '1fr',
-        gap: teams.length === 4 ? '3vh 4vw' : '0 3vw',
-        width: teams.length === 4 ? 'min(80vw, 88vh)' : '90vw',
-        px: teams.length === 4 ? 0 : '5vw',
+        gap: teams.length === 4 ? '3vh 5vw' : '0 3vw',
+        width: teams.length === 4 ? 'min(92vw, 80vh * 2)' : '92vw',
+        maxWidth: '92vw',
+        px: 0,
         aspectRatio: teams.length === 4 ? '2 / 1' : undefined,
+        minHeight: teams.length === 4 ? undefined : '22vh',
       }}>
         {teams.map((team, ti) => {
           const color = TEAM_COLORS[ti % TEAM_COLORS.length];
@@ -133,15 +135,14 @@ export const FirstPickScreen = ({ state }: Props) => {
             >
               <Typography sx={{
                 fontWeight: 900,
-                fontSize: 'clamp(1rem, 3.5vw, 5rem)',
+                fontSize: `clamp(1rem, ${Math.min(5, 20 / (Math.max(...teams.map(t => t.name.length)) || 1))}vw, 5rem)`,
                 textTransform: 'uppercase',
-                letterSpacing: '0.1em',
+                letterSpacing: '0.08em',
                 color: isActive || isWinner ? color : color + '55',
                 textShadow: isActive || isWinner ? `0 0 18px ${color}, 0 0 40px ${color}88` : 'none',
                 transition: 'color 120ms ease, text-shadow 120ms ease',
                 textAlign: 'center',
-                wordBreak: 'break-word',
-                lineHeight: 1.1,
+                whiteSpace: 'nowrap',
               }}>
                 {team.name}
               </Typography>
