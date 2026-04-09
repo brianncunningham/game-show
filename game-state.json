@@ -2,7 +2,7 @@
   "id": "default-game",
   "status": "live",
   "currentRound": 1,
-  "chooserTeamId": "team-a",
+  "chooserTeamId": "team-b",
   "multiplier": 1,
   "practiceMode": false,
   "hostLocked": false,
@@ -39,7 +39,7 @@
         "Charlie",
         "Name 8"
       ],
-      "score": 100,
+      "score": 200,
       "eliminated": false
     },
     {
@@ -52,7 +52,7 @@
         "Name 9",
         "Bradley"
       ],
-      "score": 150,
+      "score": 300,
       "eliminated": false
     },
     {
@@ -65,7 +65,7 @@
         "Name 11",
         "Name 2"
       ],
-      "score": 0,
+      "score": 100,
       "eliminated": false
     },
     {
@@ -529,96 +529,25 @@
     }
   ],
   "roundState": {
-    "selectedQuestionId": "csv-r1q2",
+    "selectedQuestionId": "csv-r1q3",
     "activeSongIndex": 2,
     "usedQuestionIds": [
-      "csv-r1q2"
+      "csv-r1q2",
+      "csv-r1q3"
     ],
     "clipState": "resolved",
-    "buzzWinnerTeamId": "team-c",
+    "buzzWinnerTeamId": "team-d",
     "attemptedTeamIds": [
-      "team-c"
+      "team-d"
     ],
     "stealingTeamId": null,
     "answerState": "wrong",
     "stealState": "resolved",
     "lastPointsAwarded": 100,
     "artistBonusUsed": false,
-    "revealState": "title"
+    "revealState": "both"
   },
   "eventLog": [
-    {
-      "action": "set_buzz_winner",
-      "at": "2026-04-09T12:57:02.567Z"
-    },
-    {
-      "action": "mark_wrong",
-      "at": "2026-04-09T12:57:10.705Z"
-    },
-    {
-      "action": "set_stealing_team",
-      "at": "2026-04-09T12:57:19.030Z"
-    },
-    {
-      "action": "steal_fail",
-      "at": "2026-04-09T12:57:23.191Z"
-    },
-    {
-      "action": "set_stealing_team",
-      "at": "2026-04-09T12:57:31.734Z"
-    },
-    {
-      "action": "steal_success",
-      "at": "2026-04-09T12:57:34.398Z"
-    },
-    {
-      "action": "select_song",
-      "at": "2026-04-09T12:57:43.336Z"
-    },
-    {
-      "action": "end_game",
-      "at": "2026-04-09T13:00:39.313Z"
-    },
-    {
-      "action": "reset_scores",
-      "at": "2026-04-09T13:00:44.460Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-09T13:00:48.036Z"
-    },
-    {
-      "action": "toggle_show_intro",
-      "at": "2026-04-09T13:00:54.415Z"
-    },
-    {
-      "action": "toggle_show_rules",
-      "at": "2026-04-09T13:00:54.417Z"
-    },
-    {
-      "action": "start_game",
-      "at": "2026-04-09T13:00:54.420Z"
-    },
-    {
-      "action": "eliminate_team",
-      "at": "2026-04-09T13:03:25.661Z"
-    },
-    {
-      "action": "reset_scores",
-      "at": "2026-04-09T13:18:59.989Z"
-    },
-    {
-      "action": "toggle_show_intro",
-      "at": "2026-04-09T13:19:03.359Z"
-    },
-    {
-      "action": "toggle_show_rules",
-      "at": "2026-04-09T13:19:03.363Z"
-    },
-    {
-      "action": "start_game",
-      "at": "2026-04-09T13:19:03.367Z"
-    },
     {
       "action": "eliminate_team",
       "at": "2026-04-09T13:19:12.392Z"
@@ -946,9 +875,81 @@
     {
       "action": "steal_success",
       "at": "2026-04-09T16:57:36.317Z"
+    },
+    {
+      "action": "reset_round",
+      "at": "2026-04-09T16:59:55.448Z"
+    },
+    {
+      "action": "select_question",
+      "at": "2026-04-09T17:12:43.022Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-09T17:12:44.379Z"
+    },
+    {
+      "action": "set_buzz_winner",
+      "at": "2026-04-09T17:12:52.869Z"
+    },
+    {
+      "action": "mark_correct",
+      "at": "2026-04-09T17:12:55.222Z"
+    },
+    {
+      "action": "award_artist_bonus",
+      "at": "2026-04-09T17:13:25.948Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-09T17:13:34.006Z"
+    },
+    {
+      "action": "set_buzz_winner",
+      "at": "2026-04-09T17:13:45.581Z"
+    },
+    {
+      "action": "mark_wrong",
+      "at": "2026-04-09T17:13:50.749Z"
+    },
+    {
+      "action": "set_stealing_team",
+      "at": "2026-04-09T17:13:55.345Z"
+    },
+    {
+      "action": "steal_success",
+      "at": "2026-04-09T17:15:02.097Z"
+    },
+    {
+      "action": "set_reveal_state",
+      "at": "2026-04-09T17:15:08.547Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-09T17:15:15.079Z"
+    },
+    {
+      "action": "set_buzz_winner",
+      "at": "2026-04-09T17:15:23.752Z"
+    },
+    {
+      "action": "mark_wrong",
+      "at": "2026-04-09T17:15:26.891Z"
+    },
+    {
+      "action": "set_stealing_team",
+      "at": "2026-04-09T17:15:30.330Z"
+    },
+    {
+      "action": "steal_success",
+      "at": "2026-04-09T17:15:36.993Z"
+    },
+    {
+      "action": "set_reveal_state",
+      "at": "2026-04-09T17:15:42.791Z"
     }
   ],
-  "updatedAt": "2026-04-09T16:57:36.317Z",
+  "updatedAt": "2026-04-09T17:15:42.791Z",
   "showIntro": false,
   "randomizerSeq": 28,
   "showRules": false,
