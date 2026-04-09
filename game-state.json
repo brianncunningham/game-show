@@ -407,30 +407,6 @@
   },
   "eventLog": [
     {
-      "action": "toggle_show_rules",
-      "at": "2026-04-08T22:06:39.912Z"
-    },
-    {
-      "action": "random_first_pick",
-      "at": "2026-04-08T22:06:39.916Z"
-    },
-    {
-      "action": "toggle_show_rules",
-      "at": "2026-04-08T22:08:51.155Z"
-    },
-    {
-      "action": "toggle_show_intro",
-      "at": "2026-04-08T22:08:51.163Z"
-    },
-    {
-      "action": "random_first_pick",
-      "at": "2026-04-08T22:08:51.164Z"
-    },
-    {
-      "action": "dismiss_first_pick",
-      "at": "2026-04-08T22:08:59.940Z"
-    },
-    {
       "action": "toggle_show_intro",
       "at": "2026-04-08T22:11:13.568Z"
     },
@@ -805,9 +781,33 @@
     {
       "action": "select_song",
       "at": "2026-04-09T04:16:08.493Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-09T04:17:23.024Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-09T04:17:24.201Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-09T04:17:34.886Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-09T04:17:36.469Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-09T04:18:05.960Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-09T04:18:07.114Z"
     }
   ],
-  "updatedAt": "2026-04-09T04:16:08.493Z",
+  "updatedAt": "2026-04-09T04:18:07.114Z",
   "showIntro": false,
   "randomizerSeq": 20,
   "showRules": false,

@@ -92,11 +92,11 @@ export const HostPage = () => {
               <Select
                 size="small"
                 value={spotify.activeDeviceId ?? ''}
-                onChange={(e) => spotify.setActiveDeviceId(e.target.value)}
+                onChange={(e) => spotify.setActiveDeviceId(e.target.value || null)}
                 sx={{ fontSize: '0.8rem', minWidth: 140 }}
                 displayEmpty
               >
-                {spotify.devices.length === 0 && <MenuItem value="">No devices</MenuItem>}
+                <MenuItem value=""><em>Active device (auto)</em></MenuItem>
                 {spotify.devices.map(d => (
                   <MenuItem key={d.id} value={d.id}>
                     {d.name}{d.is_active ? ' ●' : ''}
