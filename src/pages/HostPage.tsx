@@ -1,4 +1,4 @@
-import { Box, Button, Card, CardContent, Chip, Collapse, Divider, Grid, IconButton, Stack, Typography } from '@mui/material';
+import { Box, Button, Card, CardContent, Chip, Collapse, Divider, Grid, IconButton, MenuItem, Select, Stack, Typography } from '@mui/material';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { useState } from 'react';
@@ -89,11 +89,18 @@ export const HostPage = () => {
             <>
               <Chip label="Spotify ●" color="success" size="small" />
               {spotify.devices.length > 0 && (
-                <Chip
-                  label={spotify.devices.find(d => d.id === spotify.activeDeviceId)?.name ?? 'No device'}
+                <Select
                   size="small"
-                  variant="outlined"
-                />
+                  value={spotify.activeDeviceId ?? ''}
+                  onChange={(e) => spotify.setActiveDeviceId(e.target.value)}
+                  sx={{ fontSize: '0.8rem', minWidth: 140 }}
+                >
+                  {spotify.devices.map(d => (
+                    <MenuItem key={d.id} value={d.id}>
+                      {d.name}{d.is_active ? ' ●' : ''}
+                    </MenuItem>
+                  ))}
+                </Select>
               )}
               <Button size="small" variant="text" color="inherit" sx={{ opacity: 0.6, minWidth: 0 }} onClick={() => spotify.disconnect()}>Disconnect</Button>
             </>

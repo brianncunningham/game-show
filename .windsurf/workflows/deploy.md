@@ -18,6 +18,6 @@ ssh brian@100.115.11.8 "~/.npm-global/bin/pm2 list"
 ```
 
 URLs after deploy:
-- Show screen: http://srv1461086.tail71c584.ts.net:3001/show
-- Host page:   http://srv1461086.tail71c584.ts.net:3001/host
-- Admin page:  http://srv1461086.tail71c584.ts.net:3001/gameadmin
+- Show screen: https://srv1461086.tail71c584.ts.net/show
+- Host page:   https://srv1461086.tail71c584.ts.net/host
+- Admin page:  https://srv1461086.tail71c584.ts.net/gameadmin
