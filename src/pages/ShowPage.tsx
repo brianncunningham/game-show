@@ -86,7 +86,7 @@ export const ShowPage = () => {
 
   if (state.showIntro) {
     return (
-      <GameShowStandaloneShell>
+      <GameShowStandaloneShell hideCursor>
         <IntroScreen />
       </GameShowStandaloneShell>
     );
@@ -94,7 +94,7 @@ export const ShowPage = () => {
 
   if (state.showRules) {
     return (
-      <GameShowStandaloneShell>
+      <GameShowStandaloneShell hideCursor>
         <RulesScreen />
       </GameShowStandaloneShell>
     );
@@ -102,7 +102,7 @@ export const ShowPage = () => {
 
   if (showFirstPick) {
     return (
-      <GameShowStandaloneShell>
+      <GameShowStandaloneShell hideCursor>
         <FirstPickScreen state={state} />
       </GameShowStandaloneShell>
     );
@@ -110,7 +110,7 @@ export const ShowPage = () => {
 
   if (showRandomizer) {
     return (
-      <GameShowStandaloneShell>
+      <GameShowStandaloneShell hideCursor>
         <TeamRandomizer state={state} />
       </GameShowStandaloneShell>
     );
@@ -118,14 +118,14 @@ export const ShowPage = () => {
 
   if (state.status === 'complete') {
     return (
-      <GameShowStandaloneShell>
+      <GameShowStandaloneShell hideCursor>
         <VictoryScreen state={state} />
       </GameShowStandaloneShell>
     );
   }
 
   return (
-    <GameShowStandaloneShell>
+    <GameShowStandaloneShell hideCursor>
       <Box sx={{ position: 'relative' }}>
         <ShowBoard state={state} />
       </Box>
