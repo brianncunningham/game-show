@@ -4,5 +4,5 @@ function onOpen() {
     .addItem('Fetch Spotify IDs', 'fetchSpotifyIds')
     .addSeparator()
     .addItem('Set Spotify Credentials', 'promptSpotifyCredentials')
-    .build();
+    .addToUi();
 }
