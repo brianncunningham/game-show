@@ -72,7 +72,11 @@ These are stored securely in Apps Script's User Properties (not in cells).
 ---
 
 ## Deploying updates
+
+Swap to the game-show clasp account, push, then swap back:
 ```bash
+cp ~/.clasprc-game-show.json ~/.clasprc.json
 cd apps-script
-clasp push --auth .clasprc.json
+clasp push
+cp ~/.clasprc-other-project.json ~/.clasprc.json
 ```
