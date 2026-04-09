@@ -8,6 +8,8 @@ export interface GameShowTeam {
 export interface GameShowSong {
   title: string;
   artist: string;
+  spotifyTrackId?: string;
+  clipStartMs?: number;
 }
 
 export interface GameShowQuestion {

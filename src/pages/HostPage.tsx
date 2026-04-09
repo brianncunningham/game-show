@@ -2,6 +2,7 @@ import { Box, Button, Card, CardContent, Chip, Collapse, Divider, Grid, IconButt
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { useState } from 'react';
+import { initiateSpotifyLogin, useSpotify } from '../features/spotify/useSpotify';
 import {
   awardArtistBonus,
   endGame,
@@ -52,6 +53,7 @@ export const HostPage = () => {
   const { state, isLoading, error } = useGameShowState();
   const [gameOpen, setGameOpen] = useState(false);
   const [showScreenOpen, setShowScreenOpen] = useState(false);
+  const spotify = useSpotify();
 
   const hasQuestion = Boolean(state?.roundState.selectedQuestionId);
   const hasBuzzWinner = Boolean(state?.roundState.buzzWinnerTeamId);
@@ -81,6 +83,25 @@ export const HostPage = () => {
     <GameShowSharedView
       title="Host Control"
       subtitle=""
+      spotifyStatus={
+        <Stack direction="row" spacing={1} alignItems="center">
+          {spotify.isConnected ? (
+            <>
+              <Chip label="Spotify ●" color="success" size="small" />
+              {spotify.devices.length > 0 && (
+                <Chip
+                  label={spotify.devices.find(d => d.id === spotify.activeDeviceId)?.name ?? 'No device'}
+                  size="small"
+                  variant="outlined"
+                />
+              )}
+              <Button size="small" variant="text" color="inherit" sx={{ opacity: 0.6, minWidth: 0 }} onClick={() => spotify.disconnect()}>Disconnect</Button>
+            </>
+          ) : (
+            <Button size="small" variant="outlined" color="success" onClick={() => void initiateSpotifyLogin()}>Connect Spotify</Button>
+          )}
+        </Stack>
+      }
       state={state}
       isLoading={isLoading}
       error={error}
@@ -289,7 +310,12 @@ export const HostPage = () => {
                           color={isActive && !isResolved ? 'primary' : 'inherit'}
                           sx={{ ...bigBtnSx, opacity: isPast || isResolved ? 0.45 : 1, flexDirection: 'column', alignItems: 'center', gap: 0.25 }}
                           disabled={!canPickSong || isPast || isResolved}
-                          onClick={() => void selectSong(i)}
+                          onClick={() => {
+                            void selectSong(i);
+                            const trackId = songMeta?.spotifyTrackId;
+                            const startMs = songMeta?.clipStartMs ?? 0;
+                            if (trackId && spotify.isConnected) void spotify.play(trackId, startMs);
+                          }}
                         >
                           <span>{isResolved ? '✓ Song ' + (i + 1) : 'Song ' + (i + 1)}</span>
                           {isActive && songMeta?.title && (

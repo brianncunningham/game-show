@@ -9,9 +9,10 @@ interface GameShowSharedViewProps {
   isLoading: boolean;
   error: string | null;
   controls?: React.ReactNode;
+  spotifyStatus?: React.ReactNode;
 }
 
-export const GameShowSharedView = ({ title, subtitle, state, isLoading, error, controls }: GameShowSharedViewProps) => {
+export const GameShowSharedView = ({ title, subtitle, state, isLoading, error, controls, spotifyStatus }: GameShowSharedViewProps) => {
   if (isLoading) {
     return (
       <GameShowStandaloneShell>
@@ -50,6 +51,7 @@ export const GameShowSharedView = ({ title, subtitle, state, isLoading, error, c
             <Chip label={state.practiceMode ? 'Practice' : 'Scored'} color={state.practiceMode ? 'warning' : 'primary'} size="small" />
             <Chip label={state.hostLocked ? 'Locked' : 'Unlocked'} color={state.hostLocked ? 'error' : 'success'} size="small" />
           </Stack>
+          {spotifyStatus && <Box sx={{ ml: 'auto' }}>{spotifyStatus}</Box>}
         </Stack>
 
         {controls}
