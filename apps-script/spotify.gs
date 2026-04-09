@@ -1,8 +1,9 @@
 var SHEET_NAME = 'Themes & Songs';
-var COL_TITLE = 2;   // B
-var COL_ARTIST = 3;  // C
-var COL_SPOTIFY_ID = 4; // D
-var COL_CLIP_START = 5; // E (reserved — not auto-filled, left for manual entry)
+var COL_TITLE = 2;       // B
+var COL_ARTIST = 3;      // C
+var COL_SPOTIFY_ID = 4;  // D
+var COL_CLIP_START = 5;  // E (reserved — not auto-filled, left for manual entry)
+var COL_VERIFY = 6;      // F — "Track Name — Artist (Album, Year)" for manual review
 var HEADER_ROW = 1;
 
 // ─── Credentials prompt ──────────────────────────────────────────────────────
@@ -74,7 +75,19 @@ function searchSpotifyTrack_(token, title, artist) {
   var items = data && data.tracks && data.tracks.items;
   if (!items || items.length === 0) return null;
 
-  return items[0].id;
+  var track = items[0];
+  var year = track.album && track.album.release_date
+    ? track.album.release_date.substring(0, 4)
+    : '';
+  var albumName = (track.album && track.album.name) ? track.album.name : '';
+  var trackArtists = track.artists
+    ? track.artists.map(function(a) { return a.name; }).join(', ')
+    : '';
+
+  return {
+    id: track.id,
+    verify: track.name + ' \u2014 ' + trackArtists + ' (' + albumName + ', ' + year + ')',
+  };
 }
 
 // ─── Main: iterate rows, fill column D ───────────────────────────────────────
@@ -127,12 +140,14 @@ function fetchSpotifyIds() {
     }
 
     try {
-      var trackId = searchSpotifyTrack_(token, String(title), String(artist));
-      if (trackId) {
-        sheet.getRange(row, COL_SPOTIFY_ID).setValue(trackId);
+      var result = searchSpotifyTrack_(token, String(title), String(artist));
+      if (result) {
+        sheet.getRange(row, COL_SPOTIFY_ID).setValue(result.id);
+        sheet.getRange(row, COL_VERIFY).setValue(result.verify);
         filled++;
       } else {
         sheet.getRange(row, COL_SPOTIFY_ID).setValue('NOT_FOUND');
+        sheet.getRange(row, COL_VERIFY).setValue('');
         notFound++;
       }
       Utilities.sleep(100); // stay well under Spotify rate limits

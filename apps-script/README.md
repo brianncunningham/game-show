@@ -4,8 +4,10 @@ Adds a **Name That Tune** menu to your Google Sheet with a one-click "Fetch Spot
 
 ## Sheet layout expected
 
-| A: Theme | B: Song Title | C: Artist | D: Spotify ID (auto-filled) | E: Clip Start Ms (manual) |
-|----------|--------------|-----------|----------------------------|--------------------------|
+| A: Theme | B: Song Title | C: Artist | D: Spotify ID (auto-filled) | E: Clip Start Ms (manual) | F: Verify (auto-filled) |
+|----------|--------------|-----------|----------------------------|--------------------------|------------------------|
+
+Column F is for **visual verification only** — not used in the import. It shows the matched track in the format `Track Name — Artist (Album, Year)` so you can spot wrong versions (covers, re-releases, etc.) before importing.
 
 Sheet tab must be named **Themes & Songs**.
 

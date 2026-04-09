@@ -1,8 +1,8 @@
 {
   "id": "default-game",
-  "status": "live",
+  "status": "complete",
   "currentRound": 1,
-  "chooserTeamId": "team-a",
+  "chooserTeamId": "team-c",
   "multiplier": 1,
   "practiceMode": false,
   "hostLocked": false,
@@ -446,9 +446,7 @@
     "usedQuestionIds": [],
     "clipState": "idle",
     "buzzWinnerTeamId": null,
-    "attemptedTeamIds": [
-      "team-b"
-    ],
+    "attemptedTeamIds": [],
     "stealingTeamId": null,
     "answerState": "pending",
     "stealState": "idle",
@@ -456,22 +454,6 @@
     "artistBonusUsed": false
   },
   "eventLog": [
-    {
-      "action": "select_song",
-      "at": "2026-04-09T04:11:18.733Z"
-    },
-    {
-      "action": "select_song",
-      "at": "2026-04-09T04:11:19.808Z"
-    },
-    {
-      "action": "select_song",
-      "at": "2026-04-09T04:16:07.304Z"
-    },
-    {
-      "action": "select_song",
-      "at": "2026-04-09T04:16:08.493Z"
-    },
     {
       "action": "select_song",
       "at": "2026-04-09T04:17:23.024Z"
@@ -855,9 +837,25 @@
     {
       "action": "eliminate_team",
       "at": "2026-04-09T13:23:04.564Z"
+    },
+    {
+      "action": "reinstate_team",
+      "at": "2026-04-09T13:25:27.017Z"
+    },
+    {
+      "action": "eliminate_team",
+      "at": "2026-04-09T13:25:32.244Z"
+    },
+    {
+      "action": "sudden_death",
+      "at": "2026-04-09T13:25:46.256Z"
+    },
+    {
+      "action": "end_game",
+      "at": "2026-04-09T13:25:52.354Z"
     }
   ],
-  "updatedAt": "2026-04-09T13:23:04.564Z",
+  "updatedAt": "2026-04-09T13:25:52.354Z",
   "showIntro": false,
   "randomizerSeq": 28,
   "showRules": false,
