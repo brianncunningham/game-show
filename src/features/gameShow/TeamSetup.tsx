@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Button, Card, CardContent, FormControlLabel, Radio, RadioGroup, Stack, TextField, Typography } from '@mui/material';
+import { Button, Card, CardContent, FormControlLabel, IconButton, MenuItem, Radio, RadioGroup, Select, Stack, TextField, Tooltip, Typography } from '@mui/material';
+import ClearIcon from '@mui/icons-material/Clear';
 import PeopleIcon from '@mui/icons-material/People';
 import { randomAssignPlayers } from './api';
 import { PlayerRosterModal } from './PlayerRosterModal';
@@ -38,6 +39,20 @@ export const TeamSetup = ({ teamCount, teams, playerPool, onTeamCountChange, onT
   };
 
   const displayedTeams = teams.slice(0, teamCount);
+  const assignedPlayers = new Set(displayedTeams.flatMap(t => t.players));
+  const unassignedPool = safePlayerPool.filter(p => !assignedPlayers.has(p));
+
+  const assignPlayerToTeam = (teamId: string, playerName: string) => {
+    onTeamsChange(teams.map(team =>
+      team.id === teamId ? { ...team, players: [...team.players, playerName] } : team
+    ));
+  };
+
+  const clearTeamPlayers = (teamId: string) => {
+    onTeamsChange(teams.map(team =>
+      team.id === teamId ? { ...team, players: [] } : team
+    ));
+  };
 
   return (
     <>
@@ -82,23 +97,47 @@ export const TeamSetup = ({ teamCount, teams, playerPool, onTeamCountChange, onT
               </RadioGroup>
             </Stack>
 
-            {displayedTeams.map((team) => (
-              <Stack key={team.id} direction="row" spacing={2} flexWrap="wrap">
-                <TextField
-                  label="Team name"
-                  size="small"
-                  value={team.name}
-                  onChange={(event) => updateTeam(team.id, { name: event.target.value })}
-                />
-                <TextField
-                  label="Assigned players"
-                  size="small"
-                  sx={{ minWidth: 360 }}
-                  value={team.players.join(', ')}
-                  InputProps={{ readOnly: true }}
-                />
-              </Stack>
-            ))}
+            {displayedTeams.map((team) => {
+              const teamUnassigned = unassignedPool;
+              return (
+                <Stack key={team.id} direction="row" spacing={1} flexWrap="wrap" alignItems="center">
+                  <TextField
+                    label="Team name"
+                    size="small"
+                    value={team.name}
+                    onChange={(event) => updateTeam(team.id, { name: event.target.value })}
+                  />
+                  <TextField
+                    label="Assigned players"
+                    size="small"
+                    sx={{ minWidth: 200, flex: 1 }}
+                    value={team.players.join(', ')}
+                    InputProps={{ readOnly: true }}
+                  />
+                  {teamUnassigned.length > 0 && (
+                    <Select
+                      size="small"
+                      displayEmpty
+                      value=""
+                      onChange={(e) => { if (e.target.value) assignPlayerToTeam(team.id, e.target.value as string); }}
+                      sx={{ minWidth: 160, fontSize: '0.85rem' }}
+                      renderValue={() => <em>Add player…</em>}
+                    >
+                      {teamUnassigned.map(p => (
+                        <MenuItem key={p} value={p}>{p}</MenuItem>
+                      ))}
+                    </Select>
+                  )}
+                  {team.players.length > 0 && (
+                    <Tooltip title="Clear team">
+                      <IconButton size="small" onClick={() => clearTeamPlayers(team.id)}>
+                        <ClearIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  )}
+                </Stack>
+              );
+            })}
           </Stack>
         </CardContent>
       </Card>
