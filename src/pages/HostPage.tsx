@@ -2,7 +2,7 @@ import { Box, Button, Card, CardContent, Chip, Collapse, Divider, Grid, IconButt
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import RefreshIcon from '@mui/icons-material/Refresh';
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { initiateSpotifyLogin, useSpotify } from '../features/spotify/useSpotify';
 import {
   awardArtistBonus,
@@ -33,7 +33,10 @@ import {
   triggerSuddenDeath,
   undoLastAction,
   setRevealState,
+  listSaves,
+  loadSave,
 } from '../features/gameShow/api';
+import type { GameSaveMeta } from '../features/gameShow/api';
 import { GameShowSharedView } from '../features/gameShow/GameShowSharedView';
 import { useGameShowState } from '../features/gameShow/useGameShowState';
 
@@ -57,11 +60,25 @@ const SONG_COUNT = 3;
 export const HostPage = () => {
   const { state, isLoading, error } = useGameShowState();
   const [gameOpen, setGameOpen] = useState(false);
-  const [showScreenOpen, setShowScreenOpen] = useState(false);
-  const [spotifyPaused, setSpotifyPaused] = useState(false);
   const [spotifyTesting, setSpotifyTesting] = useState(false);
+  const [spotifyPaused, setSpotifyPaused] = useState(false);
+  const [saves, setSaves] = useState<GameSaveMeta[]>([]);
+  const [loadingId, setLoadingId] = useState<string | null>(null);
+  const [showScreenOpen, setShowScreenOpen] = useState(false);
   const [eliminateConfirm, setEliminateConfirm] = useState<string | null>(null);
   const spotify = useSpotify();
+
+  const refreshSaves = useCallback(async () => {
+    const list = await listSaves();
+    setSaves(list.sort((a, b) => b.savedAt.localeCompare(a.savedAt)));
+  }, []);
+
+  useEffect(() => { void refreshSaves(); }, [refreshSaves]);
+
+  const handleLoadSave = async (id: string) => {
+    setLoadingId(id);
+    try { await loadSave(id); } finally { setLoadingId(null); }
+  };
 
   const hasQuestion = Boolean(state?.roundState.selectedQuestionId);
   const hasBuzzWinner = Boolean(state?.roundState.buzzWinnerTeamId);
@@ -151,6 +168,33 @@ export const HostPage = () => {
       error={error}
       controls={
         <Stack spacing={2}>
+
+          {/* Load game */}
+          {saves.length > 0 && (
+            <Card>
+              <CardContent sx={{ py: '10px !important' }}>
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <Typography sx={{ ...sectionLabelSx, mb: 0, flexShrink: 0 }}>Load game</Typography>
+                  <Select
+                    size="small"
+                    displayEmpty
+                    value=""
+                    onChange={(e) => { if (e.target.value) void handleLoadSave(e.target.value as string); }}
+                    disabled={loadingId !== null}
+                    sx={{ flex: 1, fontSize: '0.85rem' }}
+                  >
+                    <MenuItem value="" disabled><em>Select a save…</em></MenuItem>
+                    {saves.map((s) => (
+                      <MenuItem key={s.id} value={s.id}>{s.name}</MenuItem>
+                    ))}
+                  </Select>
+                  <IconButton size="small" onClick={() => void refreshSaves()} title="Refresh saves">
+                    <RefreshIcon fontSize="small" />
+                  </IconButton>
+                </Stack>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Game controls */}
           <Card>
