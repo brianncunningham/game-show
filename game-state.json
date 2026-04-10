@@ -12,34 +12,21 @@
     "Charlie",
     "Monica",
     "Abbey",
-    "Sutton",
-    "Dean",
-    "Olivia",
-    "Kyle",
-    "Saavani",
     "Julie",
-    "Melissa",
     "Zenaia",
     "Zita",
-    "Name 1",
-    "Name 2",
-    "Name 3",
-    "Name 4",
-    "Name 5",
-    "Name 6",
-    "Name 7"
+    "Chris",
+    "Sutton",
+    "Melissa"
   ],
   "teams": [
     {
       "id": "team-a",
       "name": "Brass",
       "players": [
-        "Zita",
-        "Name 2",
-        "Abby",
-        "Abbey",
-        "Melissa",
-        "Zenaia"
+        "Charlie",
+        "Julie",
+        "Melissa"
       ],
       "score": 0,
       "eliminated": false
@@ -48,11 +35,9 @@
       "id": "team-b",
       "name": "Strings",
       "players": [
-        "Name 1",
-        "Name 3",
-        "Charlie",
-        "Kyle",
-        "Dean"
+        "Abbey",
+        "Zenaia",
+        "Zita"
       ],
       "score": 0,
       "eliminated": false
@@ -61,11 +46,9 @@
       "id": "team-c",
       "name": "Percussion",
       "players": [
-        "Sutton",
-        "Name 6",
-        "Olivia",
         "Bradley",
-        "Julie"
+        "Sutton",
+        "Abby"
       ],
       "score": 0,
       "eliminated": false
@@ -74,11 +57,8 @@
       "id": "team-d",
       "name": "Woodwinds",
       "players": [
-        "Name 7",
-        "Saavani",
-        "Monica",
-        "Name 5",
-        "Name 4"
+        "Chris",
+        "Monica"
       ],
       "score": 0,
       "eliminated": false
@@ -243,54 +223,6 @@
     "revealState": "none"
   },
   "eventLog": [
-    {
-      "action": "update_config",
-      "at": "2026-04-10T01:39:45.827Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-10T01:39:46.420Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-10T01:39:46.629Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-10T01:39:46.811Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-10T01:39:46.872Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-10T01:39:47.285Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-10T01:39:47.468Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-10T01:39:47.544Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-10T01:39:47.755Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-10T01:39:47.936Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-10T01:39:52.932Z"
-    },
-    {
-      "action": "toggle_show_intro",
-      "at": "2026-04-10T01:40:08.619Z"
-    },
     {
       "action": "toggle_show_rules",
       "at": "2026-04-10T01:40:08.624Z"
@@ -642,11 +574,59 @@
     {
       "action": "reset_scores",
       "at": "2026-04-10T19:04:31.588Z"
+    },
+    {
+      "action": "update_config",
+      "at": "2026-04-10T20:00:55.678Z"
+    },
+    {
+      "action": "update_config",
+      "at": "2026-04-10T20:01:04.404Z"
+    },
+    {
+      "action": "update_config",
+      "at": "2026-04-10T20:01:05.522Z"
+    },
+    {
+      "action": "update_config",
+      "at": "2026-04-10T20:01:06.390Z"
+    },
+    {
+      "action": "update_config",
+      "at": "2026-04-10T20:01:07.163Z"
+    },
+    {
+      "action": "update_config",
+      "at": "2026-04-10T20:03:39.035Z"
+    },
+    {
+      "action": "toggle_show_intro",
+      "at": "2026-04-10T20:04:03.747Z"
+    },
+    {
+      "action": "toggle_show_rules",
+      "at": "2026-04-10T20:04:03.749Z"
+    },
+    {
+      "action": "random_assign_players",
+      "at": "2026-04-10T20:04:03.751Z"
+    },
+    {
+      "action": "toggle_show_intro",
+      "at": "2026-04-10T20:04:39.439Z"
+    },
+    {
+      "action": "toggle_show_rules",
+      "at": "2026-04-10T20:04:39.442Z"
+    },
+    {
+      "action": "random_assign_players",
+      "at": "2026-04-10T20:04:39.443Z"
     }
   ],
-  "updatedAt": "2026-04-10T19:04:31.588Z",
+  "updatedAt": "2026-04-10T20:04:39.443Z",
   "showIntro": false,
-  "randomizerSeq": 32,
+  "randomizerSeq": 34,
   "showRules": false,
   "firstPickSeq": 0,
   "firstPickTeamId": "team-c",
