@@ -1,0 +1,140 @@
+{
+  "id": "save-1775785133010",
+  "name": "PRACTICE ROUND",
+  "savedAt": "2026-04-10T01:38:53.010Z",
+  "questions": [
+    {
+      "id": "csv-r1q1",
+      "round": 1,
+      "category": "DEMO Essentials",
+      "songLabel": "",
+      "songs": [
+        {
+          "title": "Stayin' Alive",
+          "artist": "Bee Gees",
+          "spotifyTrackId": "3mRM4NM8iO7UBqrSigCQFH",
+          "clipStartMs": 0
+        },
+        {
+          "title": "Baby Shark",
+          "artist": "Pinkfong",
+          "spotifyTrackId": "5ygDXis42ncn6kYG14lEVG",
+          "clipStartMs": 0
+        },
+        {
+          "title": "Sweet Caroline",
+          "artist": "Neil Diamond",
+          "spotifyTrackId": "62AuGbAkt8Ox2IrFFb8GKV",
+          "clipStartMs": 0
+        }
+      ],
+      "clipStart": 0,
+      "clipDuration": 0,
+      "basePoints": 100
+    },
+    {
+      "id": "csv-r1q2",
+      "round": 1,
+      "category": "Practice 2",
+      "songLabel": "",
+      "songs": [
+        {
+          "title": "",
+          "artist": "",
+          "clipStartMs": 0
+        },
+        {
+          "title": "",
+          "artist": "",
+          "clipStartMs": 0
+        },
+        {
+          "title": "",
+          "artist": "",
+          "clipStartMs": 0
+        }
+      ],
+      "clipStart": 0,
+      "clipDuration": 0,
+      "basePoints": 100
+    },
+    {
+      "id": "csv-r1q3",
+      "round": 1,
+      "category": "Practice 3",
+      "songLabel": "",
+      "songs": [
+        {
+          "title": "",
+          "artist": "",
+          "clipStartMs": 0
+        },
+        {
+          "title": "",
+          "artist": "",
+          "clipStartMs": 0
+        },
+        {
+          "title": "",
+          "artist": "",
+          "clipStartMs": 0
+        }
+      ],
+      "clipStart": 0,
+      "clipDuration": 0,
+      "basePoints": 100
+    },
+    {
+      "id": "csv-r1q4",
+      "round": 1,
+      "category": "Practice 4",
+      "songLabel": "",
+      "songs": [
+        {
+          "title": "",
+          "artist": "",
+          "clipStartMs": 0
+        },
+        {
+          "title": "",
+          "artist": "",
+          "clipStartMs": 0
+        },
+        {
+          "title": "",
+          "artist": "",
+          "clipStartMs": 0
+        }
+      ],
+      "clipStart": 0,
+      "clipDuration": 0,
+      "basePoints": 100
+    },
+    {
+      "id": "csv-r1q5",
+      "round": 1,
+      "category": "Practice 5",
+      "songLabel": "",
+      "songs": [
+        {
+          "title": "",
+          "artist": "",
+          "clipStartMs": 0
+        },
+        {
+          "title": "",
+          "artist": "",
+          "clipStartMs": 0
+        },
+        {
+          "title": "",
+          "artist": "",
+          "clipStartMs": 0
+        }
+      ],
+      "clipStart": 0,
+      "clipDuration": 0,
+      "basePoints": 100
+    }
+  ]
+}
