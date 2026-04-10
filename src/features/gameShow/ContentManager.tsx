@@ -46,13 +46,33 @@ export const ContentManager = ({ questions, onChange }: ContentManagerProps) => 
     onChange(rows.filter((q) => q.id !== questionId));
   };
 
+  const parseCsvLine = (line: string): string[] => {
+    const fields: string[] = [];
+    let current = '';
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') {
+        if (inQuotes && line[i + 1] === '"') { current += '"'; i++; }
+        else { inQuotes = !inQuotes; }
+      } else if (ch === ',' && !inQuotes) {
+        fields.push(current.trim());
+        current = '';
+      } else {
+        current += ch;
+      }
+    }
+    fields.push(current.trim());
+    return fields;
+  };
+
   const importCsv = () => {
     const parsed = csvText
       .split('\n')
       .map((line) => line.trim())
       .filter(Boolean)
       .map((line, index) => {
-        const [roundStr = '1', category = '', basePoints = '100', t1 = '', a1 = '', id1 = '', ms1 = '', t2 = '', a2 = '', id2 = '', ms2 = '', t3 = '', a3 = '', id3 = '', ms3 = ''] = line.split(',').map(s => s.trim());
+        const [roundStr = '1', category = '', basePoints = '100', t1 = '', a1 = '', id1 = '', ms1 = '', t2 = '', a2 = '', id2 = '', ms2 = '', t3 = '', a3 = '', id3 = '', ms3 = ''] = parseCsvLine(line);
         const round = Number(roundStr) || 1;
         return {
           id: `csv-r${round}q${index + 1}`,
