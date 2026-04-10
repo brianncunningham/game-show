@@ -1,7 +1,7 @@
 {
-  "id": "save-1775666892285",
-  "name": "Game 1 - 041026",
-  "savedAt": "2026-04-08T16:48:12.285Z",
+  "id": "save-1775841473172",
+  "name": "GAME 1 - 04102026",
+  "savedAt": "2026-04-10T17:17:53.172Z",
   "questions": [
     {
       "id": "csv-r1q1",
@@ -11,15 +11,21 @@
       "songs": [
         {
           "title": "Sweet Child O’ Mine",
-          "artist": "Guns N’ Roses"
+          "artist": "Guns N’ Roses",
+          "spotifyTrackId": "7snQQk1zcKl8gZ92AnueZW",
+          "clipStartMs": 0
         },
         {
           "title": "Billie Jean",
-          "artist": "Michael Jackson"
+          "artist": "Michael Jackson",
+          "spotifyTrackId": "7J1uxwnxfQLu4APicE5Rnj",
+          "clipStartMs": 0
         },
         {
           "title": "Livin’ on a Prayer",
-          "artist": "Bon Jovi"
+          "artist": "Bon Jovi",
+          "spotifyTrackId": "0ee1DiZF94NSqqpG0XHUzH",
+          "clipStartMs": 0
         }
       ],
       "clipStart": 0,
@@ -34,15 +40,21 @@
       "songs": [
         {
           "title": "I Gotta Feeling",
-          "artist": "Black Eyed Peas"
+          "artist": "Black Eyed Peas",
+          "spotifyTrackId": "2H1047e0oMSj10dgp7p2VG",
+          "clipStartMs": 0
         },
         {
           "title": "Party in the U.S.A.",
-          "artist": "Miley Cyrus"
+          "artist": "Miley Cyrus",
+          "spotifyTrackId": "5Q0Nhxo0l2bP3pNjpGJwV1",
+          "clipStartMs": 0
         },
         {
           "title": "Don’t Stop Believin’",
-          "artist": "Journey"
+          "artist": "Journey",
+          "spotifyTrackId": "5RKQ5NdjSh2QzD4MaunT91",
+          "clipStartMs": 0
         }
       ],
       "clipStart": 0,
@@ -57,15 +69,21 @@
       "songs": [
         {
           "title": "Anti-Hero",
-          "artist": "Taylor Swift"
+          "artist": "Taylor Swift",
+          "spotifyTrackId": "0V3wPSX9ygBnCm8psDIegu",
+          "clipStartMs": 0
         },
         {
           "title": "As It Was",
-          "artist": "Harry Styles"
+          "artist": "Harry Styles",
+          "spotifyTrackId": "4Dvkj6JhhA12EX05fT7y2e",
+          "clipStartMs": 0
         },
         {
           "title": "Espresso",
-          "artist": "Sabrina Carpenter"
+          "artist": "Sabrina Carpenter",
+          "spotifyTrackId": "2HRqTpkrJO5ggZyyK6NPWz",
+          "clipStartMs": 0
         }
       ],
       "clipStart": 0,
@@ -80,15 +98,21 @@
       "songs": [
         {
           "title": "Wagon Wheel",
-          "artist": "Darius Rucker"
+          "artist": "Darius Rucker",
+          "spotifyTrackId": "3xdjjKMcMOFgo1eQrfbogM",
+          "clipStartMs": 0
         },
         {
           "title": "Chicken Fried",
-          "artist": "Zac Brown Band"
+          "artist": "Zac Brown Band",
+          "spotifyTrackId": "0LQtEJt7x0s6knb6RKdRYc",
+          "clipStartMs": 0
         },
         {
           "title": "Old Town Road",
-          "artist": "Lil Nas X"
+          "artist": "",
+          "spotifyTrackId": "NOT_FOUND",
+          "clipStartMs": null
         }
       ],
       "clipStart": 0,
@@ -103,15 +127,21 @@
       "songs": [
         {
           "title": "Happy",
-          "artist": "Pharrell Williams"
+          "artist": "Pharrell Williams",
+          "spotifyTrackId": "60nZcImufyMA1MKQY3dcCH",
+          "clipStartMs": 0
         },
         {
           "title": "Ghostbusters",
-          "artist": "Ray Parker Jr."
+          "artist": "Ray Parker Jr.",
+          "spotifyTrackId": "3m0y8qLoznUYi73SUBP8GI",
+          "clipStartMs": 0
         },
         {
           "title": "Footloose",
-          "artist": "Kenny Loggins"
+          "artist": "Kenny Loggins",
+          "spotifyTrackId": "6W2VbtvMrDXm5vYeB7amkO",
+          "clipStartMs": 0
         }
       ],
       "clipStart": 0,
@@ -126,15 +156,21 @@
       "songs": [
         {
           "title": "Baby One More Time",
-          "artist": "Britney Spears"
+          "artist": "Britney Spears",
+          "spotifyTrackId": "3MjUtNVVq3C8Fn0MP3zhXa",
+          "clipStartMs": 0
         },
         {
           "title": "Smells Like Teen Spirit",
-          "artist": "Nirvana"
+          "artist": "Nirvana",
+          "spotifyTrackId": "5ghIJDpPoe3CfHMGu71E6T",
+          "clipStartMs": 0
         },
         {
           "title": "No Scrubs",
-          "artist": "TLC"
+          "artist": "TLC",
+          "spotifyTrackId": "1KGi9sZVMeszgZOWivFpxs",
+          "clipStartMs": 0
         }
       ],
       "clipStart": 0,
@@ -149,15 +185,21 @@
       "songs": [
         {
           "title": "Shallow",
-          "artist": "Lady Gaga & Bradley Cooper"
+          "artist": "Lady Gaga & Bradley Cooper",
+          "spotifyTrackId": "2VxeLyX666F8uXCJ0dZF8B",
+          "clipStartMs": 0
         },
         {
           "title": "Señorita",
-          "artist": "Shawn Mendes & Camila Cabello"
+          "artist": "Shawn Mendes & Camila Cabello",
+          "spotifyTrackId": "6v3KW9xbzN5yKLt9YKDYA2",
+          "clipStartMs": 0
         },
         {
           "title": "Cold Heart",
-          "artist": "Elton John & Dua Lipa"
+          "artist": "Elton John & Dua Lipa",
+          "spotifyTrackId": "7rglLriMNBPAyuJOMGwi39",
+          "clipStartMs": 0
         }
       ],
       "clipStart": 0,
@@ -172,15 +214,21 @@
       "songs": [
         {
           "title": "Bye Bye Bye",
-          "artist": "NSYNC"
+          "artist": "NSYNC",
+          "spotifyTrackId": "62bOmKYxYg7dhrC6gH9vFn",
+          "clipStartMs": 0
         },
         {
           "title": "Dynamite",
-          "artist": "BTS"
+          "artist": "BTS",
+          "spotifyTrackId": "5QDLhrAOJJdNAmCTJ8xMyW",
+          "clipStartMs": 0
         },
         {
           "title": "What Makes You Beautiful",
-          "artist": "One Direction"
+          "artist": "One Direction",
+          "spotifyTrackId": "4cluDES4hQEUhmXj6TXkSo",
+          "clipStartMs": 0
         }
       ],
       "clipStart": 0,
@@ -195,15 +243,21 @@
       "songs": [
         {
           "title": "Let It Go",
-          "artist": "Idina Menzel"
+          "artist": "Idina Menzel",
+          "spotifyTrackId": "0qcr5FMsEO85NAQjrlDRKo",
+          "clipStartMs": 0
         },
         {
           "title": "We Don’t Talk About Bruno",
-          "artist": "Encanto Cast"
+          "artist": "Encanto Cast",
+          "spotifyTrackId": "52xJxFP6TqMuO4Yt0eOkMz",
+          "clipStartMs": 0
         },
         {
           "title": "Under the Sea",
-          "artist": "The Little Mermaid"
+          "artist": "The Little Mermaid",
+          "spotifyTrackId": "7Cux0Rc1hY5Pt5T28apnzv",
+          "clipStartMs": 0
         }
       ],
       "clipStart": 0,
@@ -218,15 +272,21 @@
       "songs": [
         {
           "title": "Say So",
-          "artist": "Doja Cat"
+          "artist": "Doja Cat",
+          "spotifyTrackId": "3Dv1eDb0MEgF93GpLXlucZ",
+          "clipStartMs": 0
         },
         {
           "title": "Made You Look",
-          "artist": "Meghan Trainor"
+          "artist": "Meghan Trainor",
+          "spotifyTrackId": "0QHEIqNKsMoOY5urbzN48u",
+          "clipStartMs": 0
         },
         {
           "title": "Kill Bill",
-          "artist": "SZA"
+          "artist": "SZA",
+          "spotifyTrackId": "1Qrg8KqiBpW07V7PNxwwwL",
+          "clipStartMs": 0
         }
       ],
       "clipStart": 0,
@@ -241,15 +301,21 @@
       "songs": [
         {
           "title": "Since U Been Gone",
-          "artist": "Kelly Clarkson"
+          "artist": "Kelly Clarkson",
+          "spotifyTrackId": "3xrn9i8zhNZsTtcoWgQEAd",
+          "clipStartMs": 0
         },
         {
           "title": "Uptown Funk",
-          "artist": "Mark Ronson ft. Bruno Mars"
+          "artist": "Mark Ronson ft. Bruno Mars",
+          "spotifyTrackId": "32OlwWuMpZ6b0aN2RZOeMS",
+          "clipStartMs": 0
         },
         {
           "title": "Rolling in the Deep",
-          "artist": "Adele"
+          "artist": "Adele",
+          "spotifyTrackId": "1c8gk2PeTE04A1pIDH9YMk",
+          "clipStartMs": 0
         }
       ],
       "clipStart": 0,
@@ -264,15 +330,21 @@
       "songs": [
         {
           "title": "Firework",
-          "artist": "Katy Perry"
+          "artist": "Katy Perry",
+          "spotifyTrackId": "4r6eNCsrZnQWJzzvFh4nlg",
+          "clipStartMs": 0
         },
         {
           "title": "Wannabe",
-          "artist": "Spice Girls"
+          "artist": "Spice Girls",
+          "spotifyTrackId": "1Je1IMUlBXcx1Fz0WE7oPT",
+          "clipStartMs": 0
         },
         {
           "title": "Survivor",
-          "artist": "Destiny’s Child"
+          "artist": "Destiny’s Child",
+          "spotifyTrackId": "2Mpj1Ul5OFPyyP4wB62Rvi",
+          "clipStartMs": 0
         }
       ],
       "clipStart": 0,
@@ -287,15 +359,21 @@
       "songs": [
         {
           "title": "Take On Me",
-          "artist": "a-ha"
+          "artist": "a-ha",
+          "spotifyTrackId": "2WfaOiMkCvy7F5fcp2zZ8L",
+          "clipStartMs": 0
         },
         {
           "title": "Tubthumping",
-          "artist": "Chumbawamba"
+          "artist": "Chumbawamba",
+          "spotifyTrackId": "22HYEJveCvykVDHDiEEmjZ",
+          "clipStartMs": 24000
         },
         {
           "title": "Mambo No. 5",
-          "artist": "Lou Bega"
+          "artist": "Lou Bega",
+          "spotifyTrackId": "6x4tKaOzfNJpEJHySoiJcs",
+          "clipStartMs": 6000
         }
       ],
       "clipStart": 0,
@@ -310,15 +388,21 @@
       "songs": [
         {
           "title": "Ice Ice Baby",
-          "artist": "Vanilla Ice"
+          "artist": "Vanilla Ice",
+          "spotifyTrackId": "3XVozq1aeqsJwpXrEZrDJ9",
+          "clipStartMs": 0
         },
         {
           "title": "Lose Yourself",
-          "artist": "Eminem"
+          "artist": "Eminem",
+          "spotifyTrackId": "5Z01UMMf7V1o0MzF86s6WJ",
+          "clipStartMs": 0
         },
         {
           "title": "U Can’t Touch This",
-          "artist": "MC Hammer"
+          "artist": "MC Hammer",
+          "spotifyTrackId": "1B75hgRqe7A4fwee3g3Wmu",
+          "clipStartMs": 0
         }
       ],
       "clipStart": 0,
@@ -328,20 +412,26 @@
     {
       "id": "csv-r3q15",
       "round": 3,
-      "category": "TV Theme Songs",
+      "category": "Prime Time TV",
       "songLabel": "",
       "songs": [
         {
           "title": "Friends Theme (I’ll Be There for You)",
-          "artist": "The Rembrandts"
-        },
-        {
-          "title": "SpongeBob SquarePants Theme",
-          "artist": "Cast"
+          "artist": "The Rembrandts",
+          "spotifyTrackId": "15tHagkk8z306XkyOHqiip",
+          "clipStartMs": 0
         },
         {
           "title": "Fresh Prince of Bel-Air",
-          "artist": "Will Smith"
+          "artist": "Will Smith",
+          "spotifyTrackId": "3O3aPUd6Z4eU1e1gT7O0Wc",
+          "clipStartMs": 55000
+        },
+        {
+          "title": "Running Up That Hill (A Deal with God)",
+          "artist": "Kate Bush",
+          "spotifyTrackId": "1PtQJZVZIdWIYdARpZRDFO",
+          "clipStartMs": 0
         }
       ],
       "clipStart": 0,
