@@ -7,6 +7,16 @@ Music game show app with a host control panel, admin setup, and audience display
 - `/host` — host controls for running each round (use on tablet)
 - `/gameadmin` — pre-game setup: teams, players, questions, rules
 
+## Game content
+
+Songs, Spotify IDs, and game CSV files are managed in Google Sheets:
+
+**[Game Show Playlist & CSV Builder](https://docs.google.com/spreadsheets/d/1vUIxbrNS7_EwZCXnMvVfVXywJq5vMZLRNQf1g9b7b70/edit?gid=1514371114#gid=1514371114)**
+
+Use it to:
+- Build playlists and look up Spotify track IDs
+- Generate CSV rows to import via `/gameadmin` → Import CSV Text
+
 ## Local development
 
 ```bash
