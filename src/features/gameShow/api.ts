@@ -157,6 +157,32 @@ export const deleteSave = async (id: string): Promise<void> => {
   if (!response.ok) throw new Error('Failed to delete save');
 };
 
+export const listKnownPlayers = async (): Promise<string[]> => {
+  const response = await fetch(`${API_BASE}/known-players`, { credentials: 'include' });
+  if (!response.ok) throw new Error('Failed to list known players');
+  return response.json();
+};
+
+export const addKnownPlayers = async (names: string[]): Promise<string[]> => {
+  const response = await fetch(`${API_BASE}/known-players`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ names }),
+  });
+  if (!response.ok) throw new Error('Failed to add known players');
+  return response.json();
+};
+
+export const deleteKnownPlayer = async (name: string): Promise<string[]> => {
+  const response = await fetch(`${API_BASE}/known-players/${encodeURIComponent(name)}`, {
+    method: 'DELETE',
+    credentials: 'include',
+  });
+  if (!response.ok) throw new Error('Failed to delete known player');
+  return response.json();
+};
+
 export const updateGameConfig = async (payload: {
   practiceMode?: boolean;
   hostLocked?: boolean;

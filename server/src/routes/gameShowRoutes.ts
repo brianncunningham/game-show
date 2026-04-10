@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { gameShowStore } from '../services/gameShowStore.js';
 import { createSave, deleteSave, listSaves, loadSave } from '../services/gameSaveService.js';
+import { addKnownPlayers, deleteKnownPlayer, listKnownPlayers } from '../services/knownPlayersService.js';
 
 const router = Router();
 
@@ -168,6 +169,23 @@ router.delete('/saves/:id', (req, res) => {
     return;
   }
   res.json({ ok: true });
+});
+
+router.get('/known-players', (_req, res) => {
+  res.json(listKnownPlayers());
+});
+
+router.post('/known-players', (req, res) => {
+  const { names } = req.body as { names?: string[] };
+  if (!Array.isArray(names)) {
+    res.status(400).json({ error: 'names array required' });
+    return;
+  }
+  res.json(addKnownPlayers(names));
+});
+
+router.delete('/known-players/:name', (req, res) => {
+  res.json(deleteKnownPlayer(decodeURIComponent(req.params.name)));
 });
 
 export default router;
