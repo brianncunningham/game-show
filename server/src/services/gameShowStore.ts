@@ -587,16 +587,17 @@ class GameShowStore extends EventEmitter {
       return this.state;
     }
 
-    const completedTheme = Boolean(this.state.roundState.selectedQuestionId);
-    const usedIds = completedTheme
+    // Only mark question as used if the answer was actually resolved (not a mid-round reset)
+    const answerResolved = this.state.roundState.answerState === 'correct' || this.state.roundState.stealState === 'resolved';
+    const allSongsPlayed = this.state.roundState.activeSongIndex !== null && this.state.roundState.activeSongIndex >= 2;
+    const themeCompleted = Boolean(this.state.roundState.selectedQuestionId) && (answerResolved || allSongsPlayed);
+    const usedIds = themeCompleted
       ? [...new Set([...this.state.roundState.usedQuestionIds, this.state.roundState.selectedQuestionId!])]
       : this.state.roundState.usedQuestionIds;
 
-    // Alternate chooser when a theme was completed: either answer resolved, or all songs were played through
-    const answerResolved = this.state.roundState.answerState === 'correct' || this.state.roundState.stealState === 'resolved';
-    const allSongsPlayed = this.state.roundState.activeSongIndex !== null && this.state.roundState.activeSongIndex >= 2;
+    // Alternate chooser only when a theme was actually completed
     let nextChooserId = this.state.chooserTeamId;
-    if (completedTheme && (answerResolved || allSongsPlayed)) {
+    if (themeCompleted) {
       const activeTeams = this.state.teams.filter(t => !t.eliminated);
       const idx = activeTeams.findIndex(t => t.id === this.state.chooserTeamId);
       nextChooserId = activeTeams[(idx + 1) % activeTeams.length]?.id ?? this.state.chooserTeamId;

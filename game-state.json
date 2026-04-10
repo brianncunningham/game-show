@@ -41,7 +41,7 @@
         "Melissa",
         "Zenaia"
       ],
-      "score": 100,
+      "score": 0,
       "eliminated": false
     },
     {
@@ -67,7 +67,7 @@
         "Bradley",
         "Julie"
       ],
-      "score": 100,
+      "score": 0,
       "eliminated": false
     },
     {
@@ -97,25 +97,25 @@
     {
       "id": "csv-r1q1",
       "round": 1,
-      "category": "The 90s",
+      "category": "DEMO Essentials",
       "songLabel": "",
       "songs": [
         {
-          "title": "All Star",
-          "artist": "Smash Mouth",
-          "spotifyTrackId": "3cfOd4CMv2snFaKAnMdnvK",
+          "title": "Stayin' Alive",
+          "artist": "Bee Gees",
+          "spotifyTrackId": "3mRM4NM8iO7UBqrSigCQFH",
           "clipStartMs": 0
         },
         {
-          "title": "I Want It That Way",
-          "artist": "Backstreet Boys",
-          "spotifyTrackId": "47BBI51FKFwOMlIiX6m8ya",
+          "title": "Baby Shark",
+          "artist": "Pinkfong",
+          "spotifyTrackId": "5ygDXis42ncn6kYG14lEVG",
           "clipStartMs": 0
         },
         {
-          "title": "Wonderwall",
-          "artist": "Oasis",
-          "spotifyTrackId": "7ygpwy2qP3NbrxVkHvUhXY",
+          "title": "Sweet Caroline",
+          "artist": "Neil Diamond",
+          "spotifyTrackId": "62AuGbAkt8Ox2IrFFb8GKV",
           "clipStartMs": 0
         }
       ],
@@ -126,25 +126,22 @@
     {
       "id": "csv-r1q2",
       "round": 1,
-      "category": "Songs with Names in Title",
+      "category": "Practice 2",
       "songLabel": "",
       "songs": [
         {
-          "title": "Houdini",
-          "artist": "Eminem",
-          "spotifyTrackId": "2HYFX63wP3otVIvopRS99Z",
-          "clipStartMs": 6500
-        },
-        {
-          "title": "Luther",
-          "artist": "Kendrick Lamar & Sza",
-          "spotifyTrackId": "2CGNAOSuO1MEFCbBRgUzjd",
+          "title": "",
+          "artist": "",
           "clipStartMs": 0
         },
         {
-          "title": "Billie Jean",
-          "artist": "Michael Jackson",
-          "spotifyTrackId": "7J1uxwnxfQLu4APicE5Rnj",
+          "title": "",
+          "artist": "",
+          "clipStartMs": 0
+        },
+        {
+          "title": "",
+          "artist": "",
           "clipStartMs": 0
         }
       ],
@@ -155,25 +152,22 @@
     {
       "id": "csv-r1q3",
       "round": 1,
-      "category": "One-Hit Wonders",
+      "category": "Practice 3",
       "songLabel": "",
       "songs": [
         {
-          "title": "Gangnam Style",
-          "artist": "PSY",
-          "spotifyTrackId": "03UrZgTINDqvnUMbbIMhql",
+          "title": "",
+          "artist": "",
           "clipStartMs": 0
         },
         {
-          "title": "Blue (Da Ba Dee)",
-          "artist": "Eiffel 65",
-          "spotifyTrackId": "4GewRLEiI4BDTQsoH8BRVV",
+          "title": "",
+          "artist": "",
           "clipStartMs": 0
         },
         {
-          "title": "Call Me Maybe",
-          "artist": "Carly Rae Jepsen",
-          "spotifyTrackId": "3TGRqZ0a2l1LRblBkJoaDx",
+          "title": "",
+          "artist": "",
           "clipStartMs": 0
         }
       ],
@@ -184,25 +178,22 @@
     {
       "id": "csv-r1q4",
       "round": 1,
-      "category": "Colors",
+      "category": "Practice 4",
       "songLabel": "",
       "songs": [
         {
-          "title": "Pink Pony Club",
-          "artist": "Chappell Roan",
-          "spotifyTrackId": "6393yGahSJ9slVdOwSxOVR",
+          "title": "",
+          "artist": "",
           "clipStartMs": 0
         },
         {
-          "title": "Something in the Orange",
-          "artist": "Zach Bryan",
-          "spotifyTrackId": "3WMj8moIAXJhHsyLaqIIHI",
+          "title": "",
+          "artist": "",
           "clipStartMs": 0
         },
         {
-          "title": "Yellow",
-          "artist": "Coldplay",
-          "spotifyTrackId": "3AJwUDP919kvQ9QcozQPxg",
+          "title": "",
+          "artist": "",
           "clipStartMs": 0
         }
       ],
@@ -213,315 +204,22 @@
     {
       "id": "csv-r1q5",
       "round": 1,
-      "category": "Heard on TikTok",
+      "category": "Practice 5",
       "songLabel": "",
       "songs": [
         {
-          "title": "Savage Love",
-          "artist": "Jawsh 685 & Jason Derulo",
-          "spotifyTrackId": "1xQ6trAsedVPCdbtDAmk0c",
+          "title": "",
+          "artist": "",
           "clipStartMs": 0
         },
         {
-          "title": "HOT TO GO!",
-          "artist": "Chappell Roan",
-          "spotifyTrackId": "3j6CeoBBlm40Msn1JE1SPD",
+          "title": "",
+          "artist": "",
           "clipStartMs": 0
         },
         {
-          "title": "Anxiety",
-          "artist": "Doechii",
-          "spotifyTrackId": "3LPLRNr58Z9Pn0clnEtkXb",
-          "clipStartMs": 0
-        }
-      ],
-      "clipStart": 0,
-      "clipDuration": 0,
-      "basePoints": 100
-    },
-    {
-      "id": "csv-r2q6",
-      "round": 2,
-      "category": "Breakup Songs",
-      "songLabel": "",
-      "songs": [
-        {
-          "title": "Back to Friends",
-          "artist": "sombr",
-          "spotifyTrackId": "7qjZnBKE73H4Oxkopwulqe",
-          "clipStartMs": 0
-        },
-        {
-          "title": "Complicated",
-          "artist": "Avril Lavigne",
-          "spotifyTrackId": "5xEM5hIgJ1jjgcEBfpkt2F",
-          "clipStartMs": 0
-        },
-        {
-          "title": "We Are Never Ever Getting Back Together",
-          "artist": "Taylor Swift",
-          "spotifyTrackId": "5YqltLsjdqFtvqE7Nrysvs",
-          "clipStartMs": 0
-        }
-      ],
-      "clipStart": 0,
-      "clipDuration": 0,
-      "basePoints": 100
-    },
-    {
-      "id": "csv-r2q7",
-      "round": 2,
-      "category": "The 80s",
-      "songLabel": "",
-      "songs": [
-        {
-          "title": "Girls Just Want to Have Fun",
-          "artist": "Cyndi Lauper",
-          "spotifyTrackId": "4y1LsJpmMti1PfRQV9AWWe",
-          "clipStartMs": 0
-        },
-        {
-          "title": "Raspberry Beret",
-          "artist": "Prince",
-          "spotifyTrackId": "2I1W3hcSsPIsEJfD69pHrW",
-          "clipStartMs": 0
-        },
-        {
-          "title": "Like a Prayer",
-          "artist": "Madonna",
-          "spotifyTrackId": "2v7ywbUzCgcVohHaKUcacV",
-          "clipStartMs": 9500
-        }
-      ],
-      "clipStart": 0,
-      "clipDuration": 0,
-      "basePoints": 100
-    },
-    {
-      "id": "csv-r2q8",
-      "round": 2,
-      "category": "Country Hits",
-      "songLabel": "",
-      "songs": [
-        {
-          "title": "Last Night",
-          "artist": "Morgan Wallen",
-          "spotifyTrackId": "583dMdiUquLMenarTp7PQm",
-          "clipStartMs": 0
-        },
-        {
-          "title": "Friends in Low Places",
-          "artist": "Garth Brooks",
-          "spotifyTrackId": "5Ynx2XR1wGAZ3eUD7ED9J4",
-          "clipStartMs": 0
-        },
-        {
-          "title": "Tennessee Whiskey",
-          "artist": "Chris Stapleton",
-          "spotifyTrackId": "3fqwjXwUGN6vbzIwvyFMhx",
-          "clipStartMs": 0
-        }
-      ],
-      "clipStart": 0,
-      "clipDuration": 0,
-      "basePoints": 100
-    },
-    {
-      "id": "csv-r2q9",
-      "round": 2,
-      "category": "Female Anthems",
-      "songLabel": "",
-      "songs": [
-        {
-          "title": "Respect",
-          "artist": "Aretha Franklin",
-          "spotifyTrackId": "7s25THrKz86DM225dOYwnr",
-          "clipStartMs": 0
-        },
-        {
-          "title": "Roar",
-          "artist": "Katy Perry",
-          "spotifyTrackId": "27tNWlhdAryQY04Gb2ZhUI",
-          "clipStartMs": 0
-        },
-        {
-          "title": "Run the World (Girls)",
-          "artist": "Beyoncé",
-          "spotifyTrackId": "1uXbwHHfgsXcUKfSZw5ZJ0",
-          "clipStartMs": 0
-        }
-      ],
-      "clipStart": 0,
-      "clipDuration": 0,
-      "basePoints": 100
-    },
-    {
-      "id": "csv-r2q10",
-      "round": 2,
-      "category": "The Weather",
-      "songLabel": "",
-      "songs": [
-        {
-          "title": "Thunder",
-          "artist": "Imagine Dragons",
-          "spotifyTrackId": "1zB4vmk8tFRmM9UULNzbLB",
-          "clipStartMs": 0
-        },
-        {
-          "title": "Heat Waves",
-          "artist": "Glass Animals",
-          "spotifyTrackId": "3USxtqRwSYz57Ewm6wWRMp",
-          "clipStartMs": 0
-        },
-        {
-          "title": "Purple Rain",
-          "artist": "Prince",
-          "spotifyTrackId": "1uvyZBs4IZYRebHIB1747m",
-          "clipStartMs": 0
-        }
-      ],
-      "clipStart": 0,
-      "clipDuration": 0,
-      "basePoints": 100
-    },
-    {
-      "id": "csv-r3q11",
-      "round": 3,
-      "category": "Dance Songs",
-      "songLabel": "",
-      "songs": [
-        {
-          "title": "Get Lucky",
-          "artist": "Daft Punk ft. Pharrell",
-          "spotifyTrackId": "2jyjdujFPnzqtCr3229yls",
-          "clipStartMs": 0
-        },
-        {
-          "title": "Crank That",
-          "artist": "Soulja Boy",
-          "spotifyTrackId": "66TRwr5uJwPt15mfFkzhbi",
-          "clipStartMs": 0
-        },
-        {
-          "title": "Cotton Eye Joe",
-          "artist": "Rednex",
-          "spotifyTrackId": "0Jg602cHeMCnPez9baacIe",
-          "clipStartMs": 0
-        }
-      ],
-      "clipStart": 0,
-      "clipDuration": 0,
-      "basePoints": 100
-    },
-    {
-      "id": "csv-r3q12",
-      "round": 3,
-      "category": "Hip Hop Now",
-      "songLabel": "",
-      "songs": [
-        {
-          "title": "Not Like Us",
-          "artist": "Kendrick Lamar",
-          "spotifyTrackId": "6AI3ezQ4o3HUoP6Dhudph3",
-          "clipStartMs": 0
-        },
-        {
-          "title": "Paint the Town Red",
-          "artist": "Doja Cat",
-          "spotifyTrackId": "4dHRp03oxqJQfjGU8ECo7v",
-          "clipStartMs": 0
-        },
-        {
-          "title": "One Dance",
-          "artist": "Drake",
-          "spotifyTrackId": "1zi7xx7UVEFkmKfv06H8x0",
-          "clipStartMs": 0
-        }
-      ],
-      "clipStart": 0,
-      "clipDuration": 0,
-      "basePoints": 100
-    },
-    {
-      "id": "csv-r3q13",
-      "round": 3,
-      "category": "One Word",
-      "songLabel": "",
-      "songs": [
-        {
-          "title": "Royals",
-          "artist": "Lorde",
-          "spotifyTrackId": "2dLLR6qlu5UJ5gk0dKz0h3",
-          "clipStartMs": 0
-        },
-        {
-          "title": "Circles",
-          "artist": "Post Malone",
-          "spotifyTrackId": "21jGcNKet2qwijlDFuPiPb",
-          "clipStartMs": 0
-        },
-        {
-          "title": "Chandelier",
-          "artist": "Sia",
-          "spotifyTrackId": "2s1sdSqGcKxpPr5lCl7jAV",
-          "clipStartMs": 0
-        }
-      ],
-      "clipStart": 0,
-      "clipDuration": 0,
-      "basePoints": 100
-    },
-    {
-      "id": "csv-r3q14",
-      "round": 3,
-      "category": "Today’s Top Hits",
-      "songLabel": "",
-      "songs": [
-        {
-          "title": "I Just Might",
-          "artist": "Bruno Mars",
-          "spotifyTrackId": "6f68Ac5tt5BQOpwr0BV9oN",
-          "clipStartMs": 0
-        },
-        {
-          "title": "Levitating",
-          "artist": "Dua Lipa",
-          "spotifyTrackId": "5nujrmhLynf4yMoMtj8AQF",
-          "clipStartMs": 0
-        },
-        {
-          "title": "Lovin On Me",
-          "artist": "Jack Harlow",
-          "spotifyTrackId": "4xhsWYTOGcal8zt0J161CU",
-          "clipStartMs": 0
-        }
-      ],
-      "clipStart": 0,
-      "clipDuration": 0,
-      "basePoints": 100
-    },
-    {
-      "id": "csv-r3q15",
-      "round": 3,
-      "category": "Rock Out",
-      "songLabel": "",
-      "songs": [
-        {
-          "title": "Song 2",
-          "artist": "Blur",
-          "spotifyTrackId": "1FTSo4v6BOZH9QxKc3MbVM",
-          "clipStartMs": 0
-        },
-        {
-          "title": "American Idiot",
-          "artist": "Green Day",
-          "spotifyTrackId": "6nTiIhLmQ3FWhvrGafw2zj",
-          "clipStartMs": 0
-        },
-        {
-          "title": "Mr. Brightside",
-          "artist": "The Killers",
-          "spotifyTrackId": "003vvx7Niy0yvhvHt4a68B",
+          "title": "",
+          "artist": "",
           "clipStartMs": 0
         }
       ],
@@ -531,44 +229,20 @@
     }
   ],
   "roundState": {
-    "selectedQuestionId": "csv-r1q1",
-    "activeSongIndex": 1,
-    "usedQuestionIds": [
-      "csv-r1q1"
-    ],
-    "clipState": "resolved",
-    "buzzWinnerTeamId": "team-b",
-    "attemptedTeamIds": [
-      "team-b"
-    ],
+    "selectedQuestionId": null,
+    "activeSongIndex": null,
+    "usedQuestionIds": [],
+    "clipState": "idle",
+    "buzzWinnerTeamId": null,
+    "attemptedTeamIds": [],
     "stealingTeamId": null,
-    "answerState": "wrong",
-    "stealState": "resolved",
-    "lastPointsAwarded": 100,
+    "answerState": "pending",
+    "stealState": "idle",
+    "lastPointsAwarded": null,
     "artistBonusUsed": false,
-    "revealState": "both"
+    "revealState": "none"
   },
   "eventLog": [
-    {
-      "action": "update_config",
-      "at": "2026-04-10T01:39:44.510Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-10T01:39:44.890Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-10T01:39:45.070Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-10T01:39:45.173Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-10T01:39:45.352Z"
-    },
     {
       "action": "update_config",
       "at": "2026-04-10T01:39:45.483Z"
@@ -948,9 +622,29 @@
     {
       "action": "update_config",
       "at": "2026-04-10T18:55:33.772Z"
+    },
+    {
+      "action": "update_config",
+      "at": "2026-04-10T19:00:39.112Z"
+    },
+    {
+      "action": "reset_scores",
+      "at": "2026-04-10T19:01:27.951Z"
+    },
+    {
+      "action": "toggle_show_intro",
+      "at": "2026-04-10T19:01:30.219Z"
+    },
+    {
+      "action": "toggle_show_rules",
+      "at": "2026-04-10T19:01:30.220Z"
+    },
+    {
+      "action": "start_game",
+      "at": "2026-04-10T19:01:30.222Z"
     }
   ],
-  "updatedAt": "2026-04-10T18:55:33.772Z",
+  "updatedAt": "2026-04-10T19:01:30.222Z",
   "showIntro": false,
   "randomizerSeq": 32,
   "showRules": false,

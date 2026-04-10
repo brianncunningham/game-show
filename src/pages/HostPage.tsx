@@ -222,11 +222,6 @@ export const HostPage = () => {
                   </Button>
                 </Grid>
                 <Grid item xs={6} sm={4} md="auto">
-                  <Button fullWidth color="info" variant="outlined" sx={bigBtnSx} onClick={() => void toggleHostLock()}>
-                    {state?.hostLocked ? 'Unlock host' : 'Lock host'}
-                  </Button>
-                </Grid>
-                <Grid item xs={6} sm={4} md="auto">
                   <Button fullWidth variant="outlined" sx={bigBtnSx} onClick={() => void undoLastAction()}>
                     Undo
                   </Button>
