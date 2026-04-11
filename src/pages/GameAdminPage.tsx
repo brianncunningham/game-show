@@ -6,6 +6,7 @@ import { SaveManager } from '../features/gameShow/SaveManager';
 import { GameShowSharedView } from '../features/gameShow/GameShowSharedView';
 import { TeamSetup } from '../features/gameShow/TeamSetup';
 import { useGameShowState } from '../features/gameShow/useGameShowState';
+import { BuzzerPanel } from '../features/buzzer/BuzzerPanel';
 
 export const GameAdminPage = () => {
   const { state, isLoading, error } = useGameShowState();
@@ -124,6 +125,8 @@ export const GameAdminPage = () => {
         />
 
         <SaveManager />
+
+        <BuzzerPanel controllerIds={state.teams.slice(0, state.teamCount).map(t => t.id)} />
       </Stack>
   );
 
