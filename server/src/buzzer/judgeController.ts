@@ -1,23 +1,35 @@
 /**
- * Judge Controller — Phase 2
+ * Judge Controller — Protocol v2 (window-based)
  *
- * Implements the buzzer state machine and accepts simulated buzz input.
- * Hardware-independent: future GPIO or network inputs call `receiveBuzz()`
- * through the same code path as simulation.
+ * Implements the window-based buzzer state machine.
+ * Hardware-independent: all input sources call receiveBuzz() identically.
  *
- * State machine:
- *   IDLE   → ARMED   on arm()
- *   ARMED  → LOCKED  on first accepted receiveBuzz()
- *   LOCKED → IDLE    on reset()
+ * Window state machine:
+ *   WAITING → ARMED   on armWindow()
+ *   ARMED   → LOCKED  on first accepted receiveBuzz()
+ *   any     → closed  on closeWindow() or reset()
+ *
+ * The judge holds at most one active window at a time.
+ * The judge does NOT know game rules — the app decides which controllers are
+ * eligible for each window and whether early buzzes should be penalised.
+ *
+ * To add a new input source:
+ *   1. Create a file in server/src/buzzer/inputs/
+ *   2. Import judgeController
+ *   3. Call judgeController.receiveBuzz(controllerId) on input event
  */
 
 import type {
-  JudgeState,
+  BuzzerWindow,
+  WindowState,
   JudgeToAppMessage,
   BuzzAcceptedPayload,
   BuzzRejectedPayload,
   BuzzReceivedPayload,
-  StatePayload,
+  BuzzEarlyPayload,
+  WindowStatePayload,
+  WindowClosedPayload,
+  BuzzRejectionReason,
 } from './types.js';
 import { makeBuzzerMessage } from './types.js';
 
@@ -25,41 +37,92 @@ import { makeBuzzerMessage } from './types.js';
 // Event listener type
 // ---------------------------------------------------------------------------
 
-/** Any consumer (app integration, diagnostics, tests) implements this. */
 export type JudgeEventListener = (message: JudgeToAppMessage) => void;
+
+// ---------------------------------------------------------------------------
+// Internal window tracking
+// ---------------------------------------------------------------------------
+
+interface ActiveWindow extends BuzzerWindow {
+  state: WindowState;
+  armedAt: number | null;
+}
 
 // ---------------------------------------------------------------------------
 // Judge Controller
 // ---------------------------------------------------------------------------
 
 export class JudgeController {
-  private state: JudgeState = 'IDLE';
-  private armedAt: number | null = null;
+  private window: ActiveWindow | null = null;
   private listeners: JudgeEventListener[] = [];
 
   // -------------------------------------------------------------------------
-  // Public API — Commands (App → Judge)
+  // Public API — App → Judge commands
   // -------------------------------------------------------------------------
 
-  /** ARM: Transition from IDLE to ARMED. No-op if already ARMED. */
-  arm(): void {
-    if (this.state === 'ARMED') return;
-    if (this.state === 'LOCKED') {
-      console.warn('[Judge] ARM ignored — currently LOCKED, send RESET first');
-      this.emitState();
-      return;
+  /**
+   * OPEN_WINDOW — create a new buzzing opportunity.
+   * Closes any existing window first.
+   * The window starts in WAITING state (not yet armed).
+   */
+  openWindow(def: BuzzerWindow): void {
+    if (this.window) {
+      console.warn(`[Judge] openWindow — closing existing window '${this.window.windowId}' first`);
+      this.emitWindowClosed(this.window.windowId);
     }
-    this.state = 'ARMED';
-    this.armedAt = Date.now();
-    this.emit(makeBuzzerMessage('READY', undefined));
-    this.emitState();
+    this.window = { ...def, state: 'WAITING', armedAt: null };
+    console.log(`[Judge] Window opened: '${def.windowId}' eligibleControllers=[${def.eligibleControllers.join(',')}] earlyBuzzPenalty=${def.earlyBuzzPenalty}`);
+    this.emitWindowState();
   }
 
-  /** RESET: Return to IDLE from any state, clear lock. */
+  /**
+   * ARM_WINDOW — transition the active window WAITING → ARMED.
+   * The song has resumed; valid buzzes from eligible controllers are now accepted.
+   */
+  armWindow(windowId: string): void {
+    if (!this.window) {
+      console.warn(`[Judge] armWindow '${windowId}' — no active window`);
+      return;
+    }
+    if (this.window.windowId !== windowId) {
+      console.warn(`[Judge] armWindow '${windowId}' — mismatch with active window '${this.window.windowId}'`);
+      return;
+    }
+    if (this.window.state === 'ARMED') return;
+    if (this.window.state === 'LOCKED') {
+      console.warn(`[Judge] armWindow '${windowId}' — window is LOCKED, send CLOSE_WINDOW first`);
+      return;
+    }
+    this.window.state = 'ARMED';
+    this.window.armedAt = Date.now();
+    this.emit(makeBuzzerMessage('READY', undefined));
+    this.emitWindowState();
+  }
+
+  /**
+   * CLOSE_WINDOW — close the active window without a winner.
+   * Use when a round ends with no valid buzz, or to prepare for a steal window.
+   */
+  closeWindow(windowId: string): void {
+    if (!this.window || this.window.windowId !== windowId) {
+      console.warn(`[Judge] closeWindow '${windowId}' — no matching active window`);
+      return;
+    }
+    this.emitWindowClosed(windowId);
+    this.window = null;
+    this.emitWindowState();
+  }
+
+  /**
+   * RESET — hard reset. Closes any active window and returns to clean idle.
+   * Use between songs or on host abort.
+   */
   reset(): void {
-    this.state = 'IDLE';
-    this.armedAt = null;
-    this.emitState();
+    if (this.window) {
+      this.emitWindowClosed(this.window.windowId);
+      this.window = null;
+    }
+    this.emitWindowState();
   }
 
   // -------------------------------------------------------------------------
@@ -67,54 +130,72 @@ export class JudgeController {
   // -------------------------------------------------------------------------
 
   /**
-   * receiveBuzz: THE single entry point for all buzz inputs, regardless of source.
+   * receiveBuzz — single entry point for ALL buzz inputs, regardless of source.
    *
-   * All input adapters (simulation, GPIO, phone clients, ESP32 over HTTP) must
-   * call this method — never manipulate state directly from outside.
-   *
-   * To add a new input source:
-   *   1. Create a file in server/src/buzzer/inputs/
-   *   2. Import judgeController from '../judgeController.js'
-   *   3. Call judgeController.receiveBuzz(controllerId) on input event
-   *   4. That's it — no other changes to judge logic needed
+   * Decision logic:
+   *   1. Always emit BUZZ_RECEIVED (raw event log).
+   *   2. No active window → reject DISABLED.
+   *   3. Eligibility check (if eligibleControllers is non-empty) → reject INELIGIBLE.
+   *   4. Window WAITING + earlyBuzzPenalty → emit BUZZ_EARLY (app handles penalty).
+   *   5. Window WAITING, no penalty → reject NOT_ARMED.
+   *   6. Window LOCKED → reject LOCKED.
+   *   7. Window ARMED → accept, lock window, emit BUZZ_ACCEPTED.
    */
   receiveBuzz(controllerId: string): void {
-    // Always emit BUZZ_RECEIVED so the event log captures every press.
-    const received = makeBuzzerMessage<'BUZZ_RECEIVED', BuzzReceivedPayload>(
+    const win = this.window;
+
+    // Always emit raw received event.
+    this.emit(makeBuzzerMessage<'BUZZ_RECEIVED', BuzzReceivedPayload>(
       'BUZZ_RECEIVED',
-      { controllerId },
-    );
-    this.emit(received);
+      { windowId: win?.windowId ?? null, controllerId },
+    ));
 
-    if (this.state === 'ARMED') {
-      const elapsedMs = this.armedAt !== null ? Date.now() - this.armedAt : 0;
-      this.state = 'LOCKED';
-
-      const accepted = makeBuzzerMessage<'BUZZ_ACCEPTED', BuzzAcceptedPayload>(
-        'BUZZ_ACCEPTED',
-        { controllerId, elapsedMs },
-      );
-      this.emit(accepted);
-      this.emitState();
+    // No window open.
+    if (!win) {
+      this.reject(controllerId, null, 'DISABLED');
       return;
     }
 
-    // Not ARMED — reject with reason.
-    const reason: BuzzRejectedPayload['reason'] =
-      this.state === 'LOCKED' ? 'ALREADY_LOCKED' : 'NOT_ARMED';
+    // Eligibility check.
+    if (win.eligibleControllers.length > 0 && !win.eligibleControllers.includes(controllerId)) {
+      this.reject(controllerId, win.windowId, 'INELIGIBLE');
+      return;
+    }
 
-    const rejected = makeBuzzerMessage<'BUZZ_REJECTED', BuzzRejectedPayload>(
-      'BUZZ_REJECTED',
-      { controllerId, reason },
-    );
-    this.emit(rejected);
+    // Window not yet armed.
+    if (win.state === 'WAITING') {
+      if (win.earlyBuzzPenalty) {
+        this.emit(makeBuzzerMessage<'BUZZ_EARLY', BuzzEarlyPayload>(
+          'BUZZ_EARLY',
+          { windowId: win.windowId, controllerId },
+        ));
+      } else {
+        this.reject(controllerId, win.windowId, 'NOT_ARMED');
+      }
+      return;
+    }
+
+    // Already locked.
+    if (win.state === 'LOCKED') {
+      this.reject(controllerId, win.windowId, 'LOCKED');
+      return;
+    }
+
+    // ARMED — accept.
+    const elapsedMs = win.armedAt !== null ? Date.now() - win.armedAt : 0;
+    win.state = 'LOCKED';
+
+    this.emit(makeBuzzerMessage<'BUZZ_ACCEPTED', BuzzAcceptedPayload>(
+      'BUZZ_ACCEPTED',
+      { windowId: win.windowId, controllerId, elapsedMs },
+    ));
+    this.emitWindowState();
   }
 
   // -------------------------------------------------------------------------
   // Public API — Simulation convenience
   // -------------------------------------------------------------------------
 
-  /** Simulate a buzz from a named controller. Identical to hardware input. */
   simulateBuzz(controllerId: string): void {
     console.log(`[Judge] Simulated buzz from: ${controllerId}`);
     this.receiveBuzz(controllerId);
@@ -124,15 +205,22 @@ export class JudgeController {
   // Public API — Introspection
   // -------------------------------------------------------------------------
 
-  getState(): JudgeState {
-    return this.state;
+  getWindowState(): { windowId: string | null; windowState: WindowState | 'IDLE' } {
+    if (!this.window) return { windowId: null, windowState: 'IDLE' };
+    return { windowId: this.window.windowId, windowState: this.window.state };
+  }
+
+  /** @deprecated use getWindowState() */
+  getState(): 'IDLE' | 'ARMED' | 'LOCKED' {
+    if (!this.window) return 'IDLE';
+    if (this.window.state === 'WAITING') return 'IDLE';
+    return this.window.state;
   }
 
   // -------------------------------------------------------------------------
   // Event listener management
   // -------------------------------------------------------------------------
 
-  /** Subscribe to all judge events. Returns an unsubscribe function. */
   onEvent(listener: JudgeEventListener): () => void {
     this.listeners.push(listener);
     return () => {
@@ -144,19 +232,33 @@ export class JudgeController {
   // Internal helpers
   // -------------------------------------------------------------------------
 
+  private reject(controllerId: string, windowId: string | null, reason: BuzzRejectionReason): void {
+    this.emit(makeBuzzerMessage<'BUZZ_REJECTED', BuzzRejectedPayload>(
+      'BUZZ_REJECTED',
+      { windowId, controllerId, reason },
+    ));
+  }
+
+  private emitWindowClosed(windowId: string): void {
+    this.emit(makeBuzzerMessage<'WINDOW_CLOSED', WindowClosedPayload>(
+      'WINDOW_CLOSED',
+      { windowId },
+    ));
+  }
+
+  private emitWindowState(): void {
+    const { windowId, windowState } = this.getWindowState();
+    this.emit(makeBuzzerMessage<'WINDOW_STATE', WindowStatePayload>(
+      'WINDOW_STATE',
+      { windowId, windowState },
+    ));
+  }
+
   private emit(message: JudgeToAppMessage): void {
     console.log(`[Judge] → ${message.type}`, JSON.stringify(message.payload ?? {}));
     for (const listener of this.listeners) {
       listener(message);
     }
-  }
-
-  private emitState(): void {
-    const stateMsg = makeBuzzerMessage<'STATE', StatePayload>(
-      'STATE',
-      { state: this.state },
-    );
-    this.emit(stateMsg);
   }
 }
 
