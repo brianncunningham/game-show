@@ -44,6 +44,7 @@ const SIM_CONTROLLERS = ['P1', 'P2', 'P3', 'P4'];
 
 const MAX_LOG = 100;
 
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -72,9 +73,13 @@ export const BuzzerDiagnosticsPage = () => {
   const [eventLog,   setEventLog]     = useState<BuzzerEvent[]>([]);
   const logEndRef = useRef<HTMLDivElement | null>(null);
 
-  // Controller → team lookup from live game state
-  const teamByControllerId = (id: string) =>
-    gameState?.teams.find(t => t.id === id);
+  // Resolve winner display name from controllerAssignments
+  const resolveWinner = (controllerId: string) => {
+    const a = gameState?.controllerAssignments?.find(x => x.controllerId === controllerId);
+    if (!a) return { label: controllerId, sub: null };
+    const team = gameState?.teams.find(t => t.id === a.teamId);
+    return { label: a.playerName, sub: team?.name ?? null };
+  };
 
   useEffect(() => {
     const socket = new WebSocket(getBuzzerSocketUrl());
@@ -107,7 +112,7 @@ export const BuzzerDiagnosticsPage = () => {
     logEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [eventLog]);
 
-  const winnerTeam = winner ? teamByControllerId(winner) : null;
+  const winnerResolved = winner ? resolveWinner(winner) : null;
 
   return (
     <Box sx={{ bgcolor: '#0b1020', minHeight: '100vh', color: 'white', p: 3 }}>
@@ -204,114 +209,98 @@ export const BuzzerDiagnosticsPage = () => {
             <Typography variant="overline" sx={{ color: '#4cff91' }}>Winner</Typography>
             <Stack direction="row" spacing={2} alignItems="baseline" flexWrap="wrap">
               <Typography variant="h6" fontWeight={900} sx={{ color: '#4cff91' }}>
-                {winnerTeam ? winnerTeam.name : winner}
+                {winnerResolved?.label ?? winner}
               </Typography>
-              {winnerTeam && (
+              {winnerResolved?.sub && (
                 <Typography variant="body2" color="text.secondary">
-                  controllerId: <code>{winner}</code>
+                  {winnerResolved.sub}
                 </Typography>
               )}
-              {elapsedMs !== null && (
-                <Typography variant="body2" color="text.secondary">
-                  {elapsedMs}ms after ARM
-                </Typography>
-              )}
+              <Typography variant="body2" color="text.secondary">
+                controller #{winner} &nbsp;·&nbsp; {elapsedMs !== null ? `${elapsedMs}ms after ARM` : ''}
+              </Typography>
             </Stack>
-            {winnerTeam && (
-              <Typography variant="caption" color="text.disabled">
-                Players: {winnerTeam.players.join(', ') || 'none assigned'}
-              </Typography>
-            )}
           </Box>
         )}
 
         <Divider sx={{ borderColor: '#ffffff22' }} />
 
         {/* ---------------------------------------------------------------- */}
-        {/* Controller → Team mapping                                        */}
+        {/* Controller assignments + Simulate                               */}
         {/* ---------------------------------------------------------------- */}
         <Stack spacing={1}>
           <Typography variant="overline" color="text.secondary">
-            Controller → Team Mapping
+            Controller Assignments
           </Typography>
-          {!gameState ? (
-            <Typography variant="caption" color="text.disabled">
-              Game state not loaded — mapping unavailable.
-            </Typography>
-          ) : (
-            <>
-              <Typography variant="caption" color="text.disabled">
-                Mapping is based on team IDs from game state. Simulate using a team ID to test mapping.
-              </Typography>
-              <Table size="small" sx={{ '& td, & th': cell }}>
-                <TableHead>
-                  <TableRow>
-                    <TableCell sx={{ ...cell, color: '#aaa' }}>controllerId</TableCell>
-                    <TableCell sx={{ ...cell, color: '#aaa' }}>Team Name</TableCell>
-                    <TableCell sx={{ ...cell, color: '#aaa' }}>Players</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {gameState.teams.slice(0, gameState.teamCount).map(t => (
-                    <TableRow key={t.id}>
-                      <TableCell><code>{t.id}</code></TableCell>
-                      <TableCell>{t.name}</TableCell>
-                      <TableCell sx={{ color: '#888' }}>
-                        {t.players.length ? t.players.join(', ') : '—'}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </>
-          )}
-        </Stack>
-
-        <Divider sx={{ borderColor: '#ffffff22' }} />
-
-        {/* ---------------------------------------------------------------- */}
-        {/* Simulation                                                       */}
-        {/* ---------------------------------------------------------------- */}
-        <Stack spacing={1}>
-          <Typography variant="overline" color="text.secondary">Simulate Buzz</Typography>
           <Typography variant="caption" color="text.disabled">
             Sends through judge logic — same path as hardware. ARM first, then buzz.
           </Typography>
 
-          {/* Named sim controllers */}
-          <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-            {SIM_CONTROLLERS.map(id => (
-              <Button
-                key={id}
-                variant="outlined"
-                color="warning"
-                onClick={() => void simulateBuzz(id)}
-                sx={{ minWidth: 80 }}
-              >
-                Buzz {id}
-              </Button>
-            ))}
-          </Stack>
-
-          {/* Team ID sim buttons if game state loaded */}
-          {gameState && (
+          {!gameState || gameState.controllerAssignments.length === 0 ? (
             <>
-              <Typography variant="caption" color="text.disabled" sx={{ mt: 0.5 }}>
-                Or buzz by team ID (matches mapping table above):
+              <Typography variant="caption" color="text.disabled">
+                No assignments — run player shuffle on /gameadmin, or use generic sim buttons below.
               </Typography>
               <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                {gameState.teams.slice(0, gameState.teamCount).map(t => (
+                {SIM_CONTROLLERS.map(id => (
                   <Button
-                    key={t.id}
+                    key={id}
                     variant="outlined"
-                    size="small"
-                    sx={{ borderColor: '#56d7ff55', color: '#56d7ff', minWidth: 100 }}
-                    onClick={() => void simulateBuzz(t.id)}
+                    color="warning"
+                    onClick={() => void simulateBuzz(id)}
+                    sx={{ minWidth: 80 }}
                   >
-                    {t.name} ({t.id})
+                    Buzz {id}
                   </Button>
                 ))}
               </Stack>
+            </>
+          ) : (
+            <>
+              <Table size="small" sx={{ '& td, & th': cell }}>
+                <TableHead>
+                  <TableRow>
+                    <TableCell sx={{ ...cell, color: '#aaa' }}>#</TableCell>
+                    <TableCell sx={{ ...cell, color: '#aaa' }}>Player</TableCell>
+                    <TableCell sx={{ ...cell, color: '#aaa' }}>Team</TableCell>
+                    <TableCell sx={{ ...cell, color: '#aaa' }}>Simulate</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {gameState.controllerAssignments.map(a => {
+                    const team = gameState.teams.find(t => t.id === a.teamId);
+                    return (
+                      <TableRow key={a.controllerId}>
+                        <TableCell>
+                          <Box sx={{
+                            width: 26, height: 26, borderRadius: '50%',
+                            border: '2px solid #56d7ffcc',
+                            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                            bgcolor: '#56d7ff18',
+                          }}>
+                            <Typography sx={{ fontSize: '0.72rem', fontWeight: 900, fontFamily: 'monospace', color: '#56d7ff', lineHeight: 1 }}>
+                              {a.controllerId}
+                            </Typography>
+                          </Box>
+                        </TableCell>
+                        <TableCell>{a.playerName}</TableCell>
+                        <TableCell sx={{ color: '#888' }}>{team?.name ?? a.teamId}</TableCell>
+                        <TableCell>
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            color="warning"
+                            onClick={() => void simulateBuzz(a.controllerId)}
+                            sx={{ minWidth: 60, py: 0.25 }}
+                          >
+                            Buzz
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
             </>
           )}
         </Stack>
