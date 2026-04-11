@@ -3,6 +3,8 @@ import { existsSync, readFileSync, writeFileSync, renameSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import type {
+  BuzzerMode,
+  ControllerAssignment,
   GameShowQuestion,
   GameShowRoundState,
   GameShowSocketMessage,
@@ -90,6 +92,26 @@ const shuffle = <T,>(items: T[]) => {
   return next;
 };
 
+/**
+ * Build controller assignments for the current player/team layout.
+ * One assignment per player: controllerId = `${teamId}-${playerIndex}`
+ * e.g. team-a-0, team-a-1, team-b-0 ...
+ * These are the stable IDs used by the judge, hardware, and phone clients.
+ */
+const buildControllerAssignments = (teams: GameShowTeam[], teamCount: number): ControllerAssignment[] => {
+  const assignments: ControllerAssignment[] = [];
+  teams.slice(0, teamCount).forEach(team => {
+    team.players.forEach((playerName, index) => {
+      assignments.push({
+        controllerId: `${team.id}-${index}`,
+        teamId: team.id,
+        playerName,
+      });
+    });
+  });
+  return assignments;
+};
+
 const createInitialState = (): GameShowState => ({
   id: 'default-game',
   status: 'setup',
@@ -106,6 +128,8 @@ const createInitialState = (): GameShowState => ({
   playerPool: [],
   teamCount: 4,
   eliminationEnabled: false,
+  buzzerMode: 'manual',
+  controllerAssignments: [],
   teams: DEFAULT_TEAMS,
   rules: {
     allowSteal: true,
@@ -122,6 +146,8 @@ const migrateState = (state: GameShowState): GameShowState => ({
   ...state,
   teamCount: state.teamCount ?? (state.teams?.length as 2 | 3 | 4) ?? 2,
   eliminationEnabled: state.eliminationEnabled ?? false,
+  buzzerMode: state.buzzerMode ?? 'manual',
+  controllerAssignments: state.controllerAssignments ?? [],
   teams: (state.teams ?? DEFAULT_TEAMS).map(t => ({ ...t, eliminated: t.eliminated ?? false })),
   questions: state.questions.map((q) => ({
     ...q,
@@ -207,10 +233,17 @@ class GameShowStore extends EventEmitter {
     });
   }
 
-  updateConfig(config: Partial<Pick<GameShowState, 'practiceMode' | 'hostLocked' | 'playerPool' | 'teams' | 'questions' | 'rules'>>): GameShowState {
+  updateConfig(config: Partial<Pick<GameShowState, 'practiceMode' | 'hostLocked' | 'playerPool' | 'teams' | 'questions' | 'rules' | 'teamCount' | 'eliminationEnabled'>>): GameShowState {
     return this.commit('update_config', {
       ...this.state,
       ...config,
+    });
+  }
+
+  setBuzzerMode(mode: BuzzerMode): GameShowState {
+    return this.commit('set_buzzer_mode', {
+      ...this.state,
+      buzzerMode: mode,
     });
   }
 
@@ -223,6 +256,9 @@ class GameShowStore extends EventEmitter {
       nextTeams[index % teamCount].players.push(player);
     });
 
+    // Regenerate controller assignments for this session
+    const controllerAssignments = buildControllerAssignments(nextTeams, teamCount);
+
     return this.commit('random_assign_players', {
       ...this.state,
       status: 'setup',
@@ -230,6 +266,7 @@ class GameShowStore extends EventEmitter {
       multiplier: this.state.rules.roundMultipliers[0] ?? 1,
       chooserTeamId: nextTeams[0]?.id ?? null,
       teams: nextTeams,
+      controllerAssignments,
       randomizerSeq: (this.state.randomizerSeq ?? 0) + 1,
       roundState: EMPTY_ROUND_STATE(),
     });

@@ -1,4 +1,4 @@
-import type { GameShowQuestion, GameShowRules, GameShowState, GameShowTeam } from './types';
+import type { BuzzerMode, GameShowQuestion, GameShowRules, GameShowState, GameShowTeam } from './types';
 
 const API_BASE = '/api/game-show';
 
@@ -206,5 +206,16 @@ export const updateGameConfig = async (payload: {
     throw new Error('Failed to update game config');
   }
 
+  return response.json();
+};
+
+export const setBuzzerMode = async (mode: BuzzerMode): Promise<GameShowState> => {
+  const response = await fetch(`${API_BASE}/buzzer-mode`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ mode }),
+  });
+  if (!response.ok) throw new Error('Failed to set buzzer mode');
   return response.json();
 };

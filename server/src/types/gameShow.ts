@@ -24,6 +24,21 @@ export interface GameShowQuestion {
   basePoints: number;
 }
 
+export type BuzzerMode = 'manual' | 'phone' | 'hardware';
+
+/**
+ * Session-scoped controller assignment.
+ * Created by the app after player shuffle — one per player.
+ * controllerId is the stable identifier used by the judge.
+ * claimedAt is set when a phone session claims the slot (phone mode only).
+ */
+export interface ControllerAssignment {
+  controllerId: string;
+  teamId: string;
+  playerName: string;
+  claimedAt?: string;
+}
+
 export interface GameShowRules {
   allowSteal: boolean;
   wrongBuzzPenalty: boolean;
@@ -61,6 +76,8 @@ export interface GameShowState {
   playerPool: string[];
   teamCount: 2 | 3 | 4;
   eliminationEnabled: boolean;
+  buzzerMode: BuzzerMode;
+  controllerAssignments: ControllerAssignment[];
   teams: GameShowTeam[];
   rules: GameShowRules;
   questions: GameShowQuestion[];

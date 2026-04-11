@@ -135,6 +135,15 @@ router.put('/config', (req, res) => {
   res.json(gameShowStore.updateConfig(req.body));
 });
 
+router.post('/buzzer-mode', (req, res) => {
+  const { mode } = req.body as { mode?: string };
+  if (mode !== 'manual' && mode !== 'phone' && mode !== 'hardware') {
+    res.status(400).json({ error: 'mode must be manual, phone, or hardware' });
+    return;
+  }
+  res.json(gameShowStore.setBuzzerMode(mode));
+});
+
 router.patch('/state', (req, res) => {
   res.json(gameShowStore.patch(req.body));
 });

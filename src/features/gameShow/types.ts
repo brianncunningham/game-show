@@ -24,6 +24,15 @@ export interface GameShowQuestion {
   basePoints: number;
 }
 
+export type BuzzerMode = 'manual' | 'phone' | 'hardware';
+
+export interface ControllerAssignment {
+  controllerId: string;
+  teamId: string;
+  playerName: string;
+  claimedAt?: string;
+}
+
 export interface GameShowRules {
   allowSteal: boolean;
   wrongBuzzPenalty: boolean;
@@ -61,6 +70,8 @@ export interface GameShowState {
   playerPool: string[];
   teamCount: 2 | 3 | 4;
   eliminationEnabled: boolean;
+  buzzerMode: BuzzerMode;
+  controllerAssignments: ControllerAssignment[];
   teams: GameShowTeam[];
   rules: GameShowRules;
   questions: GameShowQuestion[];
