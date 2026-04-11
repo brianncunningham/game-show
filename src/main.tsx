@@ -6,6 +6,7 @@ import './App.css';
 import GameAdminPage from './pages/GameAdminPage';
 import HostPage from './pages/HostPage';
 import ShowPage from './pages/ShowPage';
+import BuzzerDiagnosticsPage from './pages/BuzzerDiagnosticsPage';
 
 const theme = createTheme({
   palette: {
@@ -28,6 +29,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         <Route path="/gameadmin" element={<GameAdminPage />} />
         <Route path="/host" element={<HostPage />} />
         <Route path="/show" element={<ShowPage />} />
+        <Route path="/buzzer-diagnostics" element={<BuzzerDiagnosticsPage />} />
       </Routes>
     </BrowserRouter>
   </ThemeProvider>,
