@@ -72,6 +72,7 @@ export const BuzzerDiagnosticsPage = () => {
   const [elapsedMs,  setElapsedMs]    = useState<number | null>(null);
   const [eventLog,   setEventLog]     = useState<BuzzerEvent[]>([]);
   const logEndRef = useRef<HTMLDivElement | null>(null);
+  const logSectionRef = useRef<HTMLDivElement | null>(null);
 
   // Resolve winner display name from controllerAssignments
   const resolveWinner = (controllerId: string) => {
@@ -108,15 +109,24 @@ export const BuzzerDiagnosticsPage = () => {
     return () => socket.close();
   }, []);
 
+  // Scroll the inner log box to bottom on every new event
   useEffect(() => {
     logEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [eventLog]);
+
+  // Scroll the page to the event log section when a buzz arrives
+  useEffect(() => {
+    const last = eventLog[eventLog.length - 1];
+    if (last && (last.type === 'BUZZ_RECEIVED' || last.type === 'BUZZ_ACCEPTED' || last.type === 'BUZZ_REJECTED')) {
+      logSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   }, [eventLog]);
 
   const winnerResolved = winner ? resolveWinner(winner) : null;
 
   return (
     <Box sx={{ bgcolor: '#0b1020', minHeight: '100vh', color: 'white', p: 3 }}>
-      <Stack spacing={3} maxWidth={760}>
+      <Stack spacing={3} maxWidth={1100}>
 
         {/* ---------------------------------------------------------------- */}
         {/* Header                                                           */}
@@ -255,19 +265,22 @@ export const BuzzerDiagnosticsPage = () => {
                 ))}
               </Stack>
             </>
-          ) : (
-            <>
+          ) : (() => {
+            const all = gameState.controllerAssignments;
+            const mid = Math.ceil(all.length / 2);
+            const cols = [all.slice(0, mid), all.slice(mid)];
+            const AssignmentTable = ({ rows }: { rows: typeof all }) => (
               <Table size="small" sx={{ '& td, & th': cell }}>
                 <TableHead>
                   <TableRow>
                     <TableCell sx={{ ...cell, color: '#aaa' }}>#</TableCell>
                     <TableCell sx={{ ...cell, color: '#aaa' }}>Player</TableCell>
                     <TableCell sx={{ ...cell, color: '#aaa' }}>Team</TableCell>
-                    <TableCell sx={{ ...cell, color: '#aaa' }}>Simulate</TableCell>
+                    <TableCell sx={{ ...cell, color: '#aaa' }}>Sim</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {gameState.controllerAssignments.map(a => {
+                  {rows.map(a => {
                     const team = gameState.teams.find(t => t.id === a.teamId);
                     return (
                       <TableRow key={a.controllerId}>
@@ -291,7 +304,7 @@ export const BuzzerDiagnosticsPage = () => {
                             variant="outlined"
                             color="warning"
                             onClick={() => void simulateBuzz(a.controllerId)}
-                            sx={{ minWidth: 60, py: 0.25 }}
+                            sx={{ minWidth: 48, py: 0.25, fontSize: '0.7rem' }}
                           >
                             Buzz
                           </Button>
@@ -301,8 +314,14 @@ export const BuzzerDiagnosticsPage = () => {
                   })}
                 </TableBody>
               </Table>
-            </>
-          )}
+            );
+            return (
+              <Stack direction="row" spacing={2} alignItems="flex-start">
+                <Box flex={1}><AssignmentTable rows={cols[0]} /></Box>
+                {cols[1].length > 0 && <Box flex={1}><AssignmentTable rows={cols[1]} /></Box>}
+              </Stack>
+            );
+          })()}
         </Stack>
 
         <Divider sx={{ borderColor: '#ffffff22' }} />
@@ -310,7 +329,7 @@ export const BuzzerDiagnosticsPage = () => {
         {/* ---------------------------------------------------------------- */}
         {/* Event Log                                                        */}
         {/* ---------------------------------------------------------------- */}
-        <Stack spacing={1}>
+        <Stack spacing={1} ref={logSectionRef}>
           <Stack direction="row" justifyContent="space-between" alignItems="center">
             <Typography variant="overline" color="text.secondary">
               Event Log ({eventLog.length}/{MAX_LOG})

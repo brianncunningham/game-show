@@ -30,11 +30,11 @@
       "id": "team-a",
       "name": "Brass",
       "players": [
-        "Monica",
+        "Saavani",
+        "Emily",
         "Abby",
-        "Sutton",
-        "Abbey",
-        "Kate"
+        "Julie",
+        "Abbey"
       ],
       "score": 0,
       "eliminated": false
@@ -43,9 +43,9 @@
       "id": "team-b",
       "name": "Strings",
       "players": [
-        "Melissa",
-        "Harman",
-        "Ariana",
+        "Sandy",
+        "Monica",
+        "Vinita",
         "Charlie"
       ],
       "score": 0,
@@ -55,10 +55,10 @@
       "id": "team-c",
       "name": "Percussion",
       "players": [
-        "Julie",
         "Zenaia",
         "Zita",
-        "Saavani"
+        "Kate",
+        "Sutton"
       ],
       "score": 0,
       "eliminated": false
@@ -67,10 +67,10 @@
       "id": "team-d",
       "name": "Woodwinds",
       "players": [
-        "Cece",
-        "Emily",
-        "Sandy",
-        "Vinita"
+        "Harman",
+        "Ariana",
+        "Melissa",
+        "Cece"
       ],
       "score": 0,
       "eliminated": false
@@ -538,22 +538,6 @@
   },
   "eventLog": [
     {
-      "action": "select_question",
-      "at": "2026-04-11T01:15:30.487Z"
-    },
-    {
-      "action": "select_song",
-      "at": "2026-04-11T01:15:38.511Z"
-    },
-    {
-      "action": "set_buzz_winner",
-      "at": "2026-04-11T01:15:43.787Z"
-    },
-    {
-      "action": "mark_wrong",
-      "at": "2026-04-11T01:15:48.909Z"
-    },
-    {
       "action": "set_stealing_team",
       "at": "2026-04-11T01:16:08.475Z"
     },
@@ -936,16 +920,118 @@
     {
       "action": "set_buzzer_mode",
       "at": "2026-04-11T20:56:37.252Z"
+    },
+    {
+      "action": "reset_scores",
+      "at": "2026-04-11T21:00:01.765Z"
+    },
+    {
+      "action": "toggle_show_intro",
+      "at": "2026-04-11T21:00:11.704Z"
+    },
+    {
+      "action": "toggle_show_rules",
+      "at": "2026-04-11T21:00:11.708Z"
+    },
+    {
+      "action": "random_assign_players",
+      "at": "2026-04-11T21:00:11.712Z"
     }
   ],
-  "updatedAt": "2026-04-11T20:56:37.252Z",
+  "updatedAt": "2026-04-11T21:00:11.712Z",
   "showIntro": false,
-  "randomizerSeq": 40,
+  "randomizerSeq": 41,
   "showRules": false,
   "firstPickSeq": 0,
   "firstPickTeamId": "team-d",
   "teamCount": 4,
   "eliminationEnabled": false,
   "buzzerMode": "hardware",
-  "controllerAssignments": []
+  "controllerAssignments": [
+    {
+      "controllerId": "1",
+      "teamId": "team-a",
+      "playerName": "Saavani"
+    },
+    {
+      "controllerId": "2",
+      "teamId": "team-a",
+      "playerName": "Emily"
+    },
+    {
+      "controllerId": "3",
+      "teamId": "team-a",
+      "playerName": "Abby"
+    },
+    {
+      "controllerId": "4",
+      "teamId": "team-a",
+      "playerName": "Julie"
+    },
+    {
+      "controllerId": "5",
+      "teamId": "team-a",
+      "playerName": "Abbey"
+    },
+    {
+      "controllerId": "6",
+      "teamId": "team-b",
+      "playerName": "Sandy"
+    },
+    {
+      "controllerId": "7",
+      "teamId": "team-b",
+      "playerName": "Monica"
+    },
+    {
+      "controllerId": "8",
+      "teamId": "team-b",
+      "playerName": "Vinita"
+    },
+    {
+      "controllerId": "9",
+      "teamId": "team-b",
+      "playerName": "Charlie"
+    },
+    {
+      "controllerId": "10",
+      "teamId": "team-c",
+      "playerName": "Zenaia"
+    },
+    {
+      "controllerId": "11",
+      "teamId": "team-c",
+      "playerName": "Zita"
+    },
+    {
+      "controllerId": "12",
+      "teamId": "team-c",
+      "playerName": "Kate"
+    },
+    {
+      "controllerId": "13",
+      "teamId": "team-c",
+      "playerName": "Sutton"
+    },
+    {
+      "controllerId": "14",
+      "teamId": "team-d",
+      "playerName": "Harman"
+    },
+    {
+      "controllerId": "15",
+      "teamId": "team-d",
+      "playerName": "Ariana"
+    },
+    {
+      "controllerId": "16",
+      "teamId": "team-d",
+      "playerName": "Melissa"
+    },
+    {
+      "controllerId": "17",
+      "teamId": "team-d",
+      "playerName": "Cece"
+    }
+  ]
 }
