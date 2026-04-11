@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { judgeController } from '../buzzer/judgeController.js';
+import { simulateInput } from '../buzzer/inputs/simulationInput.js';
 
 const router = Router();
 
@@ -22,7 +23,7 @@ router.get('/state', (_req, res) => {
 
 /** Simulate a buzz from a named controllerId (dev/diagnostics only) */
 router.post('/simulate/:controllerId', (req, res) => {
-  judgeController.simulateBuzz(req.params.controllerId);
+  simulateInput(req.params.controllerId);
   res.json({ state: judgeController.getState() });
 });
 

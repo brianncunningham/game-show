@@ -67,8 +67,16 @@ export class JudgeController {
   // -------------------------------------------------------------------------
 
   /**
-   * receiveBuzz: Entry point for all buzz inputs regardless of source.
-   * Simulation calls this directly. GPIO/network adapters will call this too.
+   * receiveBuzz: THE single entry point for all buzz inputs, regardless of source.
+   *
+   * All input adapters (simulation, GPIO, phone clients, ESP32 over HTTP) must
+   * call this method — never manipulate state directly from outside.
+   *
+   * To add a new input source:
+   *   1. Create a file in server/src/buzzer/inputs/
+   *   2. Import judgeController from '../judgeController.js'
+   *   3. Call judgeController.receiveBuzz(controllerId) on input event
+   *   4. That's it — no other changes to judge logic needed
    */
   receiveBuzz(controllerId: string): void {
     // Always emit BUZZ_RECEIVED so the event log captures every press.
