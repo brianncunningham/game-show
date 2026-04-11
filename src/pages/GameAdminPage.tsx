@@ -1,12 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
-import { Button, Card, CardContent, FormControlLabel, Stack, Switch, TextField, Typography } from '@mui/material';
+import { Box, Button, Card, CardContent, FormControlLabel, Stack, Switch, TextField, Typography } from '@mui/material';
 import { startGame, updateGameConfig } from '../features/gameShow/api';
 import { ContentManager } from '../features/gameShow/ContentManager';
 import { SaveManager } from '../features/gameShow/SaveManager';
 import { GameShowSharedView } from '../features/gameShow/GameShowSharedView';
 import { TeamSetup } from '../features/gameShow/TeamSetup';
 import { useGameShowState } from '../features/gameShow/useGameShowState';
-import { BuzzerPanel } from '../features/buzzer/BuzzerPanel';
 import { BuzzerModeCard } from '../features/buzzer/BuzzerModeCard';
 
 export const GameAdminPage = () => {
@@ -118,6 +117,12 @@ export const GameAdminPage = () => {
           }}
         />
 
+        <BuzzerModeCard
+          buzzerMode={state.buzzerMode ?? 'manual'}
+          controllerAssignments={state.controllerAssignments ?? []}
+          teams={state.teams}
+        />
+
         <ContentManager
           questions={state.questions}
           onChange={(questions) => {
@@ -127,13 +132,11 @@ export const GameAdminPage = () => {
 
         <SaveManager />
 
-        <BuzzerModeCard
-          buzzerMode={state.buzzerMode ?? 'manual'}
-          controllerAssignments={state.controllerAssignments ?? []}
-          teams={state.teams}
-        />
-
-        <BuzzerPanel controllerIds={state.teams.slice(0, state.teamCount).map(t => t.id)} />
+        <Box>
+          <Button variant="outlined" size="small" href="/buzzer-diagnostics" target="_blank" rel="noopener">
+            Open Buzzer Diagnostics →
+          </Button>
+        </Box>
       </Stack>
   );
 

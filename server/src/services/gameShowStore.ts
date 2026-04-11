@@ -94,19 +94,22 @@ const shuffle = <T,>(items: T[]) => {
 
 /**
  * Build controller assignments for the current player/team layout.
- * One assignment per player: controllerId = `${teamId}-${playerIndex}`
- * e.g. team-a-0, team-a-1, team-b-0 ...
+ * One assignment per player: controllerId is a globally sequential integer (1-based),
+ * counting through all teams in order. e.g. team A has 4 players → controllers 1–4,
+ * team B has 3 players → controllers 5–7. Matches physical buzzer labeling.
  * These are the stable IDs used by the judge, hardware, and phone clients.
  */
 const buildControllerAssignments = (teams: GameShowTeam[], teamCount: number): ControllerAssignment[] => {
   const assignments: ControllerAssignment[] = [];
+  let globalIndex = 1;
   teams.slice(0, teamCount).forEach(team => {
-    team.players.forEach((playerName, index) => {
+    team.players.forEach(playerName => {
       assignments.push({
-        controllerId: `${team.id}-${index}`,
+        controllerId: String(globalIndex),
         teamId: team.id,
         playerName,
       });
+      globalIndex++;
     });
   });
   return assignments;

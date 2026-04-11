@@ -1,6 +1,6 @@
 import { Box, Stack, Typography } from '@mui/material';
 import { useEffect, useRef, useState } from 'react';
-import type { GameShowState } from './types';
+import type { ControllerAssignment, GameShowState } from './types';
 
 interface Props {
   state: GameShowState;
@@ -48,6 +48,13 @@ export const TeamRandomizer = ({ state }: Props) => {
 
   const players = state.playerPool;
   const teams = state.teams.filter(t => !t.eliminated);
+  const assignments: ControllerAssignment[] = state.controllerAssignments ?? [];
+  const isHardwareMode = state.buzzerMode === 'hardware';
+
+  const controllerIdFor = (teamId: string, playerName: string): string | null => {
+    const match = assignments.find(a => a.teamId === teamId && a.playerName === playerName);
+    return match?.controllerId ?? null;
+  };
 
   useEffect(() => {
     const W = window.innerWidth;
@@ -295,32 +302,69 @@ export const TeamRandomizer = ({ state }: Props) => {
 
             {settled && (
               <Stack spacing={team.players.length > 5 ? 0.5 : team.players.length > 3 ? 1 : 1.5} alignItems="center" sx={{ width: '100%', px: 2 }}>
-                {team.players.map((p, pi) => (
-                  <Typography key={p} sx={{
-                    color: '#fff',
-                    fontSize: team.players.length > 7
-                      ? 'clamp(0.65rem, 1vw, 1.2rem)'
-                      : team.players.length > 5
-                        ? 'clamp(0.8rem, 1.3vw, 1.7rem)'
-                        : team.players.length > 3
-                          ? 'clamp(0.95rem, 1.6vw, 2.2rem)'
-                          : teams.length === 4
-                            ? 'clamp(1rem, 1.8vw, 2.6rem)'
-                            : 'clamp(1rem, 2vw, 2.8rem)',
-                    fontWeight: 700,
-                    letterSpacing: '0.06em',
-                    textAlign: 'center',
-                    textShadow: `0 0 10px ${TEAM_COLORS[ti % TEAM_COLORS.length]}88`,
-                    opacity: 0,
-                    animation: `fadeInPlayer 500ms ease ${pi * 120}ms forwards`,
-                    '@keyframes fadeInPlayer': {
-                      from: { opacity: 0, transform: 'translateY(16px)' },
-                      to: { opacity: 1, transform: 'none' },
-                    },
-                  }}>
-                    {p}
-                  </Typography>
-                ))}
+                {team.players.map((p, pi) => {
+                  const cid = isHardwareMode ? controllerIdFor(team.id, p) : null;
+                  return (
+                    <Stack
+                      key={p}
+                      direction="row"
+                      spacing={1.5}
+                      alignItems="center"
+                      justifyContent="center"
+                      sx={{
+                        opacity: 0,
+                        animation: `fadeInPlayer 500ms ease ${pi * 120}ms forwards`,
+                        '@keyframes fadeInPlayer': {
+                          from: { opacity: 0, transform: 'translateY(16px)' },
+                          to: { opacity: 1, transform: 'none' },
+                        },
+                      }}
+                    >
+                      <Typography sx={{
+                        color: '#fff',
+                        fontSize: team.players.length > 7
+                          ? 'clamp(0.65rem, 1vw, 1.2rem)'
+                          : team.players.length > 5
+                            ? 'clamp(0.8rem, 1.3vw, 1.7rem)'
+                            : team.players.length > 3
+                              ? 'clamp(0.95rem, 1.6vw, 2.2rem)'
+                              : teams.length === 4
+                                ? 'clamp(1rem, 1.8vw, 2.6rem)'
+                                : 'clamp(1rem, 2vw, 2.8rem)',
+                        fontWeight: 700,
+                        letterSpacing: '0.06em',
+                        textAlign: 'center',
+                        textShadow: `0 0 10px ${TEAM_COLORS[ti % TEAM_COLORS.length]}88`,
+                      }}>
+                        {p}
+                      </Typography>
+                      {cid && (
+                        <Box sx={{
+                          width:  'clamp(1.2rem, 1.8vw, 2.2rem)',
+                          height: 'clamp(1.2rem, 1.8vw, 2.2rem)',
+                          borderRadius: '50%',
+                          border: `2px solid ${TEAM_COLORS[ti % TEAM_COLORS.length]}cc`,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
+                          bgcolor: `${TEAM_COLORS[ti % TEAM_COLORS.length]}18`,
+                          boxShadow: `0 0 8px ${TEAM_COLORS[ti % TEAM_COLORS.length]}55`,
+                        }}>
+                          <Typography sx={{
+                            fontSize: 'clamp(0.55rem, 0.9vw, 1.1rem)',
+                            fontWeight: 900,
+                            fontFamily: 'monospace',
+                            color: TEAM_COLORS[ti % TEAM_COLORS.length],
+                            lineHeight: 1,
+                          }}>
+                            {cid}
+                          </Typography>
+                        </Box>
+                      )}
+                    </Stack>
+                  );
+                })}
               </Stack>
             )}
           </Box>

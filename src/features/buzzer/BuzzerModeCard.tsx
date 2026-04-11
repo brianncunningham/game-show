@@ -12,7 +12,6 @@ import {
   Box,
   Card,
   CardContent,
-  Chip,
   Stack,
   Table,
   TableBody,
@@ -65,67 +64,60 @@ export const BuzzerModeCard = ({ buzzerMode, controllerAssignments, teams }: Pro
             </Typography>
           </Stack>
 
-          {/* Controller assignments — generated on player shuffle */}
-          <Stack spacing={1}>
-            <Stack direction="row" spacing={2} alignItems="center">
-              <Typography variant="subtitle2" color="text.secondary">
-                Controller Assignments
-              </Typography>
+          {/* Controller assignments + hint — only shown in hardware mode */}
+          {buzzerMode === 'hardware' && (
+            <Stack spacing={1}>
+              <Stack direction="row" spacing={2} alignItems="center">
+                <Typography variant="subtitle2" color="text.secondary">
+                  Controller Assignments
+                </Typography>
+                <Typography variant="caption" color="text.disabled">
+                  (regenerated on player shuffle)
+                </Typography>
+              </Stack>
+
+              {controllerAssignments.length === 0 ? (
+                <Typography variant="caption" color="text.disabled">
+                  No assignments yet — run player shuffle to generate.
+                </Typography>
+              ) : (
+                <Box sx={{ overflowX: 'auto' }}>
+                  <Table size="small" sx={{ '& td, & th': cell }}>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell sx={{ ...cell, color: '#aaa' }}>controllerId</TableCell>
+                        <TableCell sx={{ ...cell, color: '#aaa' }}>Team</TableCell>
+                        <TableCell sx={{ ...cell, color: '#aaa' }}>Player</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {controllerAssignments.map(a => (
+                        <TableRow key={a.controllerId}>
+                          <TableCell>
+                            <Box sx={{
+                              width: 28, height: 28, borderRadius: '50%',
+                              border: '2px solid #56d7ffcc',
+                              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                              bgcolor: '#56d7ff18',
+                            }}>
+                              <Typography sx={{ fontSize: '0.75rem', fontWeight: 900, fontFamily: 'monospace', color: '#56d7ff', lineHeight: 1 }}>
+                                {a.controllerId}
+                              </Typography>
+                            </Box>
+                          </TableCell>
+                          <TableCell>{teamName(a.teamId)}</TableCell>
+                          <TableCell>{a.playerName}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </Box>
+              )}
+
               <Typography variant="caption" color="text.disabled">
-                (regenerated on player shuffle)
+                Each physical buzzer must send its controllerId (shown above) to the judge.
               </Typography>
             </Stack>
-
-            {controllerAssignments.length === 0 ? (
-              <Typography variant="caption" color="text.disabled">
-                No assignments yet — run player shuffle to generate.
-              </Typography>
-            ) : (
-              <Box sx={{ overflowX: 'auto' }}>
-                <Table size="small" sx={{ '& td, & th': cell }}>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell sx={{ ...cell, color: '#aaa' }}>controllerId</TableCell>
-                      <TableCell sx={{ ...cell, color: '#aaa' }}>Team</TableCell>
-                      <TableCell sx={{ ...cell, color: '#aaa' }}>Player</TableCell>
-                      {buzzerMode === 'phone' && (
-                        <TableCell sx={{ ...cell, color: '#aaa' }}>Claimed</TableCell>
-                      )}
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {controllerAssignments.map(a => (
-                      <TableRow key={a.controllerId}>
-                        <TableCell><code>{a.controllerId}</code></TableCell>
-                        <TableCell>{teamName(a.teamId)}</TableCell>
-                        <TableCell>{a.playerName}</TableCell>
-                        {buzzerMode === 'phone' && (
-                          <TableCell>
-                            {a.claimedAt
-                              ? <Chip label="Claimed" color="success" size="small" />
-                              : <Chip label="Waiting" size="small" />}
-                          </TableCell>
-                        )}
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </Box>
-            )}
-          </Stack>
-
-          {/* Mode-specific hints */}
-          {buzzerMode === 'phone' && (
-            <Typography variant="caption" color="text.disabled">
-              Players visit /buzz and choose their name to claim their slot. The app creates
-              assignments first — the phone session claims an existing one.
-            </Typography>
-          )}
-          {buzzerMode === 'hardware' && (
-            <Typography variant="caption" color="text.disabled">
-              Each physical buzzer must send its controllerId (shown above) to the judge.
-              Map hardware controller IDs to match the assignment table.
-            </Typography>
           )}
         </Stack>
       </CardContent>
