@@ -46,6 +46,7 @@ export class JudgeController {
     if (this.state === 'ARMED') return;
     if (this.state === 'LOCKED') {
       console.warn('[Judge] ARM ignored — currently LOCKED, send RESET first');
+      this.emitState();
       return;
     }
     this.state = 'ARMED';
