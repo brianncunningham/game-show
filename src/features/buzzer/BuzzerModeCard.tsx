@@ -80,39 +80,47 @@ export const BuzzerModeCard = ({ buzzerMode, controllerAssignments, teams }: Pro
                 <Typography variant="caption" color="text.disabled">
                   No assignments yet — run player shuffle to generate.
                 </Typography>
-              ) : (
-                <Box sx={{ overflowX: 'auto' }}>
+              ) : (() => {
+                const mid = Math.ceil(controllerAssignments.length / 2);
+                const cols = [controllerAssignments.slice(0, mid), controllerAssignments.slice(mid)];
+                const AssignmentTable = ({ rows }: { rows: ControllerAssignment[] }) => (
                   <Table size="small" sx={{ '& td, & th': cell }}>
                     <TableHead>
                       <TableRow>
-                        <TableCell sx={{ ...cell, color: '#aaa' }}>controllerId</TableCell>
-                        <TableCell sx={{ ...cell, color: '#aaa' }}>Team</TableCell>
+                        <TableCell sx={{ ...cell, color: '#aaa' }}>#</TableCell>
                         <TableCell sx={{ ...cell, color: '#aaa' }}>Player</TableCell>
+                        <TableCell sx={{ ...cell, color: '#aaa' }}>Team</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {controllerAssignments.map(a => (
+                      {rows.map(a => (
                         <TableRow key={a.controllerId}>
                           <TableCell>
                             <Box sx={{
-                              width: 28, height: 28, borderRadius: '50%',
+                              width: 26, height: 26, borderRadius: '50%',
                               border: '2px solid #56d7ffcc',
                               display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                               bgcolor: '#56d7ff18',
                             }}>
-                              <Typography sx={{ fontSize: '0.75rem', fontWeight: 900, fontFamily: 'monospace', color: '#56d7ff', lineHeight: 1 }}>
+                              <Typography sx={{ fontSize: '0.72rem', fontWeight: 900, fontFamily: 'monospace', color: '#56d7ff', lineHeight: 1 }}>
                                 {a.controllerId}
                               </Typography>
                             </Box>
                           </TableCell>
-                          <TableCell>{teamName(a.teamId)}</TableCell>
                           <TableCell>{a.playerName}</TableCell>
+                          <TableCell sx={{ color: '#888' }}>{teamName(a.teamId)}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
                   </Table>
-                </Box>
-              )}
+                );
+                return (
+                  <Stack direction="row" spacing={2} alignItems="flex-start">
+                    <Box flex={1}><AssignmentTable rows={cols[0]} /></Box>
+                    {cols[1].length > 0 && <Box flex={1}><AssignmentTable rows={cols[1]} /></Box>}
+                  </Stack>
+                );
+              })()}
 
               <Typography variant="caption" color="text.disabled">
                 Each physical buzzer must send its controllerId (shown above) to the judge.

@@ -1,6 +1,6 @@
 {
   "id": "default-game",
-  "status": "setup",
+  "status": "live",
   "currentRound": 1,
   "chooserTeamId": "team-a",
   "multiplier": 1,
@@ -523,10 +523,10 @@
     }
   ],
   "roundState": {
-    "selectedQuestionId": null,
-    "activeSongIndex": null,
+    "selectedQuestionId": "csv-r1q1",
+    "activeSongIndex": 0,
     "usedQuestionIds": [],
-    "clipState": "idle",
+    "clipState": "active",
     "buzzWinnerTeamId": null,
     "attemptedTeamIds": [],
     "stealingTeamId": null,
@@ -537,58 +537,6 @@
     "revealState": "none"
   },
   "eventLog": [
-    {
-      "action": "set_stealing_team",
-      "at": "2026-04-11T01:16:08.475Z"
-    },
-    {
-      "action": "steal_fail",
-      "at": "2026-04-11T01:16:09.781Z"
-    },
-    {
-      "action": "set_stealing_team",
-      "at": "2026-04-11T01:16:30.403Z"
-    },
-    {
-      "action": "steal_fail",
-      "at": "2026-04-11T01:16:34.600Z"
-    },
-    {
-      "action": "set_reveal_state",
-      "at": "2026-04-11T01:17:24.414Z"
-    },
-    {
-      "action": "select_song",
-      "at": "2026-04-11T01:18:03.519Z"
-    },
-    {
-      "action": "set_buzz_winner",
-      "at": "2026-04-11T01:18:08.576Z"
-    },
-    {
-      "action": "mark_correct",
-      "at": "2026-04-11T01:18:11.587Z"
-    },
-    {
-      "action": "award_artist_bonus",
-      "at": "2026-04-11T01:18:14.136Z"
-    },
-    {
-      "action": "select_song",
-      "at": "2026-04-11T01:18:22.387Z"
-    },
-    {
-      "action": "set_buzz_winner",
-      "at": "2026-04-11T01:18:27.731Z"
-    },
-    {
-      "action": "mark_correct",
-      "at": "2026-04-11T01:18:32.802Z"
-    },
-    {
-      "action": "award_artist_bonus",
-      "at": "2026-04-11T01:18:35.324Z"
-    },
     {
       "action": "reset_round",
       "at": "2026-04-11T01:18:40.834Z"
@@ -936,14 +884,66 @@
     {
       "action": "random_assign_players",
       "at": "2026-04-11T21:00:11.712Z"
+    },
+    {
+      "action": "toggle_show_intro",
+      "at": "2026-04-11T21:05:38.047Z"
+    },
+    {
+      "action": "toggle_show_rules",
+      "at": "2026-04-11T21:05:38.055Z"
+    },
+    {
+      "action": "random_first_pick",
+      "at": "2026-04-11T21:05:38.059Z"
+    },
+    {
+      "action": "show_board",
+      "at": "2026-04-11T21:06:53.727Z"
+    },
+    {
+      "action": "reset_scores",
+      "at": "2026-04-11T21:06:54.825Z"
+    },
+    {
+      "action": "toggle_show_intro",
+      "at": "2026-04-11T21:06:56.051Z"
+    },
+    {
+      "action": "toggle_show_rules",
+      "at": "2026-04-11T21:06:56.053Z"
+    },
+    {
+      "action": "start_game",
+      "at": "2026-04-11T21:06:56.055Z"
+    },
+    {
+      "action": "select_question",
+      "at": "2026-04-11T21:07:26.147Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-11T21:07:27.315Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-11T21:07:30.444Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-11T21:07:36.092Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-11T21:07:38.634Z"
     }
   ],
-  "updatedAt": "2026-04-11T21:00:11.712Z",
+  "updatedAt": "2026-04-11T21:07:38.634Z",
   "showIntro": false,
   "randomizerSeq": 41,
   "showRules": false,
   "firstPickSeq": 0,
-  "firstPickTeamId": "team-d",
+  "firstPickTeamId": "team-b",
   "teamCount": 4,
   "eliminationEnabled": false,
   "buzzerMode": "hardware",
