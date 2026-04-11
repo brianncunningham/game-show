@@ -10,7 +10,11 @@ export interface BuzzerEvent {
 
 const getBuzzerSocketUrl = () => {
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  return `${protocol}//${window.location.host}/ws/buzzer`;
+  // In Vite dev (port 4174), WS proxy is unreliable — connect directly to backend
+  const host = window.location.port === '4174'
+    ? `${window.location.hostname}:3001`
+    : window.location.host;
+  return `${protocol}//${host}/ws/buzzer`;
 };
 
 const MAX_LOG = 50;

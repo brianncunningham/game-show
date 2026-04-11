@@ -538,14 +538,6 @@
   },
   "eventLog": [
     {
-      "action": "award_artist_bonus",
-      "at": "2026-04-11T01:14:49.824Z"
-    },
-    {
-      "action": "reset_round",
-      "at": "2026-04-11T01:14:57.813Z"
-    },
-    {
       "action": "next_round",
       "at": "2026-04-11T01:15:07.468Z"
     },
@@ -936,10 +928,18 @@
     {
       "action": "toggle_show_intro",
       "at": "2026-04-11T01:42:01.919Z"
+    },
+    {
+      "action": "show_board",
+      "at": "2026-04-11T19:11:56.719Z"
+    },
+    {
+      "action": "reset_scores",
+      "at": "2026-04-11T19:11:59.231Z"
     }
   ],
-  "updatedAt": "2026-04-11T01:42:01.919Z",
-  "showIntro": true,
+  "updatedAt": "2026-04-11T19:11:59.231Z",
+  "showIntro": false,
   "randomizerSeq": 40,
   "showRules": false,
   "firstPickSeq": 0,

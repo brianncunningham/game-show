@@ -1,6 +1,7 @@
 import type { Server as HttpServer } from 'http';
-import { WebSocketServer, WebSocket } from 'ws';
+import { WebSocket } from 'ws';
 import { gameShowStore } from './gameShowStore.js';
+import { registerWsPath, initWebSocketManager } from './webSocketManager.js';
 import type { GameShowSocketMessage } from '../types/gameShow.js';
 
 const sockets = new Set<WebSocket>();
@@ -15,20 +16,15 @@ const broadcast = (message: GameShowSocketMessage) => {
 };
 
 export const attachGameShowSocket = (server: HttpServer) => {
-  const wss = new WebSocketServer({ server, path: '/ws/game-show' });
+  initWebSocketManager(server);
 
   gameShowStore.subscribe((message: GameShowSocketMessage) => {
     broadcast(message);
   });
 
-  wss.on('connection', (socket: WebSocket) => {
+  registerWsPath('/ws/game-show', (socket) => {
     sockets.add(socket);
     socket.send(JSON.stringify({ type: 'snapshot', payload: gameShowStore.getState() }));
-
-    socket.on('close', () => {
-      sockets.delete(socket);
-    });
+    socket.on('close', () => sockets.delete(socket));
   });
-
-  return wss;
 };

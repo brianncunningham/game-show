@@ -6,8 +6,9 @@
  */
 
 import type { Server as HttpServer } from 'http';
-import { WebSocketServer, WebSocket } from 'ws';
+import { WebSocket } from 'ws';
 import { judgeController } from './judgeController.js';
+import { registerWsPath, initWebSocketManager } from '../services/webSocketManager.js';
 import type { JudgeToAppMessage } from './types.js';
 
 const sockets = new Set<WebSocket>();
@@ -22,24 +23,19 @@ const broadcast = (message: JudgeToAppMessage) => {
 };
 
 export const attachBuzzerSocket = (server: HttpServer): void => {
-  const wss = new WebSocketServer({ server, path: '/ws/buzzer' });
+  initWebSocketManager(server);
 
   judgeController.onEvent((message) => {
     broadcast(message);
   });
 
-  wss.on('connection', (socket: WebSocket) => {
+  registerWsPath('/ws/buzzer', (socket) => {
     sockets.add(socket);
-
-    const stateMsg = JSON.stringify({
+    socket.send(JSON.stringify({
       type: 'STATE',
       timestamp: new Date().toISOString(),
       payload: { state: judgeController.getState() },
-    });
-    socket.send(stateMsg);
-
-    socket.on('close', () => {
-      sockets.delete(socket);
-    });
+    }));
+    socket.on('close', () => sockets.delete(socket));
   });
 };

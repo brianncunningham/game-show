@@ -4,7 +4,11 @@ import type { GameShowSocketMessage, GameShowState } from './types';
 
 const getSocketUrl = () => {
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  return `${protocol}//${window.location.host}/ws/game-show`;
+  // In Vite dev (port 4174), WS proxy is unreliable — connect directly to backend
+  const host = window.location.port === '4174'
+    ? `${window.location.hostname}:3001`
+    : window.location.host;
+  return `${protocol}//${host}/ws/game-show`;
 };
 
 export const useGameShowState = () => {
