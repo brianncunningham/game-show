@@ -8,25 +8,33 @@
   "hostLocked": false,
   "playerPool": [
     "Abby",
-    "Bradley",
     "Charlie",
     "Monica",
     "Abbey",
     "Julie",
     "Zenaia",
     "Zita",
-    "Chris",
     "Sutton",
-    "Melissa"
+    "Melissa",
+    "Kate",
+    "Ariana",
+    "Sandy",
+    "Emily",
+    "Cece",
+    "Harman",
+    "Saavani",
+    "Vinita"
   ],
   "teams": [
     {
       "id": "team-a",
       "name": "Brass",
       "players": [
-        "Charlie",
-        "Julie",
-        "Melissa"
+        "Monica",
+        "Abby",
+        "Sutton",
+        "Abbey",
+        "Kate"
       ],
       "score": 0,
       "eliminated": false
@@ -35,9 +43,10 @@
       "id": "team-b",
       "name": "Strings",
       "players": [
-        "Abbey",
-        "Zenaia",
-        "Zita"
+        "Melissa",
+        "Harman",
+        "Ariana",
+        "Charlie"
       ],
       "score": 0,
       "eliminated": false
@@ -46,9 +55,10 @@
       "id": "team-c",
       "name": "Percussion",
       "players": [
-        "Bradley",
-        "Sutton",
-        "Abby"
+        "Julie",
+        "Zenaia",
+        "Zita",
+        "Saavani"
       ],
       "score": 0,
       "eliminated": false
@@ -57,8 +67,10 @@
       "id": "team-d",
       "name": "Woodwinds",
       "players": [
-        "Chris",
-        "Monica"
+        "Cece",
+        "Emily",
+        "Sandy",
+        "Vinita"
       ],
       "score": 0,
       "eliminated": false
@@ -77,25 +89,25 @@
     {
       "id": "csv-r1q1",
       "round": 1,
-      "category": "DEMO Essentials",
+      "category": "The 90s",
       "songLabel": "",
       "songs": [
         {
-          "title": "Stayin' Alive",
-          "artist": "Bee Gees",
-          "spotifyTrackId": "3mRM4NM8iO7UBqrSigCQFH",
+          "title": "All Star",
+          "artist": "Smash Mouth",
+          "spotifyTrackId": "3cfOd4CMv2snFaKAnMdnvK",
           "clipStartMs": 0
         },
         {
-          "title": "Baby Shark",
-          "artist": "Pinkfong",
-          "spotifyTrackId": "5ygDXis42ncn6kYG14lEVG",
+          "title": "Zombie",
+          "artist": "The Cranberries",
+          "spotifyTrackId": "3gjHnylel3PTRpjS44ocqr",
           "clipStartMs": 0
         },
         {
-          "title": "Sweet Caroline",
-          "artist": "Neil Diamond",
-          "spotifyTrackId": "62AuGbAkt8Ox2IrFFb8GKV",
+          "title": "Wonderwall",
+          "artist": "Oasis",
+          "spotifyTrackId": "7ygpwy2qP3NbrxVkHvUhXY",
           "clipStartMs": 0
         }
       ],
@@ -106,22 +118,25 @@
     {
       "id": "csv-r1q2",
       "round": 1,
-      "category": "Practice 2",
+      "category": "Songs with Names in Title",
       "songLabel": "",
       "songs": [
         {
-          "title": "",
-          "artist": "",
+          "title": "Houdini",
+          "artist": "Eminem",
+          "spotifyTrackId": "2HYFX63wP3otVIvopRS99Z",
+          "clipStartMs": 6500
+        },
+        {
+          "title": "Luther",
+          "artist": "Kendrick Lamar & Sza",
+          "spotifyTrackId": "2CGNAOSuO1MEFCbBRgUzjd",
           "clipStartMs": 0
         },
         {
-          "title": "",
-          "artist": "",
-          "clipStartMs": 0
-        },
-        {
-          "title": "",
-          "artist": "",
+          "title": "Billie Jean",
+          "artist": "Michael Jackson",
+          "spotifyTrackId": "7J1uxwnxfQLu4APicE5Rnj",
           "clipStartMs": 0
         }
       ],
@@ -132,22 +147,25 @@
     {
       "id": "csv-r1q3",
       "round": 1,
-      "category": "Practice 3",
+      "category": "One-Hit Wonders",
       "songLabel": "",
       "songs": [
         {
-          "title": "",
-          "artist": "",
+          "title": "Gangnam Style",
+          "artist": "PSY",
+          "spotifyTrackId": "03UrZgTINDqvnUMbbIMhql",
           "clipStartMs": 0
         },
         {
-          "title": "",
-          "artist": "",
+          "title": "Blue (Da Ba Dee)",
+          "artist": "Eiffel 65",
+          "spotifyTrackId": "4GewRLEiI4BDTQsoH8BRVV",
           "clipStartMs": 0
         },
         {
-          "title": "",
-          "artist": "",
+          "title": "Call Me Maybe",
+          "artist": "Carly Rae Jepsen",
+          "spotifyTrackId": "3TGRqZ0a2l1LRblBkJoaDx",
           "clipStartMs": 0
         }
       ],
@@ -158,22 +176,25 @@
     {
       "id": "csv-r1q4",
       "round": 1,
-      "category": "Practice 4",
+      "category": "Colors",
       "songLabel": "",
       "songs": [
         {
-          "title": "",
-          "artist": "",
+          "title": "Pink Pony Club",
+          "artist": "Chappell Roan",
+          "spotifyTrackId": "6393yGahSJ9slVdOwSxOVR",
           "clipStartMs": 0
         },
         {
-          "title": "",
-          "artist": "",
+          "title": "Something in the Orange",
+          "artist": "Zach Bryan",
+          "spotifyTrackId": "3WMj8moIAXJhHsyLaqIIHI",
           "clipStartMs": 0
         },
         {
-          "title": "",
-          "artist": "",
+          "title": "Yellow",
+          "artist": "Coldplay",
+          "spotifyTrackId": "3AJwUDP919kvQ9QcozQPxg",
           "clipStartMs": 0
         }
       ],
@@ -184,22 +205,315 @@
     {
       "id": "csv-r1q5",
       "round": 1,
-      "category": "Practice 5",
+      "category": "Heard on TikTok",
       "songLabel": "",
       "songs": [
         {
-          "title": "",
-          "artist": "",
+          "title": "Savage Love",
+          "artist": "Jawsh 685 & Jason Derulo",
+          "spotifyTrackId": "1xQ6trAsedVPCdbtDAmk0c",
           "clipStartMs": 0
         },
         {
-          "title": "",
-          "artist": "",
+          "title": "HOT TO GO!",
+          "artist": "Chappell Roan",
+          "spotifyTrackId": "3j6CeoBBlm40Msn1JE1SPD",
           "clipStartMs": 0
         },
         {
-          "title": "",
-          "artist": "",
+          "title": "Anxiety",
+          "artist": "Doechii",
+          "spotifyTrackId": "3LPLRNr58Z9Pn0clnEtkXb",
+          "clipStartMs": 0
+        }
+      ],
+      "clipStart": 0,
+      "clipDuration": 0,
+      "basePoints": 100
+    },
+    {
+      "id": "csv-r2q6",
+      "round": 2,
+      "category": "Breakup Songs",
+      "songLabel": "",
+      "songs": [
+        {
+          "title": "Back to Friends",
+          "artist": "sombr",
+          "spotifyTrackId": "7qjZnBKE73H4Oxkopwulqe",
+          "clipStartMs": 0
+        },
+        {
+          "title": "Complicated",
+          "artist": "Avril Lavigne",
+          "spotifyTrackId": "5xEM5hIgJ1jjgcEBfpkt2F",
+          "clipStartMs": 0
+        },
+        {
+          "title": "We Are Never Ever Getting Back Together",
+          "artist": "Taylor Swift",
+          "spotifyTrackId": "5YqltLsjdqFtvqE7Nrysvs",
+          "clipStartMs": 0
+        }
+      ],
+      "clipStart": 0,
+      "clipDuration": 0,
+      "basePoints": 100
+    },
+    {
+      "id": "csv-r2q7",
+      "round": 2,
+      "category": "The 80s",
+      "songLabel": "",
+      "songs": [
+        {
+          "title": "Girls Just Want to Have Fun",
+          "artist": "Cyndi Lauper",
+          "spotifyTrackId": "4y1LsJpmMti1PfRQV9AWWe",
+          "clipStartMs": 0
+        },
+        {
+          "title": "Raspberry Beret",
+          "artist": "Prince",
+          "spotifyTrackId": "2I1W3hcSsPIsEJfD69pHrW",
+          "clipStartMs": 0
+        },
+        {
+          "title": "Like a Prayer",
+          "artist": "Madonna",
+          "spotifyTrackId": "2v7ywbUzCgcVohHaKUcacV",
+          "clipStartMs": 9500
+        }
+      ],
+      "clipStart": 0,
+      "clipDuration": 0,
+      "basePoints": 100
+    },
+    {
+      "id": "csv-r2q8",
+      "round": 2,
+      "category": "Country Hits",
+      "songLabel": "",
+      "songs": [
+        {
+          "title": "Last Night",
+          "artist": "Morgan Wallen",
+          "spotifyTrackId": "583dMdiUquLMenarTp7PQm",
+          "clipStartMs": 0
+        },
+        {
+          "title": "Friends in Low Places",
+          "artist": "Garth Brooks",
+          "spotifyTrackId": "5Ynx2XR1wGAZ3eUD7ED9J4",
+          "clipStartMs": 0
+        },
+        {
+          "title": "Tennessee Whiskey",
+          "artist": "Chris Stapleton",
+          "spotifyTrackId": "3fqwjXwUGN6vbzIwvyFMhx",
+          "clipStartMs": 0
+        }
+      ],
+      "clipStart": 0,
+      "clipDuration": 0,
+      "basePoints": 100
+    },
+    {
+      "id": "csv-r2q9",
+      "round": 2,
+      "category": "Female Anthems",
+      "songLabel": "",
+      "songs": [
+        {
+          "title": "Respect",
+          "artist": "Aretha Franklin",
+          "spotifyTrackId": "7s25THrKz86DM225dOYwnr",
+          "clipStartMs": 0
+        },
+        {
+          "title": "Roar",
+          "artist": "Katy Perry",
+          "spotifyTrackId": "27tNWlhdAryQY04Gb2ZhUI",
+          "clipStartMs": 0
+        },
+        {
+          "title": "Run the World (Girls)",
+          "artist": "Beyoncé",
+          "spotifyTrackId": "1uXbwHHfgsXcUKfSZw5ZJ0",
+          "clipStartMs": 0
+        }
+      ],
+      "clipStart": 0,
+      "clipDuration": 0,
+      "basePoints": 100
+    },
+    {
+      "id": "csv-r2q10",
+      "round": 2,
+      "category": "The Weather",
+      "songLabel": "",
+      "songs": [
+        {
+          "title": "Thunder",
+          "artist": "Imagine Dragons",
+          "spotifyTrackId": "1zB4vmk8tFRmM9UULNzbLB",
+          "clipStartMs": 0
+        },
+        {
+          "title": "Heat Waves",
+          "artist": "Glass Animals",
+          "spotifyTrackId": "3USxtqRwSYz57Ewm6wWRMp",
+          "clipStartMs": 0
+        },
+        {
+          "title": "Purple Rain",
+          "artist": "Prince",
+          "spotifyTrackId": "1uvyZBs4IZYRebHIB1747m",
+          "clipStartMs": 0
+        }
+      ],
+      "clipStart": 0,
+      "clipDuration": 0,
+      "basePoints": 100
+    },
+    {
+      "id": "csv-r3q11",
+      "round": 3,
+      "category": "Dance Songs",
+      "songLabel": "",
+      "songs": [
+        {
+          "title": "Get Lucky",
+          "artist": "Daft Punk ft. Pharrell",
+          "spotifyTrackId": "2jyjdujFPnzqtCr3229yls",
+          "clipStartMs": 0
+        },
+        {
+          "title": "Crank That",
+          "artist": "Soulja Boy",
+          "spotifyTrackId": "66TRwr5uJwPt15mfFkzhbi",
+          "clipStartMs": 0
+        },
+        {
+          "title": "Cotton Eye Joe",
+          "artist": "Rednex",
+          "spotifyTrackId": "0Jg602cHeMCnPez9baacIe",
+          "clipStartMs": 0
+        }
+      ],
+      "clipStart": 0,
+      "clipDuration": 0,
+      "basePoints": 100
+    },
+    {
+      "id": "csv-r3q12",
+      "round": 3,
+      "category": "Hip Hop Now",
+      "songLabel": "",
+      "songs": [
+        {
+          "title": "Not Like Us",
+          "artist": "Kendrick Lamar",
+          "spotifyTrackId": "6AI3ezQ4o3HUoP6Dhudph3",
+          "clipStartMs": 0
+        },
+        {
+          "title": "Paint the Town Red",
+          "artist": "Doja Cat",
+          "spotifyTrackId": "4dHRp03oxqJQfjGU8ECo7v",
+          "clipStartMs": 0
+        },
+        {
+          "title": "One Dance",
+          "artist": "Drake",
+          "spotifyTrackId": "1zi7xx7UVEFkmKfv06H8x0",
+          "clipStartMs": 0
+        }
+      ],
+      "clipStart": 0,
+      "clipDuration": 0,
+      "basePoints": 100
+    },
+    {
+      "id": "csv-r3q13",
+      "round": 3,
+      "category": "One Word",
+      "songLabel": "",
+      "songs": [
+        {
+          "title": "Royals",
+          "artist": "Lorde",
+          "spotifyTrackId": "2dLLR6qlu5UJ5gk0dKz0h3",
+          "clipStartMs": 0
+        },
+        {
+          "title": "Circles",
+          "artist": "Post Malone",
+          "spotifyTrackId": "21jGcNKet2qwijlDFuPiPb",
+          "clipStartMs": 0
+        },
+        {
+          "title": "Chandelier",
+          "artist": "Sia",
+          "spotifyTrackId": "2s1sdSqGcKxpPr5lCl7jAV",
+          "clipStartMs": 0
+        }
+      ],
+      "clipStart": 0,
+      "clipDuration": 0,
+      "basePoints": 100
+    },
+    {
+      "id": "csv-r3q14",
+      "round": 3,
+      "category": "Today’s Top Hits",
+      "songLabel": "",
+      "songs": [
+        {
+          "title": "I Just Might",
+          "artist": "Bruno Mars",
+          "spotifyTrackId": "6f68Ac5tt5BQOpwr0BV9oN",
+          "clipStartMs": 0
+        },
+        {
+          "title": "Levitating",
+          "artist": "Dua Lipa",
+          "spotifyTrackId": "5nujrmhLynf4yMoMtj8AQF",
+          "clipStartMs": 0
+        },
+        {
+          "title": "Lovin On Me",
+          "artist": "Jack Harlow",
+          "spotifyTrackId": "4xhsWYTOGcal8zt0J161CU",
+          "clipStartMs": 0
+        }
+      ],
+      "clipStart": 0,
+      "clipDuration": 0,
+      "basePoints": 100
+    },
+    {
+      "id": "csv-r3q15",
+      "round": 3,
+      "category": "Rock Out",
+      "songLabel": "",
+      "songs": [
+        {
+          "title": "Song 2",
+          "artist": "Blur",
+          "spotifyTrackId": "1FTSo4v6BOZH9QxKc3MbVM",
+          "clipStartMs": 0
+        },
+        {
+          "title": "American Idiot",
+          "artist": "Green Day",
+          "spotifyTrackId": "6nTiIhLmQ3FWhvrGafw2zj",
+          "clipStartMs": 0
+        },
+        {
+          "title": "Mr. Brightside",
+          "artist": "The Killers",
+          "spotifyTrackId": "003vvx7Niy0yvhvHt4a68B",
           "clipStartMs": 0
         }
       ],
@@ -224,412 +538,412 @@
   },
   "eventLog": [
     {
-      "action": "toggle_show_rules",
-      "at": "2026-04-10T01:40:08.624Z"
+      "action": "award_artist_bonus",
+      "at": "2026-04-11T01:14:49.824Z"
     },
     {
-      "action": "random_assign_players",
-      "at": "2026-04-10T01:40:08.629Z"
+      "action": "reset_round",
+      "at": "2026-04-11T01:14:57.813Z"
     },
     {
-      "action": "update_config",
-      "at": "2026-04-10T01:40:38.127Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-10T01:40:40.734Z"
-    },
-    {
-      "action": "toggle_show_intro",
-      "at": "2026-04-10T01:40:45.470Z"
-    },
-    {
-      "action": "toggle_show_rules",
-      "at": "2026-04-10T01:40:45.477Z"
-    },
-    {
-      "action": "random_assign_players",
-      "at": "2026-04-10T01:40:45.479Z"
-    },
-    {
-      "action": "toggle_show_intro",
-      "at": "2026-04-10T01:40:51.404Z"
-    },
-    {
-      "action": "toggle_show_rules",
-      "at": "2026-04-10T01:40:51.408Z"
-    },
-    {
-      "action": "random_first_pick",
-      "at": "2026-04-10T01:40:51.412Z"
-    },
-    {
-      "action": "show_board",
-      "at": "2026-04-10T01:41:03.267Z"
-    },
-    {
-      "action": "toggle_show_intro",
-      "at": "2026-04-10T01:41:05.712Z"
-    },
-    {
-      "action": "toggle_show_rules",
-      "at": "2026-04-10T01:41:05.715Z"
-    },
-    {
-      "action": "start_game",
-      "at": "2026-04-10T01:41:05.718Z"
+      "action": "next_round",
+      "at": "2026-04-11T01:15:07.468Z"
     },
     {
       "action": "select_question",
-      "at": "2026-04-10T01:41:26.781Z"
+      "at": "2026-04-11T01:15:30.487Z"
     },
     {
       "action": "select_song",
-      "at": "2026-04-10T01:41:38.617Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-10T01:41:48.619Z"
-    },
-    {
-      "action": "reset_scores",
-      "at": "2026-04-10T01:42:01.264Z"
-    },
-    {
-      "action": "toggle_show_intro",
-      "at": "2026-04-10T01:42:02.741Z"
-    },
-    {
-      "action": "toggle_show_rules",
-      "at": "2026-04-10T01:42:02.744Z"
-    },
-    {
-      "action": "start_game",
-      "at": "2026-04-10T01:42:02.745Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-10T01:42:21.437Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-10T01:42:22.282Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-10T01:42:22.460Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-10T01:42:22.636Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-10T01:42:22.869Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-10T01:42:22.970Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-10T01:42:23.613Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-10T01:42:23.730Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-10T01:42:23.918Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-10T01:42:24.427Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-10T01:42:24.501Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-10T01:42:24.585Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-10T01:42:24.668Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-10T01:42:24.751Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-10T01:42:24.835Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-10T01:42:24.918Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-10T01:42:25.001Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-10T01:42:25.086Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-10T01:42:25.169Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-10T01:42:25.252Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-10T01:42:25.335Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-10T01:42:25.419Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-10T01:42:25.503Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-10T01:42:26.264Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-10T01:42:26.453Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-10T01:42:26.639Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-10T01:42:26.840Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-10T01:42:27.164Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-10T01:42:27.356Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-10T01:42:27.545Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-10T01:42:27.721Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-10T01:42:28.262Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-10T01:42:28.371Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-10T01:42:29.144Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-10T01:42:29.331Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-10T01:42:29.769Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-10T01:42:30.056Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-10T01:42:30.702Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-10T01:42:30.879Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-10T01:42:31.063Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-10T01:42:31.151Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-10T01:42:31.331Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-10T01:42:31.394Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-10T01:42:31.519Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-10T01:42:31.626Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-10T01:42:31.735Z"
-    },
-    {
-      "action": "select_question",
-      "at": "2026-04-10T01:42:49.306Z"
-    },
-    {
-      "action": "select_song",
-      "at": "2026-04-10T01:42:50.507Z"
+      "at": "2026-04-11T01:15:38.511Z"
     },
     {
       "action": "set_buzz_winner",
-      "at": "2026-04-10T01:42:59.649Z"
-    },
-    {
-      "action": "mark_correct",
-      "at": "2026-04-10T01:43:03.972Z"
-    },
-    {
-      "action": "select_song",
-      "at": "2026-04-10T01:43:06.964Z"
-    },
-    {
-      "action": "set_buzz_winner",
-      "at": "2026-04-10T01:43:16.040Z"
+      "at": "2026-04-11T01:15:43.787Z"
     },
     {
       "action": "mark_wrong",
-      "at": "2026-04-10T01:43:17.754Z"
+      "at": "2026-04-11T01:15:48.909Z"
     },
     {
       "action": "set_stealing_team",
-      "at": "2026-04-10T01:43:28.664Z"
+      "at": "2026-04-11T01:16:08.475Z"
+    },
+    {
+      "action": "steal_fail",
+      "at": "2026-04-11T01:16:09.781Z"
+    },
+    {
+      "action": "set_stealing_team",
+      "at": "2026-04-11T01:16:30.403Z"
+    },
+    {
+      "action": "steal_fail",
+      "at": "2026-04-11T01:16:34.600Z"
+    },
+    {
+      "action": "set_reveal_state",
+      "at": "2026-04-11T01:17:24.414Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-11T01:18:03.519Z"
+    },
+    {
+      "action": "set_buzz_winner",
+      "at": "2026-04-11T01:18:08.576Z"
+    },
+    {
+      "action": "mark_correct",
+      "at": "2026-04-11T01:18:11.587Z"
+    },
+    {
+      "action": "award_artist_bonus",
+      "at": "2026-04-11T01:18:14.136Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-11T01:18:22.387Z"
+    },
+    {
+      "action": "set_buzz_winner",
+      "at": "2026-04-11T01:18:27.731Z"
+    },
+    {
+      "action": "mark_correct",
+      "at": "2026-04-11T01:18:32.802Z"
+    },
+    {
+      "action": "award_artist_bonus",
+      "at": "2026-04-11T01:18:35.324Z"
+    },
+    {
+      "action": "reset_round",
+      "at": "2026-04-11T01:18:40.834Z"
+    },
+    {
+      "action": "select_question",
+      "at": "2026-04-11T01:18:52.876Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-11T01:19:05.361Z"
+    },
+    {
+      "action": "set_buzz_winner",
+      "at": "2026-04-11T01:19:10.853Z"
+    },
+    {
+      "action": "mark_correct",
+      "at": "2026-04-11T01:19:15.194Z"
+    },
+    {
+      "action": "set_reveal_state",
+      "at": "2026-04-11T01:19:29.951Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-11T01:19:37.413Z"
+    },
+    {
+      "action": "set_buzz_winner",
+      "at": "2026-04-11T01:19:41.570Z"
+    },
+    {
+      "action": "mark_correct",
+      "at": "2026-04-11T01:20:02.995Z"
+    },
+    {
+      "action": "set_reveal_state",
+      "at": "2026-04-11T01:20:34.930Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-11T01:21:10.483Z"
+    },
+    {
+      "action": "set_buzz_winner",
+      "at": "2026-04-11T01:21:14.814Z"
+    },
+    {
+      "action": "mark_correct",
+      "at": "2026-04-11T01:21:16.221Z"
+    },
+    {
+      "action": "set_reveal_state",
+      "at": "2026-04-11T01:21:31.067Z"
+    },
+    {
+      "action": "reset_round",
+      "at": "2026-04-11T01:21:38.221Z"
+    },
+    {
+      "action": "select_question",
+      "at": "2026-04-11T01:21:57.642Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-11T01:22:01.396Z"
+    },
+    {
+      "action": "set_buzz_winner",
+      "at": "2026-04-11T01:22:10.547Z"
+    },
+    {
+      "action": "mark_correct",
+      "at": "2026-04-11T01:22:12.185Z"
+    },
+    {
+      "action": "award_artist_bonus",
+      "at": "2026-04-11T01:22:14.850Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-11T01:22:21.336Z"
+    },
+    {
+      "action": "set_buzz_winner",
+      "at": "2026-04-11T01:22:28.522Z"
+    },
+    {
+      "action": "mark_correct",
+      "at": "2026-04-11T01:22:33.048Z"
+    },
+    {
+      "action": "award_artist_bonus",
+      "at": "2026-04-11T01:22:35.616Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-11T01:23:26.775Z"
+    },
+    {
+      "action": "set_buzz_winner",
+      "at": "2026-04-11T01:23:32.408Z"
+    },
+    {
+      "action": "mark_correct",
+      "at": "2026-04-11T01:23:34.446Z"
+    },
+    {
+      "action": "set_reveal_state",
+      "at": "2026-04-11T01:23:53.890Z"
+    },
+    {
+      "action": "set_reveal_state",
+      "at": "2026-04-11T01:23:54.077Z"
+    },
+    {
+      "action": "reset_round",
+      "at": "2026-04-11T01:24:18.771Z"
+    },
+    {
+      "action": "select_question",
+      "at": "2026-04-11T01:24:31.243Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-11T01:24:34.243Z"
+    },
+    {
+      "action": "set_buzz_winner",
+      "at": "2026-04-11T01:24:39.429Z"
+    },
+    {
+      "action": "mark_correct",
+      "at": "2026-04-11T01:24:40.879Z"
+    },
+    {
+      "action": "award_artist_bonus",
+      "at": "2026-04-11T01:24:46.471Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-11T01:25:27.307Z"
+    },
+    {
+      "action": "set_buzz_winner",
+      "at": "2026-04-11T01:25:32.653Z"
+    },
+    {
+      "action": "mark_correct",
+      "at": "2026-04-11T01:25:35.500Z"
+    },
+    {
+      "action": "award_artist_bonus",
+      "at": "2026-04-11T01:25:41.769Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-11T01:26:28.012Z"
+    },
+    {
+      "action": "set_buzz_winner",
+      "at": "2026-04-11T01:26:34.752Z"
+    },
+    {
+      "action": "mark_correct",
+      "at": "2026-04-11T01:26:35.977Z"
+    },
+    {
+      "action": "award_artist_bonus",
+      "at": "2026-04-11T01:26:38.363Z"
+    },
+    {
+      "action": "reset_round",
+      "at": "2026-04-11T01:27:43.286Z"
+    },
+    {
+      "action": "select_question",
+      "at": "2026-04-11T01:27:53.537Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-11T01:28:05.330Z"
+    },
+    {
+      "action": "set_buzz_winner",
+      "at": "2026-04-11T01:28:12.322Z"
+    },
+    {
+      "action": "mark_correct",
+      "at": "2026-04-11T01:28:13.374Z"
+    },
+    {
+      "action": "award_artist_bonus",
+      "at": "2026-04-11T01:28:15.171Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-11T01:29:32.547Z"
+    },
+    {
+      "action": "set_buzz_winner",
+      "at": "2026-04-11T01:29:37.020Z"
+    },
+    {
+      "action": "mark_wrong",
+      "at": "2026-04-11T01:29:54.223Z"
+    },
+    {
+      "action": "set_stealing_team",
+      "at": "2026-04-11T01:30:46.121Z"
     },
     {
       "action": "steal_success",
-      "at": "2026-04-10T01:43:30.060Z"
+      "at": "2026-04-11T01:30:48.528Z"
     },
     {
-      "action": "update_config",
-      "at": "2026-04-10T17:17:31.546Z"
+      "action": "select_song",
+      "at": "2026-04-11T01:31:05.757Z"
     },
     {
-      "action": "update_config",
-      "at": "2026-04-10T17:18:17.185Z"
+      "action": "set_buzz_winner",
+      "at": "2026-04-11T01:31:10.958Z"
     },
     {
-      "action": "update_config",
-      "at": "2026-04-10T17:18:47.241Z"
+      "action": "mark_wrong",
+      "at": "2026-04-11T01:31:31.627Z"
     },
     {
-      "action": "update_config",
-      "at": "2026-04-10T18:52:25.151Z"
+      "action": "set_stealing_team",
+      "at": "2026-04-11T01:31:46.471Z"
     },
     {
-      "action": "update_config",
-      "at": "2026-04-10T18:55:05.278Z"
+      "action": "steal_success",
+      "at": "2026-04-11T01:31:47.323Z"
     },
     {
-      "action": "update_config",
-      "at": "2026-04-10T18:55:33.772Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-10T19:00:39.112Z"
+      "action": "end_game",
+      "at": "2026-04-11T01:31:57.910Z"
     },
     {
       "action": "reset_scores",
-      "at": "2026-04-10T19:01:27.951Z"
+      "at": "2026-04-11T01:39:37.294Z"
+    },
+    {
+      "action": "reset_scores",
+      "at": "2026-04-11T01:39:37.297Z"
+    },
+    {
+      "action": "reset_round",
+      "at": "2026-04-11T01:39:37.301Z"
+    },
+    {
+      "action": "update_config",
+      "at": "2026-04-11T01:39:37.303Z"
+    },
+    {
+      "action": "reset_round",
+      "at": "2026-04-11T01:39:37.305Z"
+    },
+    {
+      "action": "reset_scores",
+      "at": "2026-04-11T01:39:37.306Z"
+    },
+    {
+      "action": "update_config",
+      "at": "2026-04-11T01:39:43.189Z"
     },
     {
       "action": "toggle_show_intro",
-      "at": "2026-04-10T19:01:30.219Z"
+      "at": "2026-04-11T01:39:44.239Z"
     },
     {
       "action": "toggle_show_rules",
-      "at": "2026-04-10T19:01:30.220Z"
+      "at": "2026-04-11T01:39:44.242Z"
     },
     {
       "action": "start_game",
-      "at": "2026-04-10T19:01:30.222Z"
+      "at": "2026-04-11T01:39:44.244Z"
+    },
+    {
+      "action": "select_question",
+      "at": "2026-04-11T01:39:54.098Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-11T01:39:56.520Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-11T01:40:11.069Z"
+    },
+    {
+      "action": "set_buzz_winner",
+      "at": "2026-04-11T01:40:15.817Z"
+    },
+    {
+      "action": "mark_correct",
+      "at": "2026-04-11T01:40:17.471Z"
+    },
+    {
+      "action": "award_artist_bonus",
+      "at": "2026-04-11T01:40:18.562Z"
+    },
+    {
+      "action": "toggle_show_intro",
+      "at": "2026-04-11T01:41:19.024Z"
     },
     {
       "action": "reset_scores",
-      "at": "2026-04-10T19:04:31.588Z"
+      "at": "2026-04-11T01:41:57.958Z"
     },
     {
       "action": "update_config",
-      "at": "2026-04-10T20:00:55.678Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-10T20:01:04.404Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-10T20:01:05.522Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-10T20:01:06.390Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-10T20:01:07.163Z"
-    },
-    {
-      "action": "update_config",
-      "at": "2026-04-10T20:03:39.035Z"
+      "at": "2026-04-11T01:42:00.518Z"
     },
     {
       "action": "toggle_show_intro",
-      "at": "2026-04-10T20:04:03.747Z"
-    },
-    {
-      "action": "toggle_show_rules",
-      "at": "2026-04-10T20:04:03.749Z"
-    },
-    {
-      "action": "random_assign_players",
-      "at": "2026-04-10T20:04:03.751Z"
-    },
-    {
-      "action": "toggle_show_intro",
-      "at": "2026-04-10T20:04:39.439Z"
-    },
-    {
-      "action": "toggle_show_rules",
-      "at": "2026-04-10T20:04:39.442Z"
-    },
-    {
-      "action": "random_assign_players",
-      "at": "2026-04-10T20:04:39.443Z"
+      "at": "2026-04-11T01:42:01.919Z"
     }
   ],
-  "updatedAt": "2026-04-10T20:04:39.443Z",
-  "showIntro": false,
-  "randomizerSeq": 34,
+  "updatedAt": "2026-04-11T01:42:01.919Z",
+  "showIntro": true,
+  "randomizerSeq": 40,
   "showRules": false,
   "firstPickSeq": 0,
-  "firstPickTeamId": "team-c",
+  "firstPickTeamId": "team-d",
   "teamCount": 4,
   "eliminationEnabled": false
 }
