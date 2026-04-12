@@ -158,8 +158,9 @@ export const BuzzerDiagnosticsPage = () => {
 
       if (msg.type === 'WINDOW_CLOSED') {
         setDisabledControllers([]);
-        setEligibleControllers([]);
-        setEarlyBuzzPenalty(false);
+        // Do NOT clear eligibleControllers/earlyBuzzPenalty here — a new window
+        // may be opening immediately after (steal flow). Those are cleared only
+        // when WINDOW_STATE arrives with windowState === 'IDLE'.
       }
     };
 
