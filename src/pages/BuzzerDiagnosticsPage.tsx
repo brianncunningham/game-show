@@ -137,10 +137,12 @@ export const BuzzerDiagnosticsPage = () => {
         setWindowState(ws);
         setActiveWindowId(wid);
         if (ws === 'IDLE') {
+          // Only clear transient winner state. eligibleControllers/earlyBuzzPenalty
+          // are owned by the open-window calls (optimistic) and must survive the
+          // transient IDLE that the server emits between closing one window and
+          // opening the next (steal flow). They are cleared explicitly on Reset.
           setWinner(null);
           setElapsedMs(null);
-          setEligibleControllers([]);
-          setEarlyBuzzPenalty(false);
           setDisabledControllers([]);
         }
       }
@@ -542,7 +544,14 @@ export const BuzzerDiagnosticsPage = () => {
                 >
                   Close
                 </Button>
-                <Button variant="outlined" color="error" onClick={() => void resetJudge()}>
+                <Button variant="outlined" color="error" onClick={() => {
+                  void resetJudge();
+                  setEligibleControllers([]);
+                  setEarlyBuzzPenalty(false);
+                  setDisabledControllers([]);
+                  setWinner(null);
+                  setElapsedMs(null);
+                }}>
                   Reset
                 </Button>
               </Stack>
