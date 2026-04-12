@@ -222,6 +222,34 @@ export const BuzzerDiagnosticsPage = () => {
     });
   };
 
+  /**
+   * Mirror of HostPage.openStealWindow:
+   * - Exclude all controllers whose team has already attempted (winner's team + any prior failed teams)
+   * - earlyBuzzPenalty: true
+   * - Close previous window first
+   */
+  const handleMarkWrongOpenSteal = () => {
+    if (!winner) return;
+    const winnerTeamId = resolveController(winner).teamId;
+    // Collect all excluded team IDs: already failed (from roundState) + winner's team
+    const excludedTeamIds = Array.from(new Set([
+      ...failedTeamIds,
+      ...(winnerTeamId ? [winnerTeamId] : []),
+    ]));
+    const eligible = excludedTeamIds.length === 0
+      ? []
+      : assignments.filter(a => !excludedTeamIds.includes(a.teamId)).map(a => a.controllerId);
+    const stealN = excludedTeamIds.length; // matches HostPage: attemptedTeamIds.length after adding winner
+    const wid = `diag-steal-${stealN}-${Date.now()}`;
+    if (activeWindowId) void closeWindow(activeWindowId).catch(() => {});
+    void openWindow({ windowId: wid, eligibleControllers: eligible, earlyBuzzPenalty: true });
+    setEligibleControllers(eligible);
+    setEarlyBuzzPenalty(true);
+    setDisabledControllers([]);
+    setWinner(null);
+    setElapsedMs(null);
+  };
+
   // ---------------------------------------------------------------------------
   // Controller status for table
   // ---------------------------------------------------------------------------
@@ -421,7 +449,7 @@ export const BuzzerDiagnosticsPage = () => {
         {winner && (
           <Box sx={{ border: '1px solid #4cff9155', bgcolor: '#0d2218', borderRadius: 1, p: 2 }}>
             <Typography variant="overline" sx={{ color: '#4cff91' }}>Winner</Typography>
-            <Stack direction="row" spacing={2} alignItems="baseline" flexWrap="wrap">
+            <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
               <Typography variant="h6" fontWeight={900} sx={{ color: '#4cff91' }}>
                 {winnerResolved?.player ?? winner}
               </Typography>
@@ -431,7 +459,22 @@ export const BuzzerDiagnosticsPage = () => {
               <Typography variant="body2" color="text.secondary">
                 controller #{winner}&nbsp;·&nbsp;{elapsedMs !== null ? `${elapsedMs}ms after ARM` : ''}
               </Typography>
+              <Button
+                size="small"
+                variant="contained"
+                color="error"
+                onClick={handleMarkWrongOpenSteal}
+                sx={{ ml: 'auto !important' }}
+              >
+                ✗ Wrong → Open Steal
+              </Button>
             </Stack>
+            {winnerResolved?.teamId && (
+              <Typography variant="caption" color="text.disabled" sx={{ mt: 0.5, display: 'block' }}>
+                Steal will exclude: {winnerResolved.team} (+ any prior failed teams).
+                Eligible = all other controllers. earlyBuzzPenalty ON.
+              </Typography>
+            )}
           </Box>
         )}
 
