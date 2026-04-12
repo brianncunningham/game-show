@@ -538,14 +538,6 @@
   },
   "eventLog": [
     {
-      "action": "reset_round",
-      "at": "2026-04-11T01:18:40.834Z"
-    },
-    {
-      "action": "select_question",
-      "at": "2026-04-11T01:18:52.876Z"
-    },
-    {
       "action": "select_song",
       "at": "2026-04-11T01:19:05.361Z"
     },
@@ -936,9 +928,17 @@
     {
       "action": "select_song",
       "at": "2026-04-11T21:07:38.634Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-12T02:44:09.531Z"
+    },
+    {
+      "action": "select_song",
+      "at": "2026-04-12T02:44:40.398Z"
     }
   ],
-  "updatedAt": "2026-04-11T21:07:38.634Z",
+  "updatedAt": "2026-04-12T02:44:40.398Z",
   "showIntro": false,
   "randomizerSeq": 41,
   "showRules": false,

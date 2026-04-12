@@ -31,10 +31,11 @@ export const attachBuzzerSocket = (server: HttpServer): void => {
 
   registerWsPath('/ws/buzzer', (socket) => {
     sockets.add(socket);
+    const { windowId, windowState } = judgeController.getWindowState();
     socket.send(JSON.stringify({
-      type: 'STATE',
+      type: 'WINDOW_STATE',
       timestamp: new Date().toISOString(),
-      payload: { state: judgeController.getState() },
+      payload: { windowId, windowState },
     }));
     socket.on('close', () => sockets.delete(socket));
   });
