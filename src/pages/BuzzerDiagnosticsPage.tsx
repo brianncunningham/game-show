@@ -104,6 +104,9 @@ export const BuzzerDiagnosticsPage = () => {
   const [winner,    setWinner]    = useState<string | null>(null);
   const [elapsedMs, setElapsedMs] = useState<number | null>(null);
 
+  // Accumulated excluded teams across steal rounds (diagnostics-local, mirrors attemptedTeamIds)
+  const [diagExcludedTeamIds, setDiagExcludedTeamIds] = useState<string[]>([]);
+
   // Connection
   const [connected, setConnected] = useState(false);
 
@@ -234,15 +237,17 @@ export const BuzzerDiagnosticsPage = () => {
   const handleMarkWrongOpenSteal = () => {
     if (!winner) return;
     const winnerTeamId = resolveController(winner).teamId;
-    // Collect all excluded team IDs: already failed (from roundState) + winner's team
-    const excludedTeamIds = Array.from(new Set([
+    // Accumulate: prior excluded + game-state failed + this winner's team
+    const nextExcluded = Array.from(new Set([
+      ...diagExcludedTeamIds,
       ...failedTeamIds,
       ...(winnerTeamId ? [winnerTeamId] : []),
     ]));
-    const eligible = excludedTeamIds.length === 0
+    setDiagExcludedTeamIds(nextExcluded);
+    const eligible = nextExcluded.length === 0
       ? []
-      : assignments.filter(a => !excludedTeamIds.includes(a.teamId)).map(a => a.controllerId);
-    const stealN = excludedTeamIds.length; // matches HostPage: attemptedTeamIds.length after adding winner
+      : assignments.filter(a => !nextExcluded.includes(a.teamId)).map(a => a.controllerId);
+    const stealN = nextExcluded.length;
     const wid = `diag-steal-${stealN}-${Date.now()}`;
     if (activeWindowId) void closeWindow(activeWindowId).catch(() => {});
     void openWindow({ windowId: wid, eligibleControllers: eligible, earlyBuzzPenalty: true });
@@ -260,9 +265,9 @@ export const BuzzerDiagnosticsPage = () => {
   type CtrlStatus = 'eligible' | 'ineligible' | 'disabled' | 'team-failed';
 
   const controllerStatus = (cid: string, teamId: string | null): CtrlStatus => {
-    if (disabledControllers.includes(cid))                           return 'disabled';
-    if (teamId && failedTeamIds.includes(teamId))                   return 'team-failed';
-    if (eligibleControllers.length > 0 && !eligibleControllers.includes(cid)) return 'ineligible';
+    if (disabledControllers.includes(cid))                                        return 'disabled';
+    if (teamId && (failedTeamIds.includes(teamId) || diagExcludedTeamIds.includes(teamId))) return 'team-failed';
+    if (eligibleControllers.length > 0 && !eligibleControllers.includes(cid))    return 'ineligible';
     return 'eligible';
   };
 
@@ -551,6 +556,7 @@ export const BuzzerDiagnosticsPage = () => {
                   setDisabledControllers([]);
                   setWinner(null);
                   setElapsedMs(null);
+                  setDiagExcludedTeamIds([]);
                 }}>
                   Reset
                 </Button>
@@ -578,6 +584,10 @@ export const BuzzerDiagnosticsPage = () => {
                       .then(() => armWindow(wid));
                     setEligibleControllers([]);
                     setEarlyBuzzPenalty(false);
+                    setDiagExcludedTeamIds([]);
+                    setWinner(null);
+                    setElapsedMs(null);
+                    setDisabledControllers([]);
                   }}
                 >
                   Open+Arm (all eligible)
