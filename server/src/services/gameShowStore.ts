@@ -385,6 +385,17 @@ class GameShowStore extends EventEmitter {
     });
   }
 
+  /**
+   * Resolve a controllerId (from the judge) to a teamId via controllerAssignments
+   * and call setBuzzWinner. Used by phone/hardware mode when BUZZ_ACCEPTED fires.
+   * Returns null if the controller is not found in the current assignments.
+   */
+  setBuzzWinnerFromController(controllerId: string): GameShowState | null {
+    const assignment = this.state.controllerAssignments.find(a => a.controllerId === controllerId);
+    if (!assignment) return null;
+    return this.setBuzzWinner(assignment.teamId);
+  }
+
   setBuzzWinner(teamId: string): GameShowState {
     if (!this.canMutate() || this.state.roundState.clipState !== 'active') {
       return this.state;

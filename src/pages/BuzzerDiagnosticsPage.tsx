@@ -356,7 +356,7 @@ export const BuzzerDiagnosticsPage = () => {
             {eventLog.map((ev, i) => {
               const isAccepted = ev.type === 'BUZZ_ACCEPTED';
               const isRejected = ev.type === 'BUZZ_REJECTED';
-              const payload = ev.payload as Record<string, unknown>;
+              const payload = ev.payload as Record<string, string | number | undefined>;
 
               return (
                 <Stack

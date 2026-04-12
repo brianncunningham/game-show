@@ -37,6 +37,16 @@ router.post('/buzz/:teamId', (req, res) => {
   res.json(gameShowStore.setBuzzWinner(req.params.teamId));
 });
 
+/** Resolve a judge controllerId → teamId and set the buzz winner (phone/hardware mode). */
+router.post('/buzz/controller/:controllerId', (req, res) => {
+  const result = gameShowStore.setBuzzWinnerFromController(req.params.controllerId);
+  if (!result) {
+    res.status(404).json({ error: `No controller assignment found for controllerId '${req.params.controllerId}'` });
+    return;
+  }
+  res.json(result);
+});
+
 router.post('/answer/correct', (_req, res) => {
   res.json(gameShowStore.markCorrect());
 });

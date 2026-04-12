@@ -4,6 +4,8 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import { useCallback, useEffect, useState } from 'react';
 import { initiateSpotifyLogin, useSpotify } from '../features/spotify/useSpotify';
+import { openWindow, armWindow, closeWindow, resetJudge } from '../features/buzzer/buzzerApi';
+import { useBuzzerJudge } from '../features/buzzer/useBuzzerJudge';
 import {
   awardArtistBonus,
   endGame,
@@ -67,6 +69,83 @@ export const HostPage = () => {
   const [showScreenOpen, setShowScreenOpen] = useState(false);
   const [eliminateConfirm, setEliminateConfirm] = useState<string | null>(null);
   const spotify = useSpotify();
+
+  const buzzerMode = state?.buzzerMode ?? 'manual';
+  const isJudgeMode = buzzerMode !== 'manual';
+
+  /** Local tracking of the currently open steal window (not armed yet). */
+  const [activeStealWindowId, setActiveStealWindowId] = useState<string | null>(null);
+
+  // ---------------------------------------------------------------------------
+  // Buzzer judge integration (phone / hardware modes only)
+  // ---------------------------------------------------------------------------
+
+  /** Pause Spotify when the judge accepts a buzz. */
+  const handleBuzzAccepted = useCallback((controllerId: string) => {
+    console.log(`[Host] Judge accepted buzz from controller ${controllerId} — pausing Spotify`);
+    if (spotify.isConnected) {
+      void spotify.pause();
+      setSpotifyPaused(true);
+    }
+  }, [spotify]);
+
+  useBuzzerJudge({ buzzerMode, onBuzzAccepted: handleBuzzAccepted });
+
+  /**
+   * Build a stable windowId for the current song + steal round.
+   * Format: song-{questionId}-{songIndex}-steal-{n}  (steal-0 = initial buzz)
+   */
+  const buildWindowId = useCallback((questionId: string, songIndex: number, stealN: number): string => {
+    return `song-${questionId}-${songIndex}-steal-${stealN}`;
+  }, []);
+
+  /**
+   * Get controller IDs eligible for the given set of teamIds.
+   * Empty array means all controllers (used when no eligibility filter needed).
+   */
+  const eligibleControllerIds = useCallback((
+    excludedTeamIds: string[],
+    assignments: NonNullable<typeof state>['controllerAssignments'],
+  ): string[] => {
+    if (excludedTeamIds.length === 0) return [];
+    return assignments
+      .filter(a => !excludedTeamIds.includes(a.teamId))
+      .map(a => a.controllerId);
+  }, []);
+
+  /** Open + immediately arm an initial buzz window for a song. Clears any steal window. */
+  const openAndArmInitialWindow = useCallback((questionId: string, songIndex: number) => {
+    if (!isJudgeMode) return;
+    setActiveStealWindowId(null);
+    const windowId = buildWindowId(questionId, songIndex, 0);
+    void openWindow({ windowId, eligibleControllers: [], earlyBuzzPenalty: false })
+      .then(() => armWindow(windowId));
+  }, [isJudgeMode, buildWindowId]);
+
+  /**
+   * Open a steal window (WAITING, not yet armed) for the given attempted teams.
+   * The host will arm it by pressing Resume on the Spotify pause button.
+   */
+  const openStealWindow = useCallback((
+    questionId: string,
+    songIndex: number,
+    attemptedTeamIds: string[],
+    assignments: NonNullable<typeof state>['controllerAssignments'],
+  ) => {
+    if (!isJudgeMode) return;
+    const windowId = buildWindowId(questionId, songIndex, attemptedTeamIds.length);
+    const eligible = eligibleControllerIds(attemptedTeamIds, assignments);
+    void closeWindow(buildWindowId(questionId, songIndex, attemptedTeamIds.length - 1))
+      .catch(() => {})
+      .then(() => openWindow({ windowId, eligibleControllers: eligible, earlyBuzzPenalty: true }));
+    setActiveStealWindowId(windowId);
+  }, [isJudgeMode, buildWindowId, eligibleControllerIds]);
+
+  // Arm the current steal window when the host resumes the song.
+  const armActiveStealWindow = useCallback(() => {
+    if (!isJudgeMode) return;
+    if (activeStealWindowId) void armWindow(activeStealWindowId);
+  }, [isJudgeMode, activeStealWindowId]);
 
   const refreshSaves = useCallback(async () => {
     const list = await listSaves();
@@ -396,6 +475,9 @@ export const HostPage = () => {
                             disabled={(!canPickSong && !isActive) || isPast || isResolved}
                             onClick={() => {
                               void selectSong(i);
+                              if (isJudgeMode && state?.roundState.selectedQuestionId) {
+                                openAndArmInitialWindow(state.roundState.selectedQuestionId, i);
+                              }
                               const trackId = songMeta?.spotifyTrackId;
                               const startMs = songMeta?.clipStartMs ?? 0;
                               if (trackId && spotify.isConnected) {
@@ -421,6 +503,7 @@ export const HostPage = () => {
                                 if (spotifyPaused) {
                                   void spotify.resume();
                                   setSpotifyPaused(false);
+                                  armActiveStealWindow();
                                 } else {
                                   void spotify.pause();
                                   setSpotifyPaused(true);
@@ -474,10 +557,24 @@ export const HostPage = () => {
                 <Typography sx={sectionLabelSx} mb={0}>Judge answer</Typography>
               </Stack>
               <Stack direction="row" spacing={1} flexWrap="nowrap">
-                <Button fullWidth color="success" variant="contained" sx={{ ...bigBtnSx, flex: 1, fontSize: { xs: '0.7rem', md: '0.75rem' } }} disabled={!canJudgeAnswer} onClick={() => void markCorrect()}>
+                <Button fullWidth color="success" variant="contained" sx={{ ...bigBtnSx, flex: 1, fontSize: { xs: '0.7rem', md: '0.75rem' } }} disabled={!canJudgeAnswer} onClick={() => {
+                  void markCorrect();
+                  if (isJudgeMode) void resetJudge();
+                }}>
                   ✓ Correct ({expectedPoints} pts)
                 </Button>
-                <Button fullWidth color="error" variant="contained" sx={{ ...bigBtnSx, flex: 1, fontSize: { xs: '0.7rem', md: '0.75rem' } }} disabled={!canJudgeAnswer} onClick={() => void markWrong()}>
+                <Button fullWidth color="error" variant="contained" sx={{ ...bigBtnSx, flex: 1, fontSize: { xs: '0.7rem', md: '0.75rem' } }} disabled={!canJudgeAnswer} onClick={() => {
+                  void markWrong();
+                  if (isJudgeMode && state?.roundState.selectedQuestionId && state.roundState.activeSongIndex != null) {
+                    const nextAttempted = [...(state.roundState.attemptedTeamIds), state.roundState.buzzWinnerTeamId!].filter(Boolean) as string[];
+                    openStealWindow(
+                      state.roundState.selectedQuestionId,
+                      state.roundState.activeSongIndex,
+                      nextAttempted,
+                      state.controllerAssignments,
+                    );
+                  }
+                }}>
                   ✗ Wrong
                 </Button>
                 <Button
@@ -532,12 +629,31 @@ export const HostPage = () => {
               )}
               <Grid container spacing={1.5}>
                 <Grid item xs={6}>
-                  <Button fullWidth color="warning" variant="contained" sx={bigBtnSx} disabled={!stealAvailable || !stealingTeam} onClick={() => void markStealSuccess()}>
+                  <Button fullWidth color="warning" variant="contained" sx={bigBtnSx} disabled={!stealAvailable || !stealingTeam} onClick={() => {
+                    void markStealSuccess();
+                    if (isJudgeMode) void resetJudge();
+                  }}>
                     Steal success
                   </Button>
                 </Grid>
                 <Grid item xs={6}>
-                  <Button fullWidth color="inherit" variant="outlined" sx={bigBtnSx} disabled={!stealAvailable || !stealingTeam} onClick={() => void markStealFail()}>
+                  <Button fullWidth color="inherit" variant="outlined" sx={bigBtnSx} disabled={!stealAvailable || !stealingTeam} onClick={() => {
+                    void markStealFail();
+                    if (isJudgeMode && state?.roundState.selectedQuestionId && state.roundState.activeSongIndex != null && stealingTeamId) {
+                      const nextAttempted = [...(state.roundState.attemptedTeamIds), stealingTeamId].filter(Boolean) as string[];
+                      const remaining = activeTeams.filter(t => !nextAttempted.includes(t.id));
+                      if (remaining.length > 0) {
+                        openStealWindow(
+                          state.roundState.selectedQuestionId,
+                          state.roundState.activeSongIndex,
+                          nextAttempted,
+                          state.controllerAssignments,
+                        );
+                      } else {
+                        void resetJudge();
+                      }
+                    }
+                  }}>
                     Steal fail
                   </Button>
                 </Grid>

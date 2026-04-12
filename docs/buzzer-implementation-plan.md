@@ -39,14 +39,14 @@ Define message structure and state machine.
 - Add `windowId` to all events
 - Keep legacy `/arm` endpoint working during migration
 
-### Phase 7 - App Song-Round Integration (next)
-- On song select: call `POST /open-window` with `windowId` and all controllers eligible
-- On song resume (after wrong answer): call `POST /arm-window`
-- On wrong answer: call `POST /close-window`, then `POST /open-window` for steal with restricted eligibility
-- On steal countdown: open new window with `earlyBuzzPenalty: true`
-- On BUZZ_EARLY: apply in-app penalty (e.g. controller excluded from steal, or score deduction)
-- On BUZZ_ACCEPTED: resolve `controllerId` → player → team, apply score
-- On host abort / song end: call `POST /reset`
+### Phase 7 - App Song-Round Integration ✓
+- On song select: call `POST /open-window` (all controllers eligible) + immediately `POST /arm-window`
+- On BUZZ_ACCEPTED: judge resolves `controllerId` → teamId via `POST /api/game-show/buzz/controller/:id`; Spotify pauses
+- On wrong answer: call `POST /close-window`, open steal window with reduced eligibility and `earlyBuzzPenalty: true`
+- On steal resume (Spotify Resume button): `POST /arm-window` for the active steal window
+- On steal fail (more stealers remain): open next steal window; on no stealers: `POST /reset`
+- On correct / steal success: `POST /reset` (judge returns to idle)
+- Manual mode: unchanged — no judge calls made
 
 ### Phase 8 - Hardware (later)
 - Add GPIO input source
@@ -81,5 +81,5 @@ Define message structure and state machine.
 - First buzz wins ✓
 - Lockout works ✓
 - Window-based protocol implemented ✓
-- Steal windows with eligibility filtering — app integration pending (Phase 7)
-- Early-buzz penalty detection — implemented in judge, app handling pending (Phase 7)
+- Steal windows with eligibility filtering ✓
+- Early-buzz penalty detection (judge emits BUZZ_EARLY; app penalty UI pending Phase 10)
