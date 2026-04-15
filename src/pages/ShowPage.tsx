@@ -59,6 +59,12 @@ export const ShowPage = () => {
     if ((state?.firstPickSeq ?? 0) > 0) setShowRandomizer(false);
   }, [state?.firstPickSeq]);
 
+  // Clear reveal when song or question changes
+  useEffect(() => {
+    setRevealMode(null);
+    prevRevealStateRef.current = 'none';
+  }, [state?.roundState.selectedQuestionId, state?.roundState.activeSongIndex]);
+
   // Detect revealState transitions
   useEffect(() => {
     if (!state) return;
