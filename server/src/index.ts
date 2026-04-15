@@ -63,10 +63,10 @@ if (!JUDGE_URL) {
   const piHost = judgeUrl.hostname;
   const piPort = Number(judgeUrl.port) || 3001;
   registerWsPath('/ws/buzzer', (clientWs) => {
-    const piWs = new WebSocket(`ws://${piHost}:${piPort}/ws/buzzer`);
+    const piWs = new WebSocket(`ws://${piHost}:${piPort}/ws/buzzer`, { perMessageDeflate: false });
     piWs.on('open', () => {
-      clientWs.on('message', (msg) => piWs.readyState === WebSocket.OPEN && piWs.send(msg));
-      piWs.on('message', (msg) => clientWs.readyState === WebSocket.OPEN && clientWs.send(msg));
+      clientWs.on('message', (msg, isBinary) => piWs.readyState === WebSocket.OPEN && piWs.send(msg, { binary: isBinary }));
+      piWs.on('message', (msg) => clientWs.readyState === WebSocket.OPEN && clientWs.send(msg.toString()));
     });
     piWs.on('close', () => clientWs.close());
     clientWs.on('close', () => piWs.close());
