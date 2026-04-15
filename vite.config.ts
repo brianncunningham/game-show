@@ -7,19 +7,23 @@ const APP_SERVER_WS = 'ws://localhost:3001';
 
 // Judge-controller — override with JUDGE_URL env var to point at Pi.
 // e.g. JUDGE_URL=http://judge-controller.local:3001 npm run dev
-const JUDGE_HOST = process.env['JUDGE_URL'] ?? APP_SERVER;
-const JUDGE_HOST_WS = JUDGE_HOST.replace(/^http/, 'ws');
+// Buzzer always proxies through the local app server (which forwards to Pi if JUDGE_URL is set)
+const JUDGE_HOST = APP_SERVER;
+const JUDGE_HOST_WS = APP_SERVER_WS;
 
 export default defineConfig({
   plugins: [react()],
   server: {
-    host: '127.0.0.1',
+    host: '0.0.0.0',
     port: 4174,
     allowedHosts: ['srv1461086.tail71c584.ts.net'],
     proxy: {
       '/api/buzzer': {
         target: JUDGE_HOST,
         changeOrigin: true,
+        configure: (proxy) => {
+          proxy.on('error', (err) => console.error('[proxy/buzzer]', err.message));
+        },
       },
       '/api': {
         target: APP_SERVER,

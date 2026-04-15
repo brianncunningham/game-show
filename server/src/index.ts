@@ -8,8 +8,10 @@ import { attachBuzzerSocket } from './buzzer/buzzerSocket.js';
 import gameShowRoutes from './routes/gameShowRoutes.js';
 import buzzerRoutes from './routes/buzzerRoutes.js';
 import { initHardwareInput } from './buzzer/inputs/hardwareInput.js';
+import { createProxyMiddleware } from 'http-proxy-middleware';
 
 const PORT = Number(process.env.PORT ?? 3001);
+const JUDGE_URL = process.env['JUDGE_URL'] ?? null;
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DIST = join(__dirname, '../../dist');
 
@@ -19,7 +21,13 @@ app.use(cors());
 app.use(express.json());
 
 app.use('/api/game-show', gameShowRoutes);
-app.use('/api/buzzer', buzzerRoutes);
+
+if (JUDGE_URL) {
+  console.log(`[Judge] Proxying /api/buzzer and /ws/buzzer → ${JUDGE_URL}`);
+  app.use('/api/buzzer', createProxyMiddleware({ target: JUDGE_URL, changeOrigin: true }));
+} else {
+  app.use('/api/buzzer', buzzerRoutes);
+}
 
 app.use(express.static(DIST));
 app.get('*', (_req, res) => {
@@ -29,7 +37,15 @@ app.get('*', (_req, res) => {
 const server = createServer(app);
 
 attachGameShowSocket(server);
-attachBuzzerSocket(server);
+if (!JUDGE_URL) {
+  attachBuzzerSocket(server);
+} else {
+  // Proxy /ws/buzzer WebSocket to Pi judge
+  const wsProxy = createProxyMiddleware({ target: JUDGE_URL.replace(/^http/, 'ws'), ws: true, changeOrigin: true });
+  server.on('upgrade', (req, socket, head) => {
+    if (req.url?.startsWith('/ws/buzzer')) wsProxy.upgrade!(req, socket as import('net').Socket, head);
+  });
+}
 
 server.listen(PORT, () => {
   console.log(`Game show server listening on http://localhost:${PORT}`);
