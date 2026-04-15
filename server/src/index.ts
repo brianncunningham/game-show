@@ -9,7 +9,8 @@ import gameShowRoutes from './routes/gameShowRoutes.js';
 import buzzerRoutes from './routes/buzzerRoutes.js';
 import { initHardwareInput } from './buzzer/inputs/hardwareInput.js';
 import { request as httpRequest } from 'http';
-import { WebSocket, WebSocketServer } from 'ws';
+import { WebSocket } from 'ws';
+import { registerWsPath } from './services/webSocketManager.js';
 
 const PORT = Number(process.env.PORT ?? 3001);
 const JUDGE_URL = process.env['JUDGE_URL'] ?? null;
@@ -61,20 +62,16 @@ if (!JUDGE_URL) {
   const judgeUrl = new URL(JUDGE_URL);
   const piHost = judgeUrl.hostname;
   const piPort = Number(judgeUrl.port) || 3001;
-  const wss = new WebSocketServer({ noServer: true });
-  server.on('upgrade', (req, socket, head) => {
-    if (req.url !== '/ws/buzzer') return;
-    wss.handleUpgrade(req, socket, head, (clientWs) => {
-      const piWs = new WebSocket(`ws://${piHost}:${piPort}/ws/buzzer`);
-      piWs.on('open', () => {
-        clientWs.on('message', (msg) => piWs.readyState === WebSocket.OPEN && piWs.send(msg));
-        piWs.on('message', (msg) => clientWs.readyState === WebSocket.OPEN && clientWs.send(msg));
-      });
-      piWs.on('close', () => clientWs.close());
-      clientWs.on('close', () => piWs.close());
-      piWs.on('error', () => clientWs.close());
-      clientWs.on('error', () => piWs.close());
+  registerWsPath('/ws/buzzer', (clientWs) => {
+    const piWs = new WebSocket(`ws://${piHost}:${piPort}/ws/buzzer`);
+    piWs.on('open', () => {
+      clientWs.on('message', (msg) => piWs.readyState === WebSocket.OPEN && piWs.send(msg));
+      piWs.on('message', (msg) => clientWs.readyState === WebSocket.OPEN && clientWs.send(msg));
     });
+    piWs.on('close', () => clientWs.close());
+    clientWs.on('close', () => piWs.close());
+    piWs.on('error', () => clientWs.close());
+    clientWs.on('error', () => piWs.close());
   });
 }
 
