@@ -7,6 +7,7 @@ import { attachGameShowSocket } from './services/gameShowSocket.js';
 import { attachBuzzerSocket } from './buzzer/buzzerSocket.js';
 import gameShowRoutes from './routes/gameShowRoutes.js';
 import buzzerRoutes from './routes/buzzerRoutes.js';
+import { initHardwareInput } from './buzzer/inputs/hardwareInput.js';
 
 const PORT = Number(process.env.PORT ?? 3001);
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -32,4 +33,5 @@ attachBuzzerSocket(server);
 
 server.listen(PORT, () => {
   console.log(`Game show server listening on http://localhost:${PORT}`);
+  void initHardwareInput();
 });
