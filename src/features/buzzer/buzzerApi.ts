@@ -16,7 +16,6 @@ export interface OpenWindowParams {
 export const openWindow = async (params: OpenWindowParams): Promise<void> => {
   await fetch(`${BASE}/open-window`, {
     method: 'POST',
-    credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(params),
   });
@@ -26,7 +25,6 @@ export const openWindow = async (params: OpenWindowParams): Promise<void> => {
 export const armWindow = async (windowId: string): Promise<void> => {
   await fetch(`${BASE}/arm-window`, {
     method: 'POST',
-    credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ windowId }),
   });
@@ -36,7 +34,6 @@ export const armWindow = async (windowId: string): Promise<void> => {
 export const closeWindow = async (windowId: string): Promise<void> => {
   await fetch(`${BASE}/close-window`, {
     method: 'POST',
-    credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ windowId }),
   });
@@ -44,7 +41,7 @@ export const closeWindow = async (windowId: string): Promise<void> => {
 
 /** Hard reset — close any active window and return to idle. */
 export const resetJudge = async (): Promise<void> => {
-  await fetch(`${BASE}/reset`, { method: 'POST', credentials: 'include' });
+  await fetch(`${BASE}/reset`, { method: 'POST' });
 };
 
 // ---------------------------------------------------------------------------
@@ -53,12 +50,11 @@ export const resetJudge = async (): Promise<void> => {
 
 /** @deprecated Use openWindow + armWindow instead. */
 export const armJudge = async (): Promise<void> => {
-  await fetch(`${BASE}/arm`, { method: 'POST', credentials: 'include' });
+  await fetch(`${BASE}/arm`, { method: 'POST' });
 };
 
 export const simulateBuzz = async (controllerId: string): Promise<void> => {
   await fetch(`${BASE}/simulate/${encodeURIComponent(controllerId)}`, {
     method: 'POST',
-    credentials: 'include',
   });
 };
