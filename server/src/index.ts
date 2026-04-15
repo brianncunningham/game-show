@@ -42,7 +42,14 @@ if (JUDGE_URL) {
       piRes.pipe(res);
     });
     proxy.on('error', (err) => res.status(502).send(err.message));
-    req.pipe(proxy);
+    if (req.body && Object.keys(req.body as object).length > 0) {
+      const body = JSON.stringify(req.body);
+      proxy.setHeader('content-length', Buffer.byteLength(body));
+      proxy.write(body);
+      proxy.end();
+    } else {
+      req.pipe(proxy);
+    }
   });
 } else {
   app.use('/api/buzzer', buzzerRoutes);
