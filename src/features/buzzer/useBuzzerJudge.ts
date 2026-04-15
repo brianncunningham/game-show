@@ -14,6 +14,8 @@ import type { BuzzerMode } from '../gameShow/types';
 const GAME_API = '/api/game-show';
 
 const getBuzzerSocketUrl = () => {
+  const judgeUrl = import.meta.env['VITE_JUDGE_URL'] as string | undefined;
+  if (judgeUrl) return judgeUrl.replace(/^http/, 'ws') + '/ws/buzzer';
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
   const host = window.location.port === '4174'
     ? `${window.location.hostname}:3001`
