@@ -17,14 +17,18 @@ const DIST = join(__dirname, '../../dist');
 
 const app = express();
 
-app.use(cors());
+app.use(cors({ origin: '*' }));
 app.use(express.json());
 
 app.use('/api/game-show', gameShowRoutes);
 
 if (JUDGE_URL) {
   console.log(`[Judge] Proxying /api/buzzer and /ws/buzzer → ${JUDGE_URL}`);
-  app.use('/api/buzzer', createProxyMiddleware({ target: JUDGE_URL, changeOrigin: true }));
+  app.use(createProxyMiddleware({
+    target: JUDGE_URL,
+    changeOrigin: true,
+    pathFilter: ['/api/buzzer', '/ws/buzzer'],
+  }));
 } else {
   app.use('/api/buzzer', buzzerRoutes);
 }
@@ -39,12 +43,6 @@ const server = createServer(app);
 attachGameShowSocket(server);
 if (!JUDGE_URL) {
   attachBuzzerSocket(server);
-} else {
-  // Proxy /ws/buzzer WebSocket to Pi judge
-  const wsProxy = createProxyMiddleware({ target: JUDGE_URL.replace(/^http/, 'ws'), ws: true, changeOrigin: true });
-  server.on('upgrade', (req, socket, head) => {
-    if (req.url?.startsWith('/ws/buzzer')) wsProxy.upgrade!(req, socket as import('net').Socket, head);
-  });
 }
 
 server.listen(PORT, () => {

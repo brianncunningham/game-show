@@ -1,4 +1,6 @@
-const BASE = '/api/buzzer';
+const BASE = (import.meta.env['VITE_JUDGE_URL'] as string | undefined)
+  ? `${import.meta.env['VITE_JUDGE_URL'] as string}/api/buzzer`
+  : '/api/buzzer';
 
 // ---------------------------------------------------------------------------
 // Protocol v2 — window-based commands
