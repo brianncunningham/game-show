@@ -83,7 +83,7 @@ def uart_send(msg: str):
 
 def usb_send(obj: dict):
     """Send a JSON line to the Pi over USB serial."""
-    sys.stdout.write(json.dumps(obj) + "\n")
+    print(json.dumps(obj))
 
 def usb_readline() -> str | None:
     """Non-blocking read of a line from USB serial. Returns None if nothing available."""
@@ -107,7 +107,9 @@ for gp, cid in BUTTON_MAP.items():
 # Main loop
 # ---------------------------------------------------------------------------
 
-print("Buzz Pico ready — watching 20 buttons on GP0-GP19")
+# Wait for USB CDC to enumerate
+sleep_ms(2000)
+print("Buzz Pico ready -- watching 20 buttons on GP0-GP19")
 
 while True:
     now = ticks_ms()

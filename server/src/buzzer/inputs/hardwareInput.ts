@@ -38,7 +38,12 @@ export const initHardwareInput = async (): Promise<void> => {
     return;
   }
 
-  const port = new SerialPort({ path: PICO_PORT, baudRate: PICO_BAUD, autoOpen: false });
+  const port = new SerialPort({
+    path: PICO_PORT,
+    baudRate: PICO_BAUD,
+    autoOpen: false,
+    hupcl: false,   // don't drop DTR on close — prevents Pico reset
+  });
   const parser = port.pipe(new ReadlineParser({ delimiter: '\n' }));
 
   port.open((err: Error | null) => {
