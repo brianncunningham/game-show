@@ -9,6 +9,7 @@ import gameShowRoutes from './routes/gameShowRoutes.js';
 import buzzerRoutes from './routes/buzzerRoutes.js';
 import { initHardwareInput } from './buzzer/inputs/hardwareInput.js';
 import { request as httpRequest } from 'http';
+import { connect as netConnect } from 'net';
 
 const PORT = Number(process.env.PORT ?? 3001);
 const JUDGE_URL = process.env['JUDGE_URL'] ?? null;
@@ -56,6 +57,29 @@ const server = createServer(app);
 attachGameShowSocket(server);
 if (!JUDGE_URL) {
   attachBuzzerSocket(server);
+} else {
+  const judgeUrl = new URL(JUDGE_URL);
+  const piHost = judgeUrl.hostname;
+  const piPort = Number(judgeUrl.port) || 3001;
+  server.on('upgrade', (req, socket, head) => {
+    if (req.url !== '/ws/buzzer') return;
+    let upgraded = false;
+    const piSocket = netConnect(piPort, piHost, () => {
+      const reqLine = `GET /ws/buzzer HTTP/1.1\r\nHost: ${piHost}:${piPort}\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: ${req.headers['sec-websocket-key']}\r\nSec-WebSocket-Version: 13\r\n\r\n`;
+      piSocket.write(reqLine);
+    });
+    piSocket.on('data', (data: Buffer) => {
+      if (!upgraded) {
+        upgraded = true;
+      }
+      socket.write(data);
+    });
+    socket.on('data', (data: Buffer) => piSocket.write(data));
+    socket.on('end', () => piSocket.end());
+    piSocket.on('end', () => socket.end());
+    piSocket.on('error', () => socket.destroy());
+    socket.on('error', () => piSocket.destroy());
+  });
 }
 
 server.listen(PORT, () => {
