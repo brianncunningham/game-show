@@ -8,7 +8,7 @@ import { attachBuzzerSocket } from './buzzer/buzzerSocket.js';
 import gameShowRoutes from './routes/gameShowRoutes.js';
 import buzzerRoutes from './routes/buzzerRoutes.js';
 import { initHardwareInput } from './buzzer/inputs/hardwareInput.js';
-import { createProxyMiddleware } from 'http-proxy-middleware';
+import { request as httpRequest } from 'http';
 
 const PORT = Number(process.env.PORT ?? 3001);
 const JUDGE_URL = process.env['JUDGE_URL'] ?? null;
@@ -23,12 +23,25 @@ app.use(express.json());
 app.use('/api/game-show', gameShowRoutes);
 
 if (JUDGE_URL) {
-  console.log(`[Judge] Proxying /api/buzzer and /ws/buzzer → ${JUDGE_URL}`);
-  app.use(createProxyMiddleware({
-    target: JUDGE_URL,
-    changeOrigin: true,
-    pathFilter: ['/api/buzzer', '/ws/buzzer'],
-  }));
+  const judgeUrl = new URL(JUDGE_URL);
+  console.log(`[Judge] Proxying /api/buzzer → ${JUDGE_URL}`);
+  app.use('/api/buzzer', (req, res) => {
+    const bindAddr = process.env['BIND_ADDR'];
+    const options = {
+      hostname: judgeUrl.hostname,
+      port: Number(judgeUrl.port) || 3001,
+      path: `/api/buzzer${req.url}`,
+      method: req.method,
+      headers: { ...req.headers, host: judgeUrl.host },
+      ...(bindAddr ? { localAddress: bindAddr } : {}),
+    };
+    const proxy = httpRequest(options, (piRes) => {
+      res.writeHead(piRes.statusCode ?? 502, piRes.headers);
+      piRes.pipe(res);
+    });
+    proxy.on('error', (err) => res.status(502).send(err.message));
+    req.pipe(proxy);
+  });
 } else {
   app.use('/api/buzzer', buzzerRoutes);
 }
