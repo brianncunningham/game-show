@@ -260,9 +260,10 @@ export class JudgeController {
 
   private emitWindowState(): void {
     const { windowId, windowState } = this.getWindowState();
+    const eligibleControllers = this.window?.eligibleControllers;
     this.emit(makeBuzzerMessage<'WINDOW_STATE', WindowStatePayload>(
       'WINDOW_STATE',
-      { windowId, windowState },
+      { windowId, windowState, ...(eligibleControllers?.length ? { eligibleControllers } : {}) },
     ));
   }
 

@@ -64,12 +64,12 @@ uart = UART(1, baudrate=115200, rx=Pin(UART_RX_PIN), tx=Pin(UART_TX_PIN))
 # ---------------------------------------------------------------------------
 
 COLOR_OFF          = (0, 0, 0)
-COLOR_IDLE         = (20, 20, 20)   # dim white
-COLOR_ARMED        = (0, 0, 60)    # blue  (GRB: G=0, R=0, B=60)
-COLOR_WINNER       = (60, 0, 0)    # green (GRB: G=60, R=0, B=0)
-COLOR_NOT_WINNER   = (30, 40, 0)   # dim orange (GRB: G=30, R=40, B=0)
-COLOR_PENALTY      = (0, 60, 0)    # red   (GRB: G=0, R=60, B=0)
-COLOR_TEAM_FAILED  = (10, 0, 30)   # dim purple (GRB: G=10, R=0, B=30)
+COLOR_IDLE         = (20, 20, 20)   # dim white       (G, R, B)
+COLOR_ARMED        = (0, 0, 60)    # blue             (G=0,  R=0,  B=60)
+COLOR_WINNER       = (60, 0, 0)    # green            (G=60, R=0,  B=0)
+COLOR_NOT_WINNER   = (20, 50, 0)   # dim orange       (G=20, R=50, B=0)
+COLOR_PENALTY      = (0, 60, 0)    # red              (G=0,  R=60, B=0)
+COLOR_TEAM_FAILED  = (0, 10, 40)   # dim purple       (G=0,  R=10, B=40)
 COLOR_RESET        = (0, 0, 0)
 
 def all_leds(color: tuple):
@@ -88,15 +88,22 @@ def set_led(index: int, color: tuple):
 
 window_state = "IDLE"
 winner_led = -1
+led_overrides = {}  # index → color, persists through re-arms (penalty/team-failed)
+eligible_controllers = []  # set on WINDOW_STATE, used to mark ineligible as failed
 
 def apply_state():
     if window_state == "IDLE":
         all_leds(COLOR_IDLE)
-    elif window_state == "ARMED":
-        all_leds(COLOR_ARMED)
+    elif window_state in ("ARMED", "WAITING"):
+        for i in range(LED_COUNT):
+            np[i] = led_overrides.get(i, COLOR_ARMED)
+        np.write()
     elif window_state == "LOCKED":
         for i in range(LED_COUNT):
-            np[i] = COLOR_WINNER if i == winner_led else COLOR_NOT_WINNER
+            if i == winner_led:
+                np[i] = COLOR_WINNER
+            else:
+                np[i] = led_overrides.get(i, COLOR_NOT_WINNER)
         np.write()
     else:
         all_leds(COLOR_IDLE)
@@ -135,6 +142,14 @@ while True:
                 window_state = payload.get("windowState", "IDLE")
                 if window_state != "LOCKED":
                     winner_led = -1
+                # On steal window open: mark ineligible controllers as team-failed
+                if window_state == "WAITING":
+                    eligible_controllers = [str(c) for c in payload.get("eligibleControllers", [])]
+                    if eligible_controllers:
+                        for i in range(LED_COUNT):
+                            cid = str(i + 1)
+                            if cid not in eligible_controllers:
+                                led_overrides[i] = COLOR_TEAM_FAILED
                 apply_state()
 
             elif msg_type == "BUZZ_ACCEPTED":
@@ -146,17 +161,22 @@ while True:
             elif msg_type == "BUZZ_EARLY":
                 cid = payload.get("controllerId", "")
                 idx = controller_to_led(cid)
-                set_led(idx, COLOR_PENALTY)
+                if idx >= 0:
+                    led_overrides[idx] = COLOR_PENALTY
+                    set_led(idx, COLOR_PENALTY)
 
             elif msg_type == "TEAM_FAILED":
                 failed_ids = payload.get("controllerIds", [])
                 for cid in failed_ids:
                     idx = controller_to_led(cid)
-                    set_led(idx, COLOR_TEAM_FAILED)
+                    if idx >= 0:
+                        led_overrides[idx] = COLOR_TEAM_FAILED
+                        set_led(idx, COLOR_TEAM_FAILED)
 
             elif msg_type == "RESET":
                 window_state = "IDLE"
                 winner_led = -1
+                led_overrides.clear()
                 all_leds(COLOR_RESET)
                 time.sleep_ms(200)
                 apply_state()
