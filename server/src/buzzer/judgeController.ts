@@ -201,6 +201,18 @@ export class JudgeController {
     this.receiveBuzz(controllerId);
   }
 
+  /**
+   * TEAM_FAILED — notify the LED pico that a team answered wrong.
+   * Pass the controller IDs belonging to the failed team.
+   */
+  notifyTeamFailed(controllerIds: string[]): void {
+    if (controllerIds.length === 0) return;
+    this.emit(makeBuzzerMessage<'TEAM_FAILED', { controllerIds: string[] }>(
+      'TEAM_FAILED',
+      { controllerIds },
+    ));
+  }
+
   // -------------------------------------------------------------------------
   // Public API — Introspection
   // -------------------------------------------------------------------------

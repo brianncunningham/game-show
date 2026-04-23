@@ -63,13 +63,14 @@ uart = UART(1, baudrate=115200, rx=Pin(UART_RX_PIN), tx=Pin(UART_TX_PIN))
 # LED helpers
 # ---------------------------------------------------------------------------
 
-COLOR_OFF     = (0, 0, 0)
-COLOR_IDLE    = (20, 20, 20)    # dim white (GRB)
-COLOR_ARMED   = (60, 0, 0)     # green (GRB: G=60, R=0, B=0)
-COLOR_BUZZ    = (0, 0, 80)     # blue (GRB: G=0, R=0, B=80)
-COLOR_WINNER  = (40, 80, 0)    # gold (GRB: G=40, R=80, B=0)
-COLOR_LOSER   = (0, 30, 0)     # dim red (GRB: G=0, R=30, B=0)
-COLOR_RESET   = (0, 0, 0)
+COLOR_OFF          = (0, 0, 0)
+COLOR_IDLE         = (20, 20, 20)   # dim white
+COLOR_ARMED        = (0, 0, 60)    # blue  (GRB: G=0, R=0, B=60)
+COLOR_WINNER       = (60, 0, 0)    # green (GRB: G=60, R=0, B=0)
+COLOR_NOT_WINNER   = (30, 40, 0)   # dim orange (GRB: G=30, R=40, B=0)
+COLOR_PENALTY      = (0, 60, 0)    # red   (GRB: G=0, R=60, B=0)
+COLOR_TEAM_FAILED  = (10, 0, 30)   # dim purple (GRB: G=10, R=0, B=30)
+COLOR_RESET        = (0, 0, 0)
 
 def all_leds(color: tuple):
     for i in range(LED_COUNT):
@@ -95,7 +96,7 @@ def apply_state():
         all_leds(COLOR_ARMED)
     elif window_state == "LOCKED":
         for i in range(LED_COUNT):
-            np[i] = COLOR_WINNER if i == winner_led else COLOR_LOSER
+            np[i] = COLOR_WINNER if i == winner_led else COLOR_NOT_WINNER
         np.write()
     else:
         all_leds(COLOR_IDLE)
@@ -141,6 +142,17 @@ while True:
                 winner_led = controller_to_led(cid)
                 window_state = "LOCKED"
                 apply_state()
+
+            elif msg_type == "BUZZ_EARLY":
+                cid = payload.get("controllerId", "")
+                idx = controller_to_led(cid)
+                set_led(idx, COLOR_PENALTY)
+
+            elif msg_type == "TEAM_FAILED":
+                failed_ids = payload.get("controllerIds", [])
+                for cid in failed_ids:
+                    idx = controller_to_led(cid)
+                    set_led(idx, COLOR_TEAM_FAILED)
 
             elif msg_type == "RESET":
                 window_state = "IDLE"

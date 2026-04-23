@@ -159,6 +159,12 @@ export type BuzzRejectedMessage = BuzzerMessage<'BUZZ_REJECTED', BuzzRejectedPay
 export interface WindowClosedPayload { windowId: string; }
 export type WindowClosedMessage = BuzzerMessage<'WINDOW_CLOSED', WindowClosedPayload>;
 
+/** A team answered wrong — their controllers should show failure color. */
+export interface TeamFailedPayload {
+  controllerIds: string[];
+}
+export type TeamFailedMessage = BuzzerMessage<'TEAM_FAILED', TeamFailedPayload>;
+
 export type JudgeToAppMessage =
   | ReadyMessage
   | WindowStateMessage
@@ -166,7 +172,8 @@ export type JudgeToAppMessage =
   | BuzzEarlyMessage
   | BuzzAcceptedMessage
   | BuzzRejectedMessage
-  | WindowClosedMessage;
+  | WindowClosedMessage
+  | TeamFailedMessage;
 
 export type AnyBuzzerMessage = AppToJudgeMessage | JudgeToAppMessage;
 

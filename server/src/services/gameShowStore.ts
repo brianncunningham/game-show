@@ -1,5 +1,6 @@
 import { EventEmitter } from 'events';
 import { existsSync, readFileSync, writeFileSync, renameSync } from 'fs';
+import { judgeController } from '../buzzer/judgeController.js';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import type {
@@ -473,7 +474,7 @@ class GameShowStore extends EventEmitter {
     );
     const stealAvailable = shouldAllowSteal && eligibleStealers.length > 0;
 
-    return this.commit('mark_wrong', {
+    const newState = this.commit('mark_wrong', {
       ...this.state,
       teams: this.state.teams.map((team) =>
         this.state.rules.wrongBuzzPenalty && team.id === buzzWinnerTeamId && !this.state.practiceMode
@@ -489,6 +490,13 @@ class GameShowStore extends EventEmitter {
         lastPointsAwarded: penalty ? -penalty : null,
       },
     });
+
+    const failedControllerIds = this.state.controllerAssignments
+      .filter(a => a.teamId === buzzWinnerTeamId)
+      .map(a => a.controllerId);
+    judgeController.notifyTeamFailed(failedControllerIds);
+
+    return newState;
   }
 
   setStealingTeam(teamId: string): GameShowState {
