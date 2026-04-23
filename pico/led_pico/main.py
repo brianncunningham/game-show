@@ -38,7 +38,7 @@ from neopixel import NeoPixel
 # ---------------------------------------------------------------------------
 
 LED_PIN = 0          # GP0 → WS2812 DIN
-LED_COUNT = 1        # one LED per wand (adjust as needed)
+LED_COUNT = 20       # one LED per wand (adjust as needed)
 UART_RX_PIN = 5      # GP5 — UART1 RX from Buzz Pico
 UART_TX_PIN = 4      # GP4 — UART1 TX (reserved)
 
@@ -95,7 +95,6 @@ led_overrides = {}  # index → color, persists through re-arms (penalty/team-fa
 eligible_controllers = []  # set on WINDOW_STATE, used to mark ineligible as failed
 
 def apply_state():
-    time.sleep_ms(1)
     if window_state == "IDLE":
         all_leds(COLOR_IDLE)
     elif window_state in ("ARMED", "WAITING"):
@@ -177,12 +176,9 @@ while True:
                         # Fresh round — clear all overrides
                         led_overrides.clear()
                     had_winner = False
-                    print("WAITING wid:", incoming_window_id, "is_steal:", is_steal, "eligible:", eligible_controllers, "ov[0]:", led_overrides.get(0))
                 elif window_state != "LOCKED":
                     winner_led = -1
                 apply_state()
-                if window_state == "WAITING":
-                    print("after apply_state np[0]:", np[0])
 
             elif msg_type == "BUZZ_ACCEPTED":
                 cid = payload.get("controllerId", "")
