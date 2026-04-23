@@ -54,3 +54,18 @@ npm install -g pm2
 pm2 start "npm start" --name game-show
 pm2 save
 ```
+
+## Buzzer wand LED colors
+
+Each wand has an addressable LED (WS2812) that reflects the current game state:
+
+| Color | State | Meaning |
+|---|---|---|
+| Dim white | Idle | Waiting for a round to start |
+| Blue | Armed | Song is playing — ready to buzz |
+| Green | Winner | Your buzz was accepted — you buzzed first |
+| Orange | Not winner | Someone else buzzed first |
+| Red | Penalty | You buzzed too early (early-buzz penalty active) |
+| Purple | Team failed | Your team answered wrong |
+
+LEDs reset to white (idle) at the start of each new round.
