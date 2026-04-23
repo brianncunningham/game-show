@@ -87,6 +87,7 @@ def set_led(index: int, color: tuple):
 # ---------------------------------------------------------------------------
 
 window_state = "IDLE"
+current_window_id = None
 winner_led = -1
 last_winner_led = -1
 had_winner = False  # True after BUZZ_ACCEPTED, cleared on RESET
@@ -139,11 +140,17 @@ while True:
         try:
             msg = json.loads(line)
             msg_type = msg.get("type") or msg.get("event")
-            print("RX:", msg_type)
             payload = msg.get("payload", msg)  # fall back to msg itself for flat format
 
             if msg_type == "WINDOW_STATE":
-                window_state = payload.get("windowState", "IDLE")
+                incoming_window_id = payload.get("windowId")
+                new_state = payload.get("windowState", "IDLE")
+                if new_state == "WAITING":
+                    current_window_id = incoming_window_id
+                # Ignore stale LOCKED for old windows only (ARMED can pass — re-arm is valid)
+                elif new_state == "LOCKED" and incoming_window_id != current_window_id and current_window_id is not None:
+                    continue
+                window_state = new_state
                 if window_state == "IDLE":
                     winner_led = -1
                     # Don't clear overrides or redraw — IDLE is transient before next WAITING
@@ -170,9 +177,12 @@ while True:
                         # Fresh round — clear all overrides
                         led_overrides.clear()
                     had_winner = False
+                    print("WAITING wid:", incoming_window_id, "is_steal:", is_steal, "eligible:", eligible_controllers, "ov[0]:", led_overrides.get(0))
                 elif window_state != "LOCKED":
                     winner_led = -1
                 apply_state()
+                if window_state == "WAITING":
+                    print("after apply_state np[0]:", np[0])
 
             elif msg_type == "BUZZ_ACCEPTED":
                 cid = payload.get("controllerId", "")
