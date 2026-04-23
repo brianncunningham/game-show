@@ -41,7 +41,7 @@ from utime import ticks_ms, ticks_diff, sleep_ms
 # Configuration
 # ---------------------------------------------------------------------------
 
-DEBOUNCE_MS = 200       # minimum ms between registering presses on same button
+DEBOUNCE_MS = 500       # minimum ms between registering presses on same button
 HOLD_IGNORE_MS = 300    # ignore further presses while button is held
 
 # GP pin → controller ID (1-based, matches game-show controllerAssignments)

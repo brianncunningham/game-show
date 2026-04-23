@@ -107,6 +107,7 @@ export interface WindowStatePayload {
   windowId: string | null;
   windowState: WindowState | 'IDLE';
   eligibleControllers?: string[];
+  isSteal?: boolean;
 }
 export type WindowStateMessage = BuzzerMessage<'WINDOW_STATE', WindowStatePayload>;
 
