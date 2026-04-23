@@ -88,6 +88,8 @@ def set_led(index: int, color: tuple):
 
 window_state = "IDLE"
 winner_led = -1
+last_winner_led = -1
+had_winner = False  # True after BUZZ_ACCEPTED, cleared on RESET
 led_overrides = {}  # index → color, persists through re-arms (penalty/team-failed)
 eligible_controllers = []  # set on WINDOW_STATE, used to mark ineligible as failed
 
@@ -140,21 +142,40 @@ while True:
 
             if msg_type == "WINDOW_STATE":
                 window_state = payload.get("windowState", "IDLE")
-                if window_state != "LOCKED":
+                if window_state == "IDLE":
                     winner_led = -1
-                # On steal window open: mark ineligible controllers as team-failed
+                    # Don't clear overrides or redraw — IDLE is transient before next WAITING
+                    continue
+                # On new window open (WAITING): update overrides for failed/eligible controllers
                 if window_state == "WAITING":
+                    winner_led = -1
+                    last_winner_led = -1
                     eligible_controllers = [str(c) for c in payload.get("eligibleControllers", [])]
                     if eligible_controllers:
+                        # Steal window with known eligible set:
+                        # mark ineligible as failed, clear failed status for newly eligible
                         for i in range(LED_COUNT):
                             cid = str(i + 1)
                             if cid not in eligible_controllers:
                                 led_overrides[i] = COLOR_TEAM_FAILED
+                            elif led_overrides.get(i) == COLOR_TEAM_FAILED:
+                                del led_overrides[i]
+                    elif not had_winner:
+                        # Fresh round with no prior winner — clear all overrides
+                        led_overrides.clear()
+                    # else: steal round, no eligible list — keep purple overrides
+                elif window_state != "LOCKED":
+                    winner_led = -1
                 apply_state()
 
             elif msg_type == "BUZZ_ACCEPTED":
                 cid = payload.get("controllerId", "")
                 winner_led = controller_to_led(cid)
+                last_winner_led = winner_led
+                had_winner = True
+                # Pre-stage team-failed override so it survives regardless of message order
+                if winner_led >= 0:
+                    led_overrides[winner_led] = COLOR_TEAM_FAILED
                 window_state = "LOCKED"
                 apply_state()
 
@@ -173,13 +194,16 @@ while True:
                         led_overrides[idx] = COLOR_TEAM_FAILED
                         set_led(idx, COLOR_TEAM_FAILED)
 
+            elif msg_type == "WINDOW_CLOSED":
+                pass  # override already set in BUZZ_ACCEPTED
+
             elif msg_type == "RESET":
                 window_state = "IDLE"
                 winner_led = -1
+                last_winner_led = -1
+                had_winner = False
                 led_overrides.clear()
-                all_leds(COLOR_RESET)
-                time.sleep_ms(200)
-                apply_state()
+                all_leds(COLOR_IDLE)
 
             # controllerId-only messages (button press echo) — ignored
             # (arrives before BUZZ_ACCEPTED, would override winner color)

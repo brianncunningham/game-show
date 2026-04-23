@@ -174,7 +174,8 @@ export type JudgeToAppMessage =
   | BuzzAcceptedMessage
   | BuzzRejectedMessage
   | WindowClosedMessage
-  | TeamFailedMessage;
+  | TeamFailedMessage
+  | ResetMessage;
 
 export type AnyBuzzerMessage = AppToJudgeMessage | JudgeToAppMessage;
 

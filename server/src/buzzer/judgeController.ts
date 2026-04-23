@@ -122,6 +122,7 @@ export class JudgeController {
       this.emitWindowClosed(this.window.windowId);
       this.window = null;
     }
+    this.emit(makeBuzzerMessage('RESET', undefined));
     this.emitWindowState();
   }
 
