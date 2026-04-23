@@ -159,19 +159,15 @@ while True:
                     winner_led = -1
                     last_winner_led = -1
                     is_steal = payload.get("isSteal", False)
-                    eligible_controllers = [str(c) for c in payload.get("eligibleControllers", [])]
-                    if eligible_controllers:
-                        # Steal window with known eligible set:
-                        # mark ineligible as failed, clear failed status for newly eligible
+                    failed_controllers = [str(c) for c in payload.get("failedControllers", [])]
+                    if is_steal:
+                        # Steal round: mark failed purple, clear ALL overrides for eligible
                         for i in range(LED_COUNT):
                             cid = str(i + 1)
-                            if cid not in eligible_controllers:
+                            if cid in failed_controllers:
                                 led_overrides[i] = COLOR_TEAM_FAILED
-                            elif led_overrides.get(i) == COLOR_TEAM_FAILED:
+                            elif i in led_overrides:
                                 del led_overrides[i]
-                    elif is_steal:
-                        # Steal round, no eligible list — keep purple overrides
-                        pass
                     else:
                         # Fresh round — clear all overrides
                         led_overrides.clear()

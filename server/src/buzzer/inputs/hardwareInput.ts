@@ -81,11 +81,14 @@ export const initHardwareInput = async (): Promise<void> => {
   // Expose a function to send state events down to the Pico
   judgeController.onEvent((event) => {
     if (port.isOpen) {
-      // Strip eligibleControllers to keep serial messages short (UART buffer limit)
+      // Replace eligibleControllers with failedControllers (ineligible) to keep serial short
       let msg = event;
       if (event.type === 'WINDOW_STATE' && event.payload && 'eligibleControllers' in event.payload) {
+        const eligible = (event.payload as { eligibleControllers?: string[] }).eligibleControllers ?? [];
+        const ALL_CONTROLLERS = Array.from({ length: 20 }, (_, i) => String(i + 1));
+        const failed = ALL_CONTROLLERS.filter(c => !eligible.includes(c));
         const { eligibleControllers: _, ...rest } = event.payload;
-        msg = { ...event, payload: rest } as typeof event;
+        msg = { ...event, payload: { ...rest, failedControllers: failed } } as typeof event;
       }
       port.write(JSON.stringify(msg) + '\n');
     }
