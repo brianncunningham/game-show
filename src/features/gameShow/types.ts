@@ -50,6 +50,7 @@ export interface GameShowRoundState {
   attemptedTeamIds: string[];
   stealingTeamId: string | null;
   stealWinnerControllerId: string | null;
+  stealArmed: boolean;
   answerState: 'pending' | 'correct' | 'wrong';
   stealState: 'idle' | 'available' | 'resolved';
   lastPointsAwarded: number | null;

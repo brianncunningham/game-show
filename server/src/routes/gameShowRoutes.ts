@@ -67,6 +67,10 @@ router.post('/answer/wrong', (_req, res) => {
   res.json(gameShowStore.markWrong());
 });
 
+router.post('/steal/arm', (_req, res) => {
+  res.json(gameShowStore.setStealArmed(true));
+});
+
 router.post('/steal/team/:teamId', (req, res) => {
   res.json(gameShowStore.setStealingTeam(req.params.teamId));
 });

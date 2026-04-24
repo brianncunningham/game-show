@@ -792,7 +792,7 @@ export const ShowBoard = ({ state }: { state: GameShowState }) => {
               }}>
                 No Steal
               </Typography>
-            ) : isStealAvailable && !stealingTeamId && !stealWrongFlash && !stealFailFlash ? (() => {
+            ) : isStealAvailable && !state.roundState.stealArmed && !stealWrongFlash && !stealFailFlash ? (() => {
               const stealTeam = state.teams.find(t => t.id === stealingTeamId);
               return (
                 <Typography sx={{
@@ -962,7 +962,7 @@ export const ShowBoard = ({ state }: { state: GameShowState }) => {
             </Box>
           )}
 
-          {isStealAvailable && !stealingTeamId && !stealWrongFlash && !stealFailFlash && (
+          {isStealAvailable && !state.roundState.stealArmed && !stealWrongFlash && !stealFailFlash && (
             <Box
               sx={{
                 position: 'absolute',

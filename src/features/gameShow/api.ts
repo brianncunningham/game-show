@@ -83,6 +83,7 @@ export const markCorrect = () => postAction('/answer/correct', 'Failed to mark a
 export const awardArtistBonus = () => postAction('/answer/artist-bonus', 'Failed to award artist bonus');
 export const triggerSuddenDeath = () => postAction('/sudden-death', 'Failed to trigger sudden death');
 export const markWrong = () => postAction('/answer/wrong', 'Failed to mark answer wrong');
+export const armSteal = () => postAction('/steal/arm', 'Failed to arm steal');
 export const setStealingTeam = (teamId: string) => postAction(`/steal/team/${teamId}`, 'Failed to set stealing team');
 export const markStealSuccess = () => postAction('/steal/success', 'Failed to award steal');
 export const markStealFail = () => postAction('/steal/fail', 'Failed to resolve failed steal');

@@ -20,6 +20,7 @@ import {
   showBoard,
   eliminateTeam,
   reinstateTeam,
+  armSteal,
   setStealingTeam,
   markStealFail,
   markStealSuccess,
@@ -145,6 +146,7 @@ export const HostPage = () => {
   const armActiveStealWindow = useCallback(() => {
     if (!isJudgeMode) return;
     if (activeStealWindowId) void armWindow(activeStealWindowId);
+    void armSteal();
   }, [isJudgeMode, activeStealWindowId]);
 
   const refreshSaves = useCallback(async () => {

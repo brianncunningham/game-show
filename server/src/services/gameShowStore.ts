@@ -56,6 +56,7 @@ const EMPTY_ROUND_STATE = (): GameShowRoundState => ({
   attemptedTeamIds: [],
   stealingTeamId: null,
   stealWinnerControllerId: null,
+  stealArmed: false,
   answerState: 'pending',
   stealState: 'idle',
   lastPointsAwarded: null,
@@ -168,6 +169,7 @@ const migrateState = (state: GameShowState): GameShowState => ({
     stealingTeamId: state.roundState.stealingTeamId ?? null,
     buzzWinnerControllerId: state.roundState.buzzWinnerControllerId ?? null,
     stealWinnerControllerId: state.roundState.stealWinnerControllerId ?? null,
+    stealArmed: state.roundState.stealArmed ?? false,
     penalizedControllerIds: state.roundState.penalizedControllerIds ?? [],
   },
 });
@@ -530,6 +532,14 @@ class GameShowStore extends EventEmitter {
     return newState;
   }
 
+  setStealArmed(armed: boolean): GameShowState {
+    if (!this.canMutate()) return this.state;
+    return this.commit('set_steal_armed', {
+      ...this.state,
+      roundState: { ...this.state.roundState, stealArmed: armed },
+    });
+  }
+
   setStealingTeam(teamId: string, controllerId?: string): GameShowState {
     if (!this.canMutate() || this.state.roundState.stealState !== 'available') {
       return this.state;
@@ -598,6 +608,9 @@ class GameShowStore extends EventEmitter {
         clipState: eligibleStealers.length > 0 ? this.state.roundState.clipState : 'resolved',
         attemptedTeamIds,
         stealingTeamId: null,
+        stealWinnerControllerId: null,
+        stealArmed: false,
+        penalizedControllerIds: [],
         lastPointsAwarded: null,
         usedQuestionIds: eligibleStealers.length > 0 ? this.state.roundState.usedQuestionIds : usedIds,
       },
