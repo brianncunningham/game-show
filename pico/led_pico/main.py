@@ -172,7 +172,6 @@ while True:
                         # Fresh round — clear all overrides
                         led_overrides.clear()
                     had_winner = False
-                    print("WAITING done ov[0]:", led_overrides.get(0), "wid:", current_window_id)
                 elif window_state != "LOCKED":
                     winner_led = -1
                 apply_state()
@@ -195,9 +194,6 @@ while True:
                     if idx >= 0:
                         led_overrides[idx] = COLOR_PENALTY
                         set_led(idx, COLOR_PENALTY)
-                    print("BUZZ_EARLY applied wid:", wid)
-                else:
-                    print("BUZZ_EARLY dropped wid:", wid, "cur:", current_window_id)
 
             elif msg_type == "TEAM_FAILED":
                 failed_ids = payload.get("controllerIds", [])
