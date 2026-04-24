@@ -531,19 +531,26 @@ export const HostPage = () => {
               <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1.5 }}>
                 <Chip label="2" size="small" color={canBuzz ? 'secondary' : hasBuzzWinner ? 'success' : 'default'} />
                 <Typography sx={sectionLabelSx} mb={0}>Pick buzz winner</Typography>
-                {hasBuzzWinner && (() => {
-                  const winnerAssignment = state?.controllerAssignments.find(a => a.controllerId === state.roundState.buzzWinnerControllerId);
+                {(hasBuzzWinner || stealingTeamId) && (() => {
+                  const controllerId = stealingTeamId
+                    ? state?.roundState.stealWinnerControllerId
+                    : state?.roundState.buzzWinnerControllerId;
+                  const winnerAssignment = state?.controllerAssignments.find(a => a.controllerId === controllerId);
                   return winnerAssignment ? (
-                    <Chip label={`⚡ ${winnerAssignment.playerName}`} size="small" color="secondary" sx={{ ml: 'auto', fontWeight: 900 }} />
+                    <Chip label={`⚡ ${winnerAssignment.playerName}`} size="small" color={stealingTeamId ? 'warning' : 'secondary'} sx={{ ml: 'auto', fontWeight: 900 }} />
                   ) : null;
                 })()}
               </Stack>
               <Grid container spacing={1.5}>
                 {activeTeams.map((team) => {
-                  const isBuzzWinnerTeam = state?.roundState.buzzWinnerTeamId === team.id;
-                  const buzzerAssignment = isBuzzWinnerTeam
-                    ? state?.controllerAssignments.find(a => a.controllerId === state.roundState.buzzWinnerControllerId)
-                    : null;
+                  const isStealWinnerTeam = stealingTeamId === team.id;
+                  const isBuzzWinnerTeam = !stealingTeamId && state?.roundState.buzzWinnerTeamId === team.id;
+                  const isHighlighted = isStealWinnerTeam || isBuzzWinnerTeam;
+                  const buzzerAssignment = isStealWinnerTeam
+                    ? state?.controllerAssignments.find(a => a.controllerId === state.roundState.stealWinnerControllerId)
+                    : isBuzzWinnerTeam
+                      ? state?.controllerAssignments.find(a => a.controllerId === state.roundState.buzzWinnerControllerId)
+                      : null;
                   const penalizedPlayers = team.players.filter(playerName => {
                     const a = state?.controllerAssignments.find(ca => ca.teamId === team.id && ca.playerName === playerName);
                     return a ? (state?.roundState.penalizedControllerIds ?? []).includes(a.controllerId) : false;
@@ -552,13 +559,13 @@ export const HostPage = () => {
                     <Grid item xs={activeTeams.length <= 2 ? 6 : activeTeams.length === 3 ? 4 : 3} key={team.id}>
                       <Button
                         fullWidth
-                        color={isBuzzWinnerTeam ? 'success' : 'secondary'}
-                        variant={isBuzzWinnerTeam ? 'contained' : 'contained'}
+                        color={isStealWinnerTeam ? 'warning' : isBuzzWinnerTeam ? 'success' : 'secondary'}
+                        variant="contained"
                         sx={{ ...bigBtnSx, fontSize: { xs: '1.1rem', md: '1rem' }, flexDirection: 'column', gap: 0.25 }}
                         disabled={!canBuzz}
                         onClick={() => void setBuzzWinner(team.id)}
                       >
-                        <span>{isBuzzWinnerTeam ? `⚡ ${team.name}` : `${team.name} buzzed`}</span>
+                        <span>{isHighlighted ? `⚡ ${team.name}` : `${team.name} buzzed`}</span>
                         {buzzerAssignment && (
                           <span style={{ fontSize: '0.8em', fontWeight: 700, opacity: 0.9 }}>{buzzerAssignment.playerName}</span>
                         )}
