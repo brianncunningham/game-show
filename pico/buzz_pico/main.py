@@ -124,8 +124,8 @@ while True:
                 usb_send(msg)
                 uart_send(json.dumps(msg))
 
-    # --- Check for incoming state from Pi — drain all available lines ---
-    while True:
+    # --- Check for incoming state from Pi — drain up to 16 lines per tick ---
+    for _ in range(16):
         line = usb_readline()
         if not line:
             break
