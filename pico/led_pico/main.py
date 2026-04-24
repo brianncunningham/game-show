@@ -187,11 +187,12 @@ while True:
                 apply_state()
 
             elif msg_type == "BUZZ_EARLY":
-                cid = payload.get("controllerId", "")
-                idx = controller_to_led(cid)
-                if idx >= 0:
-                    led_overrides[idx] = COLOR_PENALTY
-                    set_led(idx, COLOR_PENALTY)
+                if payload.get("windowId") == current_window_id:
+                    cid = payload.get("controllerId", "")
+                    idx = controller_to_led(cid)
+                    if idx >= 0:
+                        led_overrides[idx] = COLOR_PENALTY
+                        set_led(idx, COLOR_PENALTY)
 
             elif msg_type == "TEAM_FAILED":
                 failed_ids = payload.get("controllerIds", [])
