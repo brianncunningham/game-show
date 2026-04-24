@@ -21,8 +21,8 @@ After=network.target
 
 [Service]
 Type=simple
-User=pi
-WorkingDirectory=/home/pi/game-show
+User=bcunningham2
+WorkingDirectory=/home/bcunningham2/game-show
 Environment=HARDWARE_INPUT=1
 Environment=PORT=3001
 ExecStart=/usr/bin/node server/dist/index.js
