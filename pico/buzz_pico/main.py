@@ -124,9 +124,11 @@ while True:
                 usb_send(msg)
                 uart_send(json.dumps(msg))
 
-    # --- Check for incoming state from Pi ---
-    line = usb_readline()
-    if line:
+    # --- Check for incoming state from Pi — drain all available lines ---
+    while True:
+        line = usb_readline()
+        if not line:
+            break
         try:
             obj = json.loads(line)
             # Forward state events to LED Pico
