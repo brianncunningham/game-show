@@ -27,13 +27,8 @@ export const attachBuzzerSocket = (server: HttpServer): void => {
   initWebSocketManager(server);
 
   judgeController.onEvent((message) => {
-    // Update game state for early buzz penalties and cleared penalties
-    if (message.type === 'BUZZ_EARLY') {
-      const { controllerId } = message.payload as { controllerId: string };
-      console.log(`[BuzzerSocket] BUZZ_EARLY controllerId=${controllerId} — adding to penalizedControllerIds`);
-      gameShowStore.addPenalizedController(controllerId);
-      console.log(`[BuzzerSocket] penalizedControllerIds now:`, gameShowStore.getState().roundState.penalizedControllerIds);
-    } else if (message.type === 'WINDOW_STATE') {
+    // Clear penalties when a new window opens (client handles adding via API on BUZZ_EARLY)
+    if (message.type === 'WINDOW_STATE') {
       const payload = message.payload as { windowState: string; isSteal?: boolean; eligibleControllers?: string[] };
       if (payload.windowState === 'WAITING' && payload.isSteal) {
         // Clear penalties for controllers that are eligible again

@@ -47,6 +47,14 @@ router.post('/buzz/controller/:controllerId', (req, res) => {
   res.json(result);
 });
 
+router.post('/penalized-controller/:controllerId', (req, res) => {
+  res.json(gameShowStore.addPenalizedController(req.params.controllerId));
+});
+
+router.delete('/penalized-controller/:controllerId', (req, res) => {
+  res.json(gameShowStore.removePenalizedController(req.params.controllerId));
+});
+
 router.post('/answer/correct', (_req, res) => {
   res.json(gameShowStore.markCorrect());
 });

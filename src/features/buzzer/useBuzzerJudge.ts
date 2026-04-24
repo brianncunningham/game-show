@@ -81,6 +81,10 @@ export const useBuzzerJudge = ({ buzzerMode, onBuzzAccepted, onBuzzEarly }: UseB
           const controllerId = msg.payload.controllerId as string | undefined;
           if (windowId && controllerId) {
             console.warn(`[BuzzerJudge] BUZZ_EARLY windowId=${windowId} controllerId=${controllerId}`);
+            void fetch(`${GAME_API}/penalized-controller/${encodeURIComponent(controllerId)}`, {
+              method: 'POST',
+              credentials: 'include',
+            });
             onBuzzEarlyRef.current?.(windowId, controllerId);
           }
         }
