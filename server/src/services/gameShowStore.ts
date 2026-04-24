@@ -55,6 +55,7 @@ const EMPTY_ROUND_STATE = (): GameShowRoundState => ({
   penalizedControllerIds: [],
   attemptedTeamIds: [],
   stealingTeamId: null,
+  stealWinnerControllerId: null,
   answerState: 'pending',
   stealState: 'idle',
   lastPointsAwarded: null,
@@ -165,6 +166,9 @@ const migrateState = (state: GameShowState): GameShowState => ({
     ...state.roundState,
     attemptedTeamIds: state.roundState.attemptedTeamIds ?? [],
     stealingTeamId: state.roundState.stealingTeamId ?? null,
+    buzzWinnerControllerId: state.roundState.buzzWinnerControllerId ?? null,
+    stealWinnerControllerId: state.roundState.stealWinnerControllerId ?? null,
+    penalizedControllerIds: state.roundState.penalizedControllerIds ?? [],
   },
 });
 
@@ -397,7 +401,7 @@ class GameShowStore extends EventEmitter {
     const assignment = this.state.controllerAssignments.find(a => a.controllerId === controllerId);
     if (!assignment) return null;
     if (this.state.roundState.stealState === 'available') {
-      return this.setStealingTeam(assignment.teamId);
+      return this.setStealingTeam(assignment.teamId, controllerId);
     }
     return this.setBuzzWinner(assignment.teamId, controllerId);
   }
@@ -526,7 +530,7 @@ class GameShowStore extends EventEmitter {
     return newState;
   }
 
-  setStealingTeam(teamId: string): GameShowState {
+  setStealingTeam(teamId: string, controllerId?: string): GameShowState {
     if (!this.canMutate() || this.state.roundState.stealState !== 'available') {
       return this.state;
     }
@@ -536,7 +540,7 @@ class GameShowStore extends EventEmitter {
     }
     return this.commit('set_stealing_team', {
       ...this.state,
-      roundState: { ...this.state.roundState, stealingTeamId: teamId },
+      roundState: { ...this.state.roundState, stealingTeamId: teamId, stealWinnerControllerId: controllerId ?? null },
     });
   }
 

@@ -512,7 +512,8 @@ export const ShowBoard = ({ state }: { state: GameShowState }) => {
             const activeTeamId = stealingTeamId ?? buzzWinnerTeamId;
             const buzzerTeam = state.teams.find(t => t.id === activeTeamId);
             const buzzerAssignment = stealingTeamId
-              ? state.controllerAssignments.find(a => a.teamId === stealingTeamId)
+              ? state.controllerAssignments.find(a => a.controllerId === state.roundState.stealWinnerControllerId)
+                ?? state.controllerAssignments.find(a => a.teamId === stealingTeamId)
               : state.controllerAssignments.find(a => a.controllerId === state.roundState.buzzWinnerControllerId);
             const buzzerPlayer = buzzerAssignment?.playerName ?? null;
             const buzzerTeamIdx = state.teams.findIndex(t => t.id === activeTeamId);

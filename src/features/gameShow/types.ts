@@ -49,6 +49,7 @@ export interface GameShowRoundState {
   penalizedControllerIds: string[];
   attemptedTeamIds: string[];
   stealingTeamId: string | null;
+  stealWinnerControllerId: string | null;
   answerState: 'pending' | 'correct' | 'wrong';
   stealState: 'idle' | 'available' | 'resolved';
   lastPointsAwarded: number | null;
