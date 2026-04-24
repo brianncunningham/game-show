@@ -97,13 +97,11 @@ def usb_readline() -> str | None:
 
 buttons = {}
 last_press_ms = {}
-prev_state = {}
 
 for gp, cid in BUTTON_MAP.items():
     pin = Pin(gp, Pin.IN, Pin.PULL_UP)
     buttons[gp] = (pin, cid)
     last_press_ms[gp] = 0
-    prev_state[gp] = pin.value()  # read actual state to avoid false edge on startup
 
 # ---------------------------------------------------------------------------
 # Main loop
@@ -116,17 +114,15 @@ print("Buzz Pico ready -- watching 20 buttons on GP0-GP19")
 while True:
     now = ticks_ms()
 
-    # --- Check buttons — fire only on falling edge (HIGH→LOW) ---
+    # --- Check buttons ---
     for gp, (pin, cid) in buttons.items():
-        cur = pin.value()
-        if cur == 0 and prev_state[gp] == 1:  # falling edge
+        if pin.value() == 0:  # active LOW — button pressed
             elapsed = ticks_diff(now, last_press_ms[gp])
             if elapsed > DEBOUNCE_MS:
                 last_press_ms[gp] = now
                 msg = {"controllerId": cid}
                 usb_send(msg)
                 uart_send(json.dumps(msg))
-        prev_state[gp] = cur
 
     # --- Check for incoming state from Pi — drain up to 16 lines per tick ---
     for _ in range(16):
