@@ -252,7 +252,7 @@ export const BuzzerDiagnosticsPage = () => {
     const stealN = nextExcluded.length;
     const wid = `diag-steal-${stealN}-${Date.now()}`;
     if (activeWindowId) void closeWindow(activeWindowId).catch(() => {});
-    void openWindow({ windowId: wid, eligibleControllers: eligible, earlyBuzzPenalty: true });
+    void openWindow({ windowId: wid, eligibleControllers: eligible, earlyBuzzPenalty: true, isSteal: true });
     setEligibleControllers(eligible);
     setEarlyBuzzPenalty(true);
     setDisabledControllers([]);

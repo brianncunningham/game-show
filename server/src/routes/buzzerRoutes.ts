@@ -16,12 +16,12 @@ const router = Router();
  * Any existing window is closed first.
  */
 router.post('/open-window', (req, res) => {
-  const { windowId, eligibleControllers, earlyBuzzPenalty } = req.body as Partial<BuzzerWindow>;
+  const { windowId, eligibleControllers, earlyBuzzPenalty, isSteal } = req.body as Partial<BuzzerWindow>;
   if (!windowId || !Array.isArray(eligibleControllers) || typeof earlyBuzzPenalty !== 'boolean') {
     res.status(400).json({ error: 'windowId (string), eligibleControllers (array), earlyBuzzPenalty (boolean) required' });
     return;
   }
-  judgeController.openWindow({ windowId, eligibleControllers, earlyBuzzPenalty });
+  judgeController.openWindow({ windowId, eligibleControllers, earlyBuzzPenalty, isSteal });
   res.json(judgeController.getWindowState());
 });
 

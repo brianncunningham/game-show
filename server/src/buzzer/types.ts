@@ -59,6 +59,8 @@ export interface BuzzerWindow {
    * presses during steal countdown.
    */
   earlyBuzzPenalty: boolean;
+  /** Explicitly marks this as a steal window even if eligibleControllers is empty. */
+  isSteal?: boolean;
 }
 
 // ---------------------------------------------------------------------------

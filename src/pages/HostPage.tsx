@@ -137,7 +137,7 @@ export const HostPage = () => {
     const eligible = eligibleControllerIds(attemptedTeamIds, assignments);
     void closeWindow(buildWindowId(questionId, songIndex, attemptedTeamIds.length - 1))
       .catch(() => {})
-      .then(() => openWindow({ windowId, eligibleControllers: eligible, earlyBuzzPenalty: true }));
+      .then(() => openWindow({ windowId, eligibleControllers: eligible, earlyBuzzPenalty: true, isSteal: true }));
     setActiveStealWindowId(windowId);
   }, [isJudgeMode, buildWindowId, eligibleControllerIds]);
 

@@ -10,6 +10,7 @@ export interface OpenWindowParams {
   windowId: string;
   eligibleControllers: string[];
   earlyBuzzPenalty: boolean;
+  isSteal?: boolean;
 }
 
 /** Open a new buzzing window in WAITING state. Any existing window is closed first. */
