@@ -508,11 +508,14 @@ export const ShowBoard = ({ state }: { state: GameShowState }) => {
           </Grid>
 
           {/* Buzz-in banner */}
-          {buzzWinnerTeamId && !isCorrectPhase && !isWrongPhase && !stealSuccessFlash && !stealFailFlash && (() => {
-            const buzzerTeam = state.teams.find(t => t.id === buzzWinnerTeamId);
-            const buzzerAssignment = state.controllerAssignments.find(a => a.controllerId === state.roundState.buzzWinnerControllerId);
+          {(buzzWinnerTeamId || stealingTeamId) && !isCorrectPhase && !isWrongPhase && !stealSuccessFlash && !stealFailFlash && (() => {
+            const activeTeamId = stealingTeamId ?? buzzWinnerTeamId;
+            const buzzerTeam = state.teams.find(t => t.id === activeTeamId);
+            const buzzerAssignment = stealingTeamId
+              ? state.controllerAssignments.find(a => a.teamId === stealingTeamId)
+              : state.controllerAssignments.find(a => a.controllerId === state.roundState.buzzWinnerControllerId);
             const buzzerPlayer = buzzerAssignment?.playerName ?? null;
-            const buzzerTeamIdx = state.teams.findIndex(t => t.id === buzzWinnerTeamId);
+            const buzzerTeamIdx = state.teams.findIndex(t => t.id === activeTeamId);
             const TEAM_ACCENTS = ['#56d7ff', '#ff9e3d', '#c88cff', '#50ffa0'];
             const teamColor = TEAM_ACCENTS[buzzerTeamIdx % TEAM_ACCENTS.length];
             if (!buzzerTeam) return null;
@@ -788,7 +791,7 @@ export const ShowBoard = ({ state }: { state: GameShowState }) => {
               }}>
                 No Steal
               </Typography>
-            ) : isStealAvailable && !stealWrongFlash && !stealFailFlash ? (() => {
+            ) : isStealAvailable && !stealingTeamId && !stealWrongFlash && !stealFailFlash ? (() => {
               const stealTeam = state.teams.find(t => t.id === stealingTeamId);
               return (
                 <Typography sx={{
@@ -958,7 +961,7 @@ export const ShowBoard = ({ state }: { state: GameShowState }) => {
             </Box>
           )}
 
-          {isStealAvailable && !stealWrongFlash && !stealFailFlash && (
+          {isStealAvailable && !stealingTeamId && !stealWrongFlash && !stealFailFlash && (
             <Box
               sx={{
                 position: 'absolute',
