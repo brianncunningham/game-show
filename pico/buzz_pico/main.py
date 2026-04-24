@@ -103,7 +103,7 @@ for gp, cid in BUTTON_MAP.items():
     pin = Pin(gp, Pin.IN, Pin.PULL_UP)
     buttons[gp] = (pin, cid)
     last_press_ms[gp] = 0
-    prev_state[gp] = 1  # assume released (HIGH) at startup
+    prev_state[gp] = pin.value()  # read actual state to avoid false edge on startup
 
 # ---------------------------------------------------------------------------
 # Main loop
