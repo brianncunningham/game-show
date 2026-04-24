@@ -22,6 +22,31 @@ const themeStyles = [
 
 const SONG_COUNT = 3;
 
+// --- Synthesized buzzer sound (Web Audio API) ---
+// Tune these constants to adjust the sound:
+const BUZZ_START_HZ = 380;   // starting pitch
+const BUZZ_END_HZ   = 140;   // ending pitch (sweep down)
+const BUZZ_DURATION = 0.45;  // seconds
+const BUZZ_GAIN     = 0.55;  // volume 0–1
+
+function playBuzzSound() {
+  try {
+    const ctx = new AudioContext();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(BUZZ_START_HZ, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(BUZZ_END_HZ, ctx.currentTime + BUZZ_DURATION);
+    gain.gain.setValueAtTime(BUZZ_GAIN, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + BUZZ_DURATION);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + BUZZ_DURATION);
+    osc.onended = () => void ctx.close();
+  } catch { /* AudioContext unavailable */ }
+}
+
 export const ShowBoard = ({ state }: { state: GameShowState }) => {
   const selectedQuestion = state.questions.find((question) => question.id === state.roundState.selectedQuestionId) ?? null;
   const chooserTeam = state.teams.find((team) => team.id === state.chooserTeamId) ?? null;
@@ -66,7 +91,18 @@ export const ShowBoard = ({ state }: { state: GameShowState }) => {
     }
   }, [isCorrectPhase]);
 
-  // Dedicated effect for stealWrongFlash — isolated so its 2s timer is never cancelled by other dep changes
+  // Play buzzer sound on any buzz-in (initial or steal)
+  const prevBuzzWinnerRef = useRef<string | null>(null);
+  const prevStealingTeamRef = useRef<string | null>(null);
+  useEffect(() => {
+    const newBuzz = state.roundState.buzzWinnerTeamId;
+    const newSteal = state.roundState.stealingTeamId;
+    if (newBuzz && !prevBuzzWinnerRef.current) playBuzzSound();
+    else if (newSteal && !prevStealingTeamRef.current) playBuzzSound();
+    prevBuzzWinnerRef.current = newBuzz;
+    prevStealingTeamRef.current = newSteal;
+  }, [state.roundState.buzzWinnerTeamId, state.roundState.stealingTeamId]);
+
   const prevStealForWrongRef = useRef<string>('idle');
   useEffect(() => {
     const curr = state.roundState.stealState;
