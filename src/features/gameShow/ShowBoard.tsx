@@ -22,53 +22,6 @@ const themeStyles = [
 
 const SONG_COUNT = 3;
 
-// --- Synthesized buzzer sound (Web Audio API) ---
-// Tune these constants to adjust the sound:
-const BUZZ_START_HZ = 380;   // starting pitch
-const BUZZ_END_HZ   = 140;   // ending pitch (sweep down)
-const BUZZ_DURATION = 0.45;  // seconds
-const BUZZ_GAIN     = 0.55;  // volume 0–1
-
-// Shared AudioContext — created once, resumed on first user interaction
-let _audioCtx: AudioContext | null = null;
-
-function getAudioCtx(): AudioContext {
-  if (!_audioCtx) _audioCtx = new AudioContext();
-  if (_audioCtx.state === 'suspended') void _audioCtx.resume();
-  return _audioCtx;
-}
-
-// Call once on any user gesture to unlock audio for future programmatic plays
-function unlockAudio() {
-  try {
-    const ctx = getAudioCtx();
-    // Play a silent buffer to satisfy autoplay policy
-    const buf = ctx.createBuffer(1, 1, 22050);
-    const src = ctx.createBufferSource();
-    src.buffer = buf;
-    src.connect(ctx.destination);
-    src.start(0);
-  } catch { /* ignore */ }
-}
-
-function playBuzzSound() {
-  try {
-    const ctx = getAudioCtx();
-    if (ctx.state === 'suspended') { void ctx.resume(); }
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.type = 'square';
-    osc.frequency.setValueAtTime(BUZZ_START_HZ, ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(BUZZ_END_HZ, ctx.currentTime + BUZZ_DURATION);
-    gain.gain.setValueAtTime(BUZZ_GAIN, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + BUZZ_DURATION);
-    osc.start(ctx.currentTime);
-    osc.stop(ctx.currentTime + BUZZ_DURATION);
-    console.log('[Buzz] playing sound, AudioContext state:', ctx.state);
-  } catch (e) { console.warn('[Buzz] playBuzzSound error', e); }
-}
 
 export const ShowBoard = ({ state }: { state: GameShowState }) => {
   const selectedQuestion = state.questions.find((question) => question.id === state.roundState.selectedQuestionId) ?? null;
@@ -113,22 +66,6 @@ export const ShowBoard = ({ state }: { state: GameShowState }) => {
       return () => window.clearTimeout(t);
     }
   }, [isCorrectPhase]);
-
-  // Unlock AudioContext on first user interaction (browser autoplay policy)
-  const [audioUnlocked, setAudioUnlocked] = useState(false);
-  const handleUnlockAudio = () => { unlockAudio(); setAudioUnlocked(true); };
-
-  // Play buzzer sound on any buzz-in (initial or steal)
-  const prevBuzzWinnerRef = useRef<string | null>(null);
-  const prevStealingTeamRef = useRef<string | null>(null);
-  useEffect(() => {
-    const newBuzz = state.roundState.buzzWinnerTeamId;
-    const newSteal = state.roundState.stealingTeamId;
-    if (newBuzz && !prevBuzzWinnerRef.current) playBuzzSound();
-    else if (newSteal && !prevStealingTeamRef.current) playBuzzSound();
-    prevBuzzWinnerRef.current = newBuzz;
-    prevStealingTeamRef.current = newSteal;
-  }, [state.roundState.buzzWinnerTeamId, state.roundState.stealingTeamId]);
 
   const prevStealForWrongRef = useRef<string>('idle');
   useEffect(() => {
@@ -279,22 +216,6 @@ export const ShowBoard = ({ state }: { state: GameShowState }) => {
   }, [displayScores, state.teams]);
 
   return (
-    <>
-    {!audioUnlocked && (
-      <Box
-        onClick={handleUnlockAudio}
-        sx={{
-          position: 'fixed', bottom: 16, right: 16, zIndex: 9999,
-          px: 2, py: 1, borderRadius: 2,
-          background: 'rgba(0,0,0,0.7)', border: '1px solid rgba(255,255,255,0.2)',
-          color: 'rgba(255,255,255,0.6)', fontSize: '0.8rem', cursor: 'pointer',
-          userSelect: 'none',
-          '&:hover': { color: '#fff', borderColor: 'rgba(255,255,255,0.5)' },
-        }}
-      >
-        🔊 Click to enable sound
-      </Box>
-    )}
     <Box
       sx={{
         height: '100vh',
@@ -1143,6 +1064,5 @@ export const ShowBoard = ({ state }: { state: GameShowState }) => {
         </Stack>
       </Box>
     </Box>
-    </>
   );
 };
