@@ -8,6 +8,7 @@
 import type { Server as HttpServer } from 'http';
 import { WebSocket } from 'ws';
 import { judgeController } from './judgeController.js';
+import { gameShowStore } from '../services/gameShowStore.js';
 import { registerWsPath, initWebSocketManager } from '../services/webSocketManager.js';
 import type { JudgeToAppMessage } from './types.js';
 
@@ -26,6 +27,30 @@ export const attachBuzzerSocket = (server: HttpServer): void => {
   initWebSocketManager(server);
 
   judgeController.onEvent((message) => {
+    // Update game state for early buzz penalties and cleared penalties
+    if (message.type === 'BUZZ_EARLY') {
+      const { controllerId } = message.payload as { controllerId: string };
+      gameShowStore.addPenalizedController(controllerId);
+    } else if (message.type === 'WINDOW_STATE') {
+      const payload = message.payload as { windowState: string; isSteal?: boolean; eligibleControllers?: string[] };
+      if (payload.windowState === 'WAITING' && payload.isSteal) {
+        // Clear penalties for controllers that are eligible again
+        const eligible = payload.eligibleControllers ?? [];
+        const penalized = gameShowStore.getState().roundState.penalizedControllerIds;
+        const toRemove = eligible.length > 0
+          ? penalized.filter(id => eligible.includes(id))
+          : penalized; // empty eligible = all eligible
+        for (const id of toRemove) {
+          gameShowStore.removePenalizedController(id);
+        }
+      } else if (payload.windowState === 'WAITING' && !payload.isSteal) {
+        // Fresh round — clear all penalties
+        const penalized = [...gameShowStore.getState().roundState.penalizedControllerIds];
+        for (const id of penalized) {
+          gameShowStore.removePenalizedController(id);
+        }
+      }
+    }
     broadcast(message);
   });
 

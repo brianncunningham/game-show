@@ -45,6 +45,8 @@ export interface GameShowRoundState {
   usedQuestionIds: string[];
   clipState: 'idle' | 'active' | 'resolved';
   buzzWinnerTeamId: string | null;
+  buzzWinnerControllerId: string | null;
+  penalizedControllerIds: string[];
   attemptedTeamIds: string[];
   stealingTeamId: string | null;
   answerState: 'pending' | 'correct' | 'wrong';

@@ -479,9 +479,23 @@ export const ShowBoard = ({ state }: { state: GameShowState }) => {
                         <Typography sx={{ color: '#f4f7ff', fontSize: 'clamp(0.8rem, 1.2vw, 1.8rem)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>
                           Points
                         </Typography>
-                        <Typography sx={{ color: 'rgba(255,255,255,0.82)', fontSize: 'clamp(0.8rem, 1.2vw, 1.8rem)' }}>
-                          {team.players.length ? team.players.join(' • ') : 'Players pending'}
-                        </Typography>
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: '0 6px' }}>
+                          {team.players.length ? team.players.map((playerName, pi) => {
+                            const assignment = state.controllerAssignments.find(a => a.teamId === team.id && a.playerName === playerName);
+                            const isPenalized = assignment ? state.roundState.penalizedControllerIds.includes(assignment.controllerId) : false;
+                            const isBuzzer = assignment ? assignment.controllerId === state.roundState.buzzWinnerControllerId : false;
+                            return (
+                              <Typography key={pi} component="span" sx={{
+                                color: isPenalized ? '#ff4444' : isBuzzer && isBuzzWinner ? '#fff6dd' : 'rgba(255,255,255,0.82)',
+                                fontSize: 'clamp(0.8rem, 1.2vw, 1.8rem)',
+                                fontWeight: isPenalized || isBuzzer ? 900 : 400,
+                                textShadow: isPenalized ? '0 0 10px rgba(255,60,60,0.7)' : isBuzzer && isBuzzWinner ? '0 0 10px rgba(255,255,255,0.6)' : 'none',
+                              }}>
+                                {playerName}{pi < team.players.length - 1 ? ' •' : ''}
+                              </Typography>
+                            );
+                          }) : <Typography sx={{ color: 'rgba(255,255,255,0.82)', fontSize: 'clamp(0.8rem, 1.2vw, 1.8rem)' }}>Players pending</Typography>}
+                        </Box>
                       </Stack>
                       <Box sx={{ color: isWrongTeam ? '#ff2020' : isArtistBonusTeam ? '#ffe047' : isWinningTeam ? '#d8ff9b' : isBuzzWinner ? '#fff6dd' : accent, filter: isWrongTeam ? 'drop-shadow(0 0 14px rgba(255,20,20,0.95)) drop-shadow(0 0 28px rgba(200,0,0,0.8))' : isArtistBonusTeam ? 'drop-shadow(0 0 16px rgba(255,220,40,1)) drop-shadow(0 0 32px rgba(40,210,255,0.8))' : isWinningTeam ? 'drop-shadow(0 0 12px rgba(202,255,116,0.95)) drop-shadow(0 0 18px rgba(255,214,74,0.65))' : isBuzzWinner ? 'drop-shadow(0 0 10px rgba(255,255,255,0.95)) drop-shadow(0 0 18px rgba(255,170,64,0.95))' : `drop-shadow(0 0 14px ${glow})`, opacity: 0.95, animation: isWrongTeam ? 'wrongIconPulse 600ms ease-in-out infinite' : isArtistBonusTeam ? 'artistIconPulse 500ms ease-in-out infinite' : isWinningTeam ? 'winIconPulse 650ms ease-in-out infinite' : isBuzzWinner ? 'buzzIconPulse 420ms ease-in-out infinite' : 'none', '@keyframes artistIconPulse': { '0%': { transform: 'scale(1) rotate(0deg)' }, '25%': { transform: 'scale(1.25) rotate(-8deg)' }, '75%': { transform: 'scale(1.25) rotate(8deg)' }, '100%': { transform: 'scale(1) rotate(0deg)' } }, '@keyframes wrongIconPulse': { '0%': { transform: 'scale(1)' }, '50%': { transform: 'scale(1.2)' }, '100%': { transform: 'scale(1)' } }, '@keyframes buzzIconPulse': { '0%': { transform: 'scale(1) translateX(0px)' }, '50%': { transform: 'scale(1.14) translateX(2px)' }, '100%': { transform: 'scale(1) translateX(0px)' } }, '@keyframes winIconPulse': { '0%': { transform: 'scale(1)' }, '50%': { transform: 'scale(1.16)' }, '100%': { transform: 'scale(1)' } } }}>
                         {sideIcon}
@@ -492,6 +506,37 @@ export const ShowBoard = ({ state }: { state: GameShowState }) => {
               );
             })}
           </Grid>
+
+          {/* Buzz-in banner */}
+          {buzzWinnerTeamId && !isCorrectPhase && !isWrongPhase && !stealSuccessFlash && !stealFailFlash && (() => {
+            const buzzerTeam = state.teams.find(t => t.id === buzzWinnerTeamId);
+            const buzzerAssignment = state.controllerAssignments.find(a => a.controllerId === state.roundState.buzzWinnerControllerId);
+            const buzzerPlayer = buzzerAssignment?.playerName ?? null;
+            const buzzerTeamIdx = state.teams.findIndex(t => t.id === buzzWinnerTeamId);
+            const TEAM_ACCENTS = ['#56d7ff', '#ff9e3d', '#c88cff', '#50ffa0'];
+            const teamColor = TEAM_ACCENTS[buzzerTeamIdx % TEAM_ACCENTS.length];
+            if (!buzzerTeam) return null;
+            return (
+              <Box sx={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.5,
+                px: 3, py: 0.75, borderRadius: 999,
+                border: `2px solid ${teamColor}cc`,
+                background: `linear-gradient(90deg, ${teamColor}22, ${teamColor}0a, ${teamColor}22)`,
+                boxShadow: `0 0 20px ${teamColor}55`,
+                alignSelf: 'center',
+              }}>
+                <VolumeUpIcon sx={{ fontSize: 'clamp(1rem, 1.6vw, 2rem)', color: teamColor }} />
+                {buzzerPlayer && (
+                  <Typography sx={{ color: '#fff', fontWeight: 900, fontSize: 'clamp(1rem, 1.8vw, 2.4rem)', letterSpacing: '0.06em' }}>
+                    {buzzerPlayer}
+                  </Typography>
+                )}
+                <Typography sx={{ color: teamColor, fontWeight: 900, fontSize: 'clamp(1rem, 1.8vw, 2.4rem)', textTransform: 'uppercase', letterSpacing: '0.08em', textShadow: `0 0 12px ${teamColor}` }}>
+                  {buzzerPlayer ? `• ${buzzerTeam.name}` : buzzerTeam.name}
+                </Typography>
+              </Box>
+            );
+          })()}
 
           {/* Round + multiplier row */}
           <Stack direction="row" justifyContent="center" spacing={3} alignItems="center">

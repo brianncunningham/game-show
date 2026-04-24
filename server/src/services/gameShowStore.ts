@@ -51,6 +51,8 @@ const EMPTY_ROUND_STATE = (): GameShowRoundState => ({
   usedQuestionIds: [],
   clipState: 'idle',
   buzzWinnerTeamId: null,
+  buzzWinnerControllerId: null,
+  penalizedControllerIds: [],
   attemptedTeamIds: [],
   stealingTeamId: null,
   answerState: 'pending',
@@ -394,10 +396,10 @@ class GameShowStore extends EventEmitter {
   setBuzzWinnerFromController(controllerId: string): GameShowState | null {
     const assignment = this.state.controllerAssignments.find(a => a.controllerId === controllerId);
     if (!assignment) return null;
-    return this.setBuzzWinner(assignment.teamId);
+    return this.setBuzzWinner(assignment.teamId, controllerId);
   }
 
-  setBuzzWinner(teamId: string): GameShowState {
+  setBuzzWinner(teamId: string, controllerId?: string): GameShowState {
     if (!this.canMutate() || this.state.roundState.clipState !== 'active') {
       return this.state;
     }
@@ -412,7 +414,29 @@ class GameShowStore extends EventEmitter {
       roundState: {
         ...this.state.roundState,
         buzzWinnerTeamId: teamId,
+        buzzWinnerControllerId: controllerId ?? null,
         attemptedTeamIds: [teamId],
+      },
+    });
+  }
+
+  addPenalizedController(controllerId: string): GameShowState {
+    if (this.state.roundState.penalizedControllerIds.includes(controllerId)) return this.state;
+    return this.commit('add_penalized_controller', {
+      ...this.state,
+      roundState: {
+        ...this.state.roundState,
+        penalizedControllerIds: [...this.state.roundState.penalizedControllerIds, controllerId],
+      },
+    });
+  }
+
+  removePenalizedController(controllerId: string): GameShowState {
+    return this.commit('remove_penalized_controller', {
+      ...this.state,
+      roundState: {
+        ...this.state.roundState,
+        penalizedControllerIds: this.state.roundState.penalizedControllerIds.filter(id => id !== controllerId),
       },
     });
   }

@@ -527,24 +527,46 @@ export const HostPage = () => {
           <Card>
             <CardContent>
               <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1.5 }}>
-                <Chip label="2" size="small" color={canBuzz ? 'secondary' : 'default'} />
+                <Chip label="2" size="small" color={canBuzz ? 'secondary' : hasBuzzWinner ? 'success' : 'default'} />
                 <Typography sx={sectionLabelSx} mb={0}>Pick buzz winner</Typography>
+                {hasBuzzWinner && (() => {
+                  const winnerAssignment = state?.controllerAssignments.find(a => a.controllerId === state.roundState.buzzWinnerControllerId);
+                  return winnerAssignment ? (
+                    <Chip label={`⚡ ${winnerAssignment.playerName}`} size="small" color="secondary" sx={{ ml: 'auto', fontWeight: 900 }} />
+                  ) : null;
+                })()}
               </Stack>
               <Grid container spacing={1.5}>
-                {activeTeams.map((team) => (
-                  <Grid item xs={activeTeams.length <= 2 ? 6 : activeTeams.length === 3 ? 4 : 3} key={team.id}>
-                    <Button
-                      fullWidth
-                      color="secondary"
-                      variant="contained"
-                      sx={{ ...bigBtnSx, fontSize: { xs: '1.1rem', md: '1rem' } }}
-                      disabled={!canBuzz}
-                      onClick={() => void setBuzzWinner(team.id)}
-                    >
-                      {team.name} buzzed
-                    </Button>
-                  </Grid>
-                ))}
+                {activeTeams.map((team) => {
+                  const isBuzzWinnerTeam = state?.roundState.buzzWinnerTeamId === team.id;
+                  const buzzerAssignment = isBuzzWinnerTeam
+                    ? state?.controllerAssignments.find(a => a.controllerId === state.roundState.buzzWinnerControllerId)
+                    : null;
+                  const penalizedPlayers = team.players.filter(playerName => {
+                    const a = state?.controllerAssignments.find(ca => ca.teamId === team.id && ca.playerName === playerName);
+                    return a ? (state?.roundState.penalizedControllerIds ?? []).includes(a.controllerId) : false;
+                  });
+                  return (
+                    <Grid item xs={activeTeams.length <= 2 ? 6 : activeTeams.length === 3 ? 4 : 3} key={team.id}>
+                      <Button
+                        fullWidth
+                        color={isBuzzWinnerTeam ? 'success' : 'secondary'}
+                        variant={isBuzzWinnerTeam ? 'contained' : 'contained'}
+                        sx={{ ...bigBtnSx, fontSize: { xs: '1.1rem', md: '1rem' }, flexDirection: 'column', gap: 0.25 }}
+                        disabled={!canBuzz}
+                        onClick={() => void setBuzzWinner(team.id)}
+                      >
+                        <span>{isBuzzWinnerTeam ? `⚡ ${team.name}` : `${team.name} buzzed`}</span>
+                        {buzzerAssignment && (
+                          <span style={{ fontSize: '0.8em', fontWeight: 700, opacity: 0.9 }}>{buzzerAssignment.playerName}</span>
+                        )}
+                        {penalizedPlayers.length > 0 && (
+                          <span style={{ fontSize: '0.72em', color: '#ff8888', fontWeight: 700 }}>🚫 {penalizedPlayers.join(', ')}</span>
+                        )}
+                      </Button>
+                    </Grid>
+                  );
+                })}
               </Grid>
             </CardContent>
           </Card>
