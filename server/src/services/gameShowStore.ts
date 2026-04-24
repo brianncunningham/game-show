@@ -396,6 +396,9 @@ class GameShowStore extends EventEmitter {
   setBuzzWinnerFromController(controllerId: string): GameShowState | null {
     const assignment = this.state.controllerAssignments.find(a => a.controllerId === controllerId);
     if (!assignment) return null;
+    if (this.state.roundState.stealState === 'available') {
+      return this.setStealingTeam(assignment.teamId);
+    }
     return this.setBuzzWinner(assignment.teamId, controllerId);
   }
 
