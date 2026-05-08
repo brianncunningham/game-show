@@ -72,7 +72,7 @@ export const PlayerRosterModal = ({ open, currentPool, onClose, onApply }: Playe
   };
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs">
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
       <DialogTitle>Player roster</DialogTitle>
       <DialogContent>
         <Stack spacing={2} sx={{ mt: 0.5 }}>
@@ -92,29 +92,31 @@ export const PlayerRosterModal = ({ open, currentPool, onClose, onApply }: Playe
 
           {knownPlayers.length > 0 && <Divider />}
 
-          <Stack spacing={0}>
-            {knownPlayers.length === 0 && (
-              <Typography variant="body2" color="text.secondary">No players yet — add some above.</Typography>
-            )}
-            {knownPlayers.map(name => (
-              <Box key={name} sx={{ display: 'flex', alignItems: 'center' }}>
-                <FormControlLabel
-                  sx={{ flex: 1, mr: 0 }}
-                  control={
-                    <Checkbox
-                      size="small"
-                      checked={checked.has(name)}
-                      onChange={() => toggle(name)}
-                    />
-                  }
-                  label={name}
-                />
-                <IconButton size="small" color="error" onClick={() => void handleDelete(name)}>
-                  <DeleteIcon fontSize="small" />
-                </IconButton>
-              </Box>
-            ))}
-          </Stack>
+          {knownPlayers.length === 0 && (
+            <Typography variant="body2" color="text.secondary">No players yet — add some above.</Typography>
+          )}
+          {knownPlayers.length > 0 && (
+            <Box sx={{ columns: 2, columnGap: 1 }}>
+              {knownPlayers.map(name => (
+                <Box key={name} sx={{ display: 'flex', alignItems: 'center', breakInside: 'avoid' }}>
+                  <FormControlLabel
+                    sx={{ flex: 1, mr: 0, minWidth: 0 }}
+                    control={
+                      <Checkbox
+                        size="small"
+                        checked={checked.has(name)}
+                        onChange={() => toggle(name)}
+                      />
+                    }
+                    label={<Typography variant="body2" noWrap>{name}</Typography>}
+                  />
+                  <IconButton size="small" color="error" onClick={() => void handleDelete(name)}>
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
+                </Box>
+              ))}
+            </Box>
+          )}
         </Stack>
       </DialogContent>
       <DialogActions>
