@@ -735,6 +735,7 @@ class GameShowStore extends EventEmitter {
       showIntro: false,
       showRules: false,
       firstPickSeq: 0,
+      wandTestSeq: 0,
     });
   }
 

@@ -63,7 +63,12 @@ export const ShowPage = () => {
     }
   }, [state?.wandTestSeq]);
 
-  // Dismiss wand test when intro, rules, randomizer, or first pick activates
+  // Dismiss wand test when wandTestSeq resets to 0 (showBoard) or other modes activate
+  useEffect(() => {
+    if (!state) return;
+    if ((state.wandTestSeq ?? 0) === 0) setShowWandTest(false);
+  }, [state?.wandTestSeq]);
+
   useEffect(() => {
     if (state?.showIntro || state?.showRules) setShowWandTest(false);
   }, [state?.showIntro, state?.showRules]);
