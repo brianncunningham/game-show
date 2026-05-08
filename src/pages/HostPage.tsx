@@ -18,6 +18,7 @@ import {
   randomFirstPick,
   dismissFirstPick,
   showBoard,
+  showWandTest,
   eliminateTeam,
   reinstateTeam,
   armSteal,
@@ -354,6 +355,7 @@ export const HostPage = () => {
                   { label: '🎲 Randomize', color: 'info' as const, onClick: () => { void showIntroOff(); void showRulesOff(); void randomAssignPlayers(); } },
                   { label: '🎯 First Pick', color: 'success' as const, onClick: () => { void showIntroOff(); void showRulesOff(); void randomFirstPick(); } },
                   { label: '📺 Game Board', color: 'inherit' as const, onClick: () => { void showBoard(); } },
+                  { label: '🪄 Wand Test', color: 'info' as const, onClick: () => { void showWandTest(); } },
                 ].map(({ label, color, onClick }) => (
                   <Button key={label} variant="outlined" color={color} sx={{ ...bigBtnSx, flex: 1, minWidth: 0, fontSize: { xs: '0.7rem', md: '0.75rem' } }} onClick={onClick}>
                     {label}

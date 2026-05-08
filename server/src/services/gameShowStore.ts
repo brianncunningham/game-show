@@ -132,6 +132,7 @@ const createInitialState = (): GameShowState => ({
   showRules: false,
   randomizerSeq: 0,
   firstPickSeq: 0,
+  wandTestSeq: 0,
   firstPickTeamId: null,
   playerPool: [],
   teamCount: 4,
@@ -156,6 +157,7 @@ const migrateState = (state: GameShowState): GameShowState => ({
   eliminationEnabled: state.eliminationEnabled ?? false,
   buzzerMode: state.buzzerMode ?? 'manual',
   controllerAssignments: state.controllerAssignments ?? [],
+  wandTestSeq: state.wandTestSeq ?? 0,
   teams: (state.teams ?? DEFAULT_TEAMS).map(t => ({ ...t, eliminated: t.eliminated ?? false })),
   questions: state.questions.map((q) => ({
     ...q,
@@ -717,6 +719,13 @@ class GameShowStore extends EventEmitter {
     return this.commit('dismiss_first_pick', {
       ...this.state,
       firstPickSeq: 0,
+    });
+  }
+
+  showWandTest(): GameShowState {
+    return this.commit('show_wand_test', {
+      ...this.state,
+      wandTestSeq: (this.state.wandTestSeq ?? 0) + 1,
     });
   }
 

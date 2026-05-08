@@ -128,6 +128,10 @@ router.post('/show-board', (_req, res) => {
   res.json(gameShowStore.showBoard());
 });
 
+router.post('/wand-test', (_req, res) => {
+  res.json(gameShowStore.showWandTest());
+});
+
 router.post('/show-rules/on', (_req, res) => {
   res.json(gameShowStore.toggleShowRules(true));
 });

@@ -104,6 +104,7 @@ export const showRulesOff = () => postAction('/show-rules/off', 'Failed to hide 
 export const randomFirstPick = () => postAction('/first-pick/random', 'Failed to randomize first pick');
 export const dismissFirstPick = () => postAction('/first-pick/dismiss', 'Failed to dismiss first pick');
 export const showBoard = () => postAction('/show-board', 'Failed to show board');
+export const showWandTest = () => postAction('/wand-test', 'Failed to show wand test');
 
 export const endGame = async (winnerTeamId: string): Promise<GameShowState> => {
   const response = await fetch(`${API_BASE}/game/end`, {

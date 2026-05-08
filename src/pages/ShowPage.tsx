@@ -7,6 +7,7 @@ import { FirstPickScreen } from '../features/gameShow/FirstPickScreen';
 import { IntroScreen } from '../features/gameShow/IntroScreen';
 import { RulesScreen } from '../features/gameShow/RulesScreen';
 import { ShowBoard } from '../features/gameShow/ShowBoard';
+import { WandTestScreen } from '../features/gameShow/WandTestScreen';
 import { TeamRandomizer } from '../features/gameShow/TeamRandomizer';
 import { VictoryScreen } from '../features/gameShow/VictoryScreen';
 import type { GameShowTeam } from '../features/gameShow/types';
@@ -16,6 +17,8 @@ export const ShowPage = () => {
   const { state, isLoading, error } = useGameShowState();
   const [showRandomizer, setShowRandomizer] = useState(false);
   const [showFirstPick, setShowFirstPick] = useState(false);
+  const [showWandTest, setShowWandTest] = useState(false);
+  const prevWandTestSeqRef = useRef<number>(-1);
   const [eliminatedTeam, setEliminatedTeam] = useState<GameShowTeam | null>(null);
   const [revealMode, setRevealMode] = useState<'title' | 'artist' | 'both' | null>(null);
   const prevSeqRef = useRef<number>(-1);
@@ -49,6 +52,29 @@ export const ShowPage = () => {
       setShowFirstPick(false);
     }
   }, [state?.showIntro, state?.showRules, state?.firstPickSeq]);
+
+  // Show wand test screen on wandTestSeq increment
+  useEffect(() => {
+    if (!state) return;
+    const seq = state.wandTestSeq ?? 0;
+    if (seq > 0 && seq !== prevWandTestSeqRef.current) {
+      prevWandTestSeqRef.current = seq;
+      setShowWandTest(true);
+    }
+  }, [state?.wandTestSeq]);
+
+  // Dismiss wand test when intro, rules, randomizer, or first pick activates
+  useEffect(() => {
+    if (state?.showIntro || state?.showRules) setShowWandTest(false);
+  }, [state?.showIntro, state?.showRules]);
+
+  useEffect(() => {
+    if ((state?.randomizerSeq ?? 0) > 0) setShowWandTest(false);
+  }, [state?.randomizerSeq]);
+
+  useEffect(() => {
+    if ((state?.firstPickSeq ?? 0) > 0) setShowWandTest(false);
+  }, [state?.firstPickSeq]);
 
   // Dismiss first pick when randomizer fires, dismiss randomizer when first pick fires
   useEffect(() => {
@@ -116,6 +142,14 @@ export const ShowPage = () => {
         <Box sx={{ p: 6 }}>
           <Typography color="error" variant="h4">{error ?? 'Show state unavailable'}</Typography>
         </Box>
+      </GameShowStandaloneShell>
+    );
+  }
+
+  if (showWandTest && state) {
+    return (
+      <GameShowStandaloneShell hideCursor>
+        <WandTestScreen state={state} />
       </GameShowStandaloneShell>
     );
   }

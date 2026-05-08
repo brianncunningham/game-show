@@ -70,6 +70,7 @@ export interface GameShowState {
   showRules: boolean;
   randomizerSeq: number;
   firstPickSeq: number;
+  wandTestSeq: number;
   firstPickTeamId: string | null;
   playerPool: string[];
   teamCount: 2 | 3 | 4;
