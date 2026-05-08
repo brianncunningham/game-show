@@ -55,6 +55,13 @@ export const ShowBoard = ({ state }: { state: GameShowState }) => {
   const prevStealStateRef = useRef<string>('idle');
   const prevStealingTeamIdRef = useRef<string | null>(null);
 
+  useEffect(() => {
+    if (buzzWinnerTeamId) {
+      const audio = new Audio('/buzz.mp3');
+      void audio.play().catch(() => { /* autoplay blocked */ });
+    }
+  }, [buzzWinnerTeamId]);
+
   // Derived: show the wrong-answer ✕ either for a plain wrong, or during the 2s steal-wrong window
   const isWrongPhase = (isRawWrongPhase && state.roundState.stealState === 'idle') || stealWrongFlash;
   const wrongTeamId = isWrongPhase ? (stealWrongFlash ? stealOriginalBuzzerId : buzzWinnerTeamId) : null;

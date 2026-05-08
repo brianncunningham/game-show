@@ -30,6 +30,9 @@ export const WandTestScreen = ({ state }: WandTestScreenProps) => {
           const controllerId = msg.payload.controllerId as string | undefined;
           if (!controllerId) return;
 
+          const audio = new Audio('/buzz.mp3');
+          void audio.play().catch(() => { /* autoplay blocked */ });
+
           setActiveControllerIds(prev => {
             const next = new Set(prev);
             next.add(controllerId);
