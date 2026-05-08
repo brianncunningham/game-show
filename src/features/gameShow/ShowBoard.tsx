@@ -11,6 +11,9 @@ import VolumeUpIcon from '@mui/icons-material/VolumeUp';
 import { Box, Grid, Stack, Typography } from '@mui/material';
 import type { GameShowState } from './types';
 
+const buzzAudio = new Audio('/buzz.mp3');
+buzzAudio.preload = 'auto';
+
 const themeStyles = [
   { color: '#ff4fd8', glow: 'rgba(255,79,216,0.55)', icon: <MicIcon sx={{ fontSize: 44 }} /> },
   { color: '#40d8ff', glow: 'rgba(64,216,255,0.55)', icon: <AlbumIcon sx={{ fontSize: 44 }} /> },
@@ -57,8 +60,8 @@ export const ShowBoard = ({ state }: { state: GameShowState }) => {
 
   useEffect(() => {
     if (buzzWinnerTeamId) {
-      const audio = new Audio('/buzz.mp3');
-      void audio.play().catch(() => { /* autoplay blocked */ });
+      buzzAudio.currentTime = 0;
+      void buzzAudio.play().catch(() => { /* autoplay blocked */ });
     }
   }, [buzzWinnerTeamId]);
 

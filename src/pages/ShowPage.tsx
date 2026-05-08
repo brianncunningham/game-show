@@ -13,6 +13,16 @@ import { VictoryScreen } from '../features/gameShow/VictoryScreen';
 import type { GameShowTeam } from '../features/gameShow/types';
 import { useGameShowState } from '../features/gameShow/useGameShowState';
 
+const unlockAudio = () => {
+  const audio = new Audio('/buzz.mp3');
+  audio.volume = 0;
+  void audio.play().then(() => { audio.pause(); }).catch(() => { /* ignore */ });
+  window.removeEventListener('click', unlockAudio);
+  window.removeEventListener('keydown', unlockAudio);
+};
+window.addEventListener('click', unlockAudio);
+window.addEventListener('keydown', unlockAudio);
+
 export const ShowPage = () => {
   const { state, isLoading, error } = useGameShowState();
   const [showRandomizer, setShowRandomizer] = useState(false);
