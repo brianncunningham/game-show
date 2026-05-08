@@ -120,20 +120,35 @@ export const WandTestScreen = ({ state }: WandTestScreenProps) => {
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
-                  gap: 0.5,
+                  gap: 0.75,
                 }}
               >
-                <Typography
+                <Box
                   sx={{
-                    color: isActive ? '#00ff88' : 'rgba(255,255,255,0.35)',
-                    fontSize: '0.75rem',
-                    fontWeight: 700,
-                    letterSpacing: '0.1em',
-                    textTransform: 'uppercase',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: 32,
+                    height: 32,
+                    borderRadius: '50%',
+                    border: '2px solid',
+                    borderColor: isActive ? '#00ff88' : 'rgba(255,255,255,0.25)',
+                    bgcolor: isActive ? 'rgba(0,255,136,0.2)' : 'rgba(255,255,255,0.06)',
+                    transition: 'all 0.1s ease',
                   }}
                 >
-                  #{a.controllerId}
-                </Typography>
+                  <Typography
+                    sx={{
+                      color: isActive ? '#00ff88' : 'rgba(255,255,255,0.5)',
+                      fontSize: '0.8rem',
+                      fontWeight: 900,
+                      fontFamily: 'monospace',
+                      lineHeight: 1,
+                    }}
+                  >
+                    {a.controllerId}
+                  </Typography>
+                </Box>
                 <Typography
                   sx={{
                     color: isActive ? '#ffffff' : 'rgba(255,255,255,0.75)',
