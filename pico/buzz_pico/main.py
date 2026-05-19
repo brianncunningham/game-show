@@ -357,6 +357,14 @@ def handle_event(obj):
         else:
             led_test_stop()
 
+    elif event == "LED_PIXEL":
+        idx = obj.get("index")
+        if isinstance(idx, int) and 0 <= idx < NUM_LEDS:
+            led_test_stop()
+            _clear()
+            _set(idx, WHITE)
+            _show()
+
 # ---------------------------------------------------------------------------
 # Button setup
 # ---------------------------------------------------------------------------

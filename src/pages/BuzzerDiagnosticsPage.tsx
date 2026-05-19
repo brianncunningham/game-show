@@ -13,7 +13,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { openWindow, armWindow, closeWindow, resetJudge, simulateBuzz, ledTest } from '../features/buzzer/buzzerApi';
+import { openWindow, armWindow, closeWindow, resetJudge, simulateBuzz, ledTest, ledPixel } from '../features/buzzer/buzzerApi';
 import { useGameShowState } from '../features/gameShow/useGameShowState';
 
 // ---------------------------------------------------------------------------
@@ -119,6 +119,7 @@ export const BuzzerDiagnosticsPage = () => {
 
   // LED test toggle
   const [ledTestActive, setLedTestActive] = useState(false);
+  const [pixelIndex, setPixelIndex] = useState('0');
 
   // Open-window form state
   const [formWindowId,     setFormWindowId]     = useState('diag-window-1');
@@ -733,6 +734,33 @@ export const BuzzerDiagnosticsPage = () => {
               {ledTestActive
                 ? 'Strip is cycling through test pattern — press again to stop.'
                 : 'Starts a looping marquee/color test on the LED strip.'}
+            </Typography>
+          </Stack>
+          <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 1.5 }}>
+            <TextField
+              label="Pixel index"
+              size="small"
+              value={pixelIndex}
+              onChange={e => setPixelIndex(e.target.value)}
+              inputProps={{ inputMode: 'numeric', pattern: '[0-9]*', style: { width: 72, color: 'white', fontFamily: 'monospace' } }}
+              InputLabelProps={{ sx: { color: '#888' } }}
+              sx={{ '& .MuiOutlinedInput-notchedOutline': { borderColor: '#ffffff22' } }}
+            />
+            <Button
+              variant="outlined"
+              color="inherit"
+              onClick={() => {
+                const n = parseInt(pixelIndex, 10);
+                if (!isNaN(n)) {
+                  setLedTestActive(false);
+                  void ledPixel(n);
+                }
+              }}
+            >
+              Light Pixel
+            </Button>
+            <Typography variant="caption" color="text.disabled">
+              Lights one pixel (white, others off) — use to find corner indices.
             </Typography>
           </Stack>
         </Box>

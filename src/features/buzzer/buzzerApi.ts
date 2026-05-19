@@ -67,3 +67,11 @@ export const ledTest = async (active: boolean): Promise<void> => {
     body: JSON.stringify({ active }),
   });
 };
+
+export const ledPixel = async (index: number): Promise<void> => {
+  await fetch(`${BASE}/led-pixel`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ index }),
+  });
+};

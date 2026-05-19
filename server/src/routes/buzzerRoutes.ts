@@ -105,6 +105,21 @@ router.post('/led-test', (req, res) => {
   res.json({ ok: true, active });
 });
 
+/**
+ * POST /led-pixel
+ * Body: { index: number }
+ * Lights a single pixel by index (white, all others off). Stops any active test.
+ */
+router.post('/led-pixel', (req, res) => {
+  const { index } = req.body as { index?: unknown };
+  if (typeof index !== 'number' || !Number.isInteger(index) || index < 0) {
+    res.status(400).json({ error: 'index (non-negative integer) required' });
+    return;
+  }
+  sendToPico({ event: 'LED_PIXEL', index });
+  res.json({ ok: true, index });
+});
+
 // ---------------------------------------------------------------------------
 // Legacy shims — keep old ARM endpoint working during diagnostics migration
 // ---------------------------------------------------------------------------
