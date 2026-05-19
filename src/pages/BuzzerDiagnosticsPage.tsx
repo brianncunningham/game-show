@@ -814,6 +814,10 @@ export const BuzzerDiagnosticsPage = () => {
             </Stack>
             <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
               {[
+                { label: 'Solid white',   v: '{"effect":"solid","color":[255,255,255]}' },
+                { label: 'Solid blue',    v: '{"effect":"solid","color":[0,80,255]}' },
+                { label: 'Solid orange',  v: '{"effect":"solid","color":[255,80,0]}' },
+                { label: 'Solid purple',  v: '{"effect":"solid","color":[160,0,255]}' },
                 { label: 'Marquee gold',  v: '{"effect":"marquee","color":[255,200,0],"bulb_size":5,"gap_size":4,"speed_ms":25}' },
                 { label: 'Marquee 2-col', v: '{"effect":"marquee","color":[255,200,0],"color2":[0,180,255],"bulb_size":4,"gap_size":2,"speed_ms":30}' },
                 { label: 'Pulse white',   v: '{"effect":"pulse","color":[255,255,255],"bpm":30}' },
