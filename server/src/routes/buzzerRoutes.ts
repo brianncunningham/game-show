@@ -106,6 +106,22 @@ router.post('/led-test', (req, res) => {
 });
 
 /**
+ * POST /led-effect
+ * Body: { effect: string, ...params }
+ * Starts a named LED effect on the Pico with arbitrary params.
+ */
+router.post('/led-effect', (req, res) => {
+  const body = req.body as Record<string, unknown>;
+  const effect = body['effect'];
+  if (typeof effect !== 'string') {
+    res.status(400).json({ error: 'effect (string) required' });
+    return;
+  }
+  sendToPico({ event: 'LED_EFFECT', ...body });
+  res.json({ ok: true, effect });
+});
+
+/**
  * POST /led-pixel
  * Body: { index: number }
  * Lights a single pixel by index (white, all others off). Stops any active test.

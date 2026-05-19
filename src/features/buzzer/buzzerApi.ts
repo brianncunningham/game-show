@@ -68,6 +68,14 @@ export const ledTest = async (active: boolean): Promise<void> => {
   });
 };
 
+export const ledEffect = async (effect: string, params: Record<string, unknown> = {}): Promise<void> => {
+  await fetch(`${BASE}/led-effect`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ effect, ...params }),
+  });
+};
+
 export const ledPixel = async (index: number): Promise<void> => {
   await fetch(`${BASE}/led-pixel`, {
     method: 'POST',

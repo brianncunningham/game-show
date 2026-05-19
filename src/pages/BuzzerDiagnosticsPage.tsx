@@ -13,7 +13,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { openWindow, armWindow, closeWindow, resetJudge, simulateBuzz, ledTest, ledPixel } from '../features/buzzer/buzzerApi';
+import { openWindow, armWindow, closeWindow, resetJudge, simulateBuzz, ledTest, ledPixel, ledEffect } from '../features/buzzer/buzzerApi';
 import { useGameShowState } from '../features/gameShow/useGameShowState';
 
 // ---------------------------------------------------------------------------
@@ -120,6 +120,10 @@ export const BuzzerDiagnosticsPage = () => {
   // LED test toggle
   const [ledTestActive, setLedTestActive] = useState(false);
   const [pixelIndex, setPixelIndex] = useState('0');
+
+  // LED effect tester
+  const [effectParams, setEffectParams] = useState('{"effect":"marquee","color":[255,200,0],"bulb_size":5,"gap_size":4,"speed_ms":25}');
+  const [effectParamsError, setEffectParamsError] = useState(false);
 
   // Open-window form state
   const [formWindowId,     setFormWindowId]     = useState('diag-window-1');
@@ -762,6 +766,83 @@ export const BuzzerDiagnosticsPage = () => {
             <Typography variant="caption" color="text.disabled">
               Lights one pixel (white, others off) — use to find corner indices.
             </Typography>
+          </Stack>
+        </Box>
+
+        {/* ================================================================ */}
+        {/* LED Effect Tester                                                 */}
+        {/* ================================================================ */}
+        <Box sx={{ border: '1px solid #ffffff18', borderRadius: 1, p: 2 }}>
+          <Typography variant="overline" color="text.secondary" display="block" sx={{ mb: 1 }}>
+            LED Effect Tester
+          </Typography>
+          <Typography variant="caption" color="text.disabled" display="block" sx={{ mb: 1.5 }}>
+            Send any effect with params as JSON. Effects: solid, pulse, marquee, sparkle, rainbow, clock, off
+          </Typography>
+          <Stack spacing={1.5}>
+            <TextField
+              multiline
+              minRows={2}
+              size="small"
+              value={effectParams}
+              onChange={e => { setEffectParams(e.target.value); setEffectParamsError(false); }}
+              error={effectParamsError}
+              helperText={effectParamsError ? 'Invalid JSON' : undefined}
+              InputProps={{ sx: { color: 'white', fontFamily: 'monospace', fontSize: '0.8rem' } }}
+              InputLabelProps={{ sx: { color: '#888' } }}
+              sx={{ '& .MuiOutlinedInput-notchedOutline': { borderColor: '#ffffff22' } }}
+            />
+            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={() => {
+                  try {
+                    const p = JSON.parse(effectParams) as Record<string, unknown>;
+                    const { effect, ...rest } = p;
+                    if (typeof effect !== 'string') throw new Error();
+                    setLedTestActive(false);
+                    void ledEffect(effect, rest);
+                  } catch { setEffectParamsError(true); }
+                }}
+              >
+                Send Effect
+              </Button>
+              <Button variant="outlined" color="error" onClick={() => void ledEffect('off')}>
+                Off
+              </Button>
+            </Stack>
+            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+              {[
+                { label: 'Marquee gold',  v: '{"effect":"marquee","color":[255,200,0],"bulb_size":5,"gap_size":4,"speed_ms":25}' },
+                { label: 'Marquee 2-col', v: '{"effect":"marquee","color":[255,200,0],"color2":[0,180,255],"bulb_size":4,"gap_size":2,"speed_ms":30}' },
+                { label: 'Pulse white',   v: '{"effect":"pulse","color":[255,255,255],"bpm":30}' },
+                { label: 'Pulse fast',    v: '{"effect":"pulse","color":[0,60,180],"bpm":80}' },
+                { label: 'Sparkle',       v: '{"effect":"sparkle","color":[255,255,255],"density":0.05,"speed_ms":40}' },
+                { label: 'Rainbow',       v: '{"effect":"rainbow","speed_ms":20}' },
+                { label: 'Clock 30s',     v: '{"effect":"clock","duration_ms":30000,"segment":"top","mode":"inward"}' },
+                { label: 'Clock chunked', v: '{"effect":"clock","duration_ms":30000,"segment":"top","mode":"chunked","chunks":10}' },
+                { label: 'Clock smooth',  v: '{"effect":"clock","duration_ms":30000,"segment":"top","mode":"smooth"}' },
+              ].map(({ label, v }) => (
+                <Button
+                  key={label}
+                  size="small"
+                  variant="outlined"
+                  color="inherit"
+                  onClick={() => {
+                    setEffectParams(v);
+                    setEffectParamsError(false);
+                    const p = JSON.parse(v) as Record<string, unknown>;
+                    const { effect, ...rest } = p;
+                    setLedTestActive(false);
+                    void ledEffect(effect as string, rest);
+                  }}
+                  sx={{ fontSize: '0.7rem', py: 0.25 }}
+                >
+                  {label}
+                </Button>
+              ))}
+            </Stack>
           </Stack>
         </Box>
 

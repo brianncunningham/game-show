@@ -29,14 +29,17 @@ USB serial protocol (Pi → Buzz Pico):
   {"event":"RESET"}\n
   {"event":"CLOCK_START","durationMs":30000}\n
   {"event":"CLOCK_STOP"}\n
+  {"event":"LED_EFFECT","effect":"marquee","color":[r,g,b],...}\n
+  {"event":"LED_TEST","active":true}\n
+  {"event":"LED_PIXEL","index":42}\n
 
 LED segment map (update after physical install):
-  Placeholder — all effects use full strip until segments are measured.
   SEGMENTS dict maps face name to (start_index, end_index) inclusive.
 """
 
 import array
 import json
+import math
 import sys
 import select
 import rp2
@@ -66,15 +69,19 @@ LED_PIN    = 20
 NUM_LEDS   = 320
 BRIGHTNESS = 0.4   # 0.0–1.0
 
-# Segment map — update these after physical install
+# Segment map — update after physical install
 # Format: (first_led_index, last_led_index) inclusive
-# Placeholder: everything is "full strip" until measured
 SEGMENTS = {
-    "right":  (0,   79),   # bottom-right up to top-right  (~quarter)
-    "top":    (80,  159),  # top-right across to top-left  (~quarter)
-    "left":   (160, 239),  # top-left down to bottom-left  (~quarter)
-    "bottom": (240, 319),  # bottom-left across to start   (~quarter)
+    "right":  (0,   79),
+    "top":    (80,  159),
+    "left":   (160, 239),
+    "bottom": (240, 319),
 }
+
+def _seg_range(segment="all"):
+    if segment == "all" or segment not in SEGMENTS:
+        return (0, NUM_LEDS - 1)
+    return SEGMENTS[segment]
 
 # ---------------------------------------------------------------------------
 # PIO WS2812B driver
@@ -117,12 +124,27 @@ def _fill(rgb, start=0, end=None):
     for i in range(start, end + 1):
         _set(i, rgb)
 
-def _clear():
-    _fill((0, 0, 0))
+def _clear(start=0, end=None):
+    _fill((0, 0, 0), start, end if end is not None else NUM_LEDS - 1)
     _show()
 
+def _scale(rgb, factor):
+    return (int(rgb[0]*factor), int(rgb[1]*factor), int(rgb[2]*factor))
+
+def _hsv_to_rgb(h, s, v):
+    """h: 0-360, s/v: 0.0-1.0 → (r,g,b) 0-255"""
+    h = h % 360
+    i = int(h / 60)
+    f = (h / 60) - i
+    p = v * (1 - s)
+    q = v * (1 - s * f)
+    t = v * (1 - s * (1 - f))
+    sectors = [(v,t,p),(q,v,p),(p,v,t),(p,q,v),(t,p,v),(v,p,q)]
+    r, g, b = sectors[i % 6]
+    return (int(r*255), int(g*255), int(b*255))
+
 # ---------------------------------------------------------------------------
-# LED effects
+# Named colors
 # ---------------------------------------------------------------------------
 
 OFF    = (0, 0, 0)
@@ -131,175 +153,327 @@ GREEN  = (0, 220, 60)
 RED    = (220, 30, 0)
 BLUE   = (0, 80, 255)
 ORANGE = (255, 80, 0)
-ARMED_COLOR = (0, 60, 180)  # dim blue when armed
 
-def effect_idle():
-    """All off."""
-    _clear()
+# ---------------------------------------------------------------------------
+# Active effect state — only one effect runs at a time
+# ---------------------------------------------------------------------------
 
-def effect_armed():
-    """Dim blue pulse — judge is armed, waiting for buzz."""
-    _fill(ARMED_COLOR)
-    _show()
+_effect_name   = "off"
+_effect_params = {}
+_effect_state  = {}
 
-def effect_buzz(team_color):
-    """Flash team color across full strip — someone buzzed in."""
-    for _ in range(3):
-        _fill(team_color)
-        _show()
-        sleep_ms(80)
-        _clear()
-        sleep_ms(60)
-    _fill(team_color)
-    _show()
+def _effect_stop():
+    global _effect_name, _effect_params, _effect_state
+    _effect_name   = "off"
+    _effect_params = {}
+    _effect_state  = {}
 
-def effect_correct(team_color):
-    """Green wipe then hold team color."""
+def _effect_start(name, params):
+    global _effect_name, _effect_params, _effect_state
+    _effect_name   = name
+    _effect_params = params
+    _effect_state  = {"started_ms": ticks_ms(), "last_ms": ticks_ms()}
+
+# ---------------------------------------------------------------------------
+# One-shot blocking effects (used for game events)
+# ---------------------------------------------------------------------------
+
+def effect_flash(color, count=3, on_ms=80, off_ms=60):
+    for _ in range(count):
+        _fill(color); _show(); sleep_ms(on_ms)
+        _fill(OFF);   _show(); sleep_ms(off_ms)
+
+def effect_wipe(color, speed_ms=2):
     for i in range(NUM_LEDS):
-        _set(i, GREEN)
+        _set(i, color)
         if i % 8 == 0:
             _show()
-    _show()
-    sleep_ms(600)
-    _fill(team_color)
-    _show()
-    sleep_ms(800)
-    _clear()
-
-def effect_wrong():
-    """Red flash."""
-    for _ in range(4):
-        _fill(RED)
-        _show()
-        sleep_ms(120)
-        _clear()
-        sleep_ms(80)
-
-def effect_steal(team_color):
-    """Orange chase then team color."""
-    for i in range(NUM_LEDS):
-        _set(i, ORANGE)
-        if i > 0:
-            _set(i - 1, OFF)
-        if i % 4 == 0:
-            _show()
-    _show()
-    sleep_ms(300)
-    _fill(team_color)
+        sleep_ms(speed_ms)
     _show()
 
 def effect_reset():
-    """White flash then off."""
-    _fill(WHITE)
+    _fill(WHITE); _show(); sleep_ms(300)
+    _fill(OFF);   _show()
+
+# ---------------------------------------------------------------------------
+# Tick-based effect: solid
+# params: color, segment
+# ---------------------------------------------------------------------------
+
+def _tick_solid(p, s):
+    if s.get("done"):
+        return
+    start, end = _seg_range(p.get("segment", "all"))
+    _fill(OFF)
+    _fill(tuple(p.get("color", WHITE)), start, end)
     _show()
-    sleep_ms(300)
-    _clear()
+    s["done"] = True
 
 # ---------------------------------------------------------------------------
-# LED test pattern state
+# Tick-based effect: pulse (breathing)
+# params: color, bpm, min_bright, max_bright, segment
 # ---------------------------------------------------------------------------
 
-_led_test_active  = False
-_led_test_offset  = 0
-_led_test_last_ms = 0
-_LED_TEST_BULB    = 4   # LEDs per bulb
-_LED_TEST_GAP     = 4   # LEDs between bulbs
-_LED_TEST_STEP_MS = 30  # ms per frame
-_LED_TEST_COLORS  = [(255,255,255), (255,200,0), (0,180,255), (0,255,100)]
-_led_test_color_idx = 0
-_led_test_color_ms  = 0
-_LED_TEST_COLOR_INTERVAL = 2000  # ms per color cycle
+def _tick_pulse(p, s):
+    now    = ticks_ms()
+    bpm    = p.get("bpm", 30)
+    period = 60000 / bpm
+    lo     = p.get("min_bright", 0.05)
+    hi     = p.get("max_bright", 1.0)
+    color  = tuple(p.get("color", WHITE))
+    t      = ticks_diff(now, s["started_ms"]) % int(period)
+    phase  = t / period  # 0.0→1.0
+    bright = lo + (hi - lo) * (0.5 - 0.5 * math.cos(phase * 2 * math.pi))
+    start, end = _seg_range(p.get("segment", "all"))
+    _fill(OFF)
+    _fill(_scale(color, bright), start, end)
+    _show()
+
+# ---------------------------------------------------------------------------
+# Tick-based effect: marquee (chasing bulbs, 1 or 2 colors)
+# params: color, color2, bulb_size, gap_size, speed_ms, direction, segment
+# ---------------------------------------------------------------------------
+
+def _tick_marquee(p, s):
+    now      = ticks_ms()
+    speed    = p.get("speed_ms", 30)
+    if ticks_diff(now, s["last_ms"]) < speed:
+        return
+    s["last_ms"] = now
+    bulb     = p.get("bulb_size", 4)
+    gap      = p.get("gap_size",  4)
+    period   = bulb + gap
+    color1   = tuple(p.get("color",  WHITE))
+    color2   = tuple(p.get("color2", OFF))
+    seg      = p.get("segment", "all")
+    start, end = _seg_range(seg)
+    count    = end - start + 1
+    offset   = s.get("offset", 0)
+    rev      = p.get("direction", "fwd") == "rev"
+    _fill(OFF)
+    for i in range(count):
+        pos = (i + offset) % period
+        idx = (end - i) if rev else (start + i)
+        if pos < bulb:
+            group = (i // period) % 2 if color2 != OFF else 0
+            _set(idx, color2 if group else color1)
+        else:
+            _set(idx, OFF)
+    _show()
+    s["offset"] = (offset + 1) % period
+
+# ---------------------------------------------------------------------------
+# Tick-based effect: sparkle
+# params: color, density, speed_ms, segment
+# ---------------------------------------------------------------------------
+
+def _tick_sparkle(p, s):
+    import urandom
+    now   = ticks_ms()
+    speed = p.get("speed_ms", 50)
+    if ticks_diff(now, s["last_ms"]) < speed:
+        return
+    s["last_ms"] = now
+    color   = tuple(p.get("color", WHITE))
+    density = p.get("density", 0.05)
+    start, end = _seg_range(p.get("segment", "all"))
+    _fill(OFF, start, end)
+    count = end - start + 1
+    for i in range(count):
+        if urandom.random() < density:
+            _set(start + i, color)
+    _show()
+
+# ---------------------------------------------------------------------------
+# Tick-based effect: rainbow
+# params: speed_ms, brightness, segment
+# ---------------------------------------------------------------------------
+
+def _tick_rainbow(p, s):
+    now   = ticks_ms()
+    speed = p.get("speed_ms", 20)
+    if ticks_diff(now, s["last_ms"]) < speed:
+        return
+    s["last_ms"] = now
+    bright  = p.get("brightness", 1.0)
+    start, end = _seg_range(p.get("segment", "all"))
+    count   = end - start + 1
+    offset  = s.get("offset", 0)
+    _fill(OFF)
+    for i in range(count):
+        hue = (i * 360 / count + offset) % 360
+        _set(start + i, _scale(_hsv_to_rgb(hue, 1.0, bright), 1.0))
+    _show()
+    s["offset"] = (offset + 2) % 360
+
+# ---------------------------------------------------------------------------
+# Tick-based effect: clock_bar (outside-in shrink with color shift)
+# params: duration_ms, segment, mode ("smooth"|"inward"|"chunked"), chunks
+# ---------------------------------------------------------------------------
+
+def _tick_clock(p, s):
+    now       = ticks_ms()
+    duration  = p.get("duration_ms", 30000)
+    seg       = p.get("segment", "top")
+    mode      = p.get("mode", "inward")
+    chunks    = p.get("chunks", 10)
+    start, end = _seg_range(seg)
+    count     = end - start + 1
+    elapsed   = ticks_diff(now, s["started_ms"])
+    remaining = max(0, duration - elapsed)
+    frac      = remaining / duration  # 1.0 → 0.0
+
+    # Color: green → yellow → red
+    if frac > 0.5:
+        color = (int((1.0 - frac) * 2 * 255), 255, 0)
+    else:
+        color = (255, int(frac * 2 * 255), 0)
+
+    _fill(OFF, start, end)
+
+    if mode == "smooth":
+        lit = int(frac * count)
+        pad = (count - lit) // 2
+        for i in range(count):
+            if i >= pad and i < count - pad:
+                _set(start + i, color)
+
+    elif mode == "inward":
+        lit = int(frac * count)
+        pad = (count - lit) // 2
+        for i in range(count):
+            if i >= pad and i < count - pad:
+                _set(start + i, color)
+
+    elif mode == "chunked":
+        lit_chunks = int(frac * chunks + 0.999)
+        chunk_size = count / chunks
+        outer = (chunks - lit_chunks) // 2
+        for ci in range(chunks):
+            if ci >= outer and ci < chunks - outer:
+                ci_start = start + int(ci * chunk_size)
+                ci_end   = start + int((ci + 1) * chunk_size) - 1
+                for i in range(ci_start, min(ci_end + 1, end + 1)):
+                    _set(i, color)
+
+    _show()
+
+    if remaining == 0:
+        _effect_stop()
+        _fill(OFF, start, end)
+        _show()
+
+# ---------------------------------------------------------------------------
+# LED test pattern (multi-color marquee cycling through colors)
+# ---------------------------------------------------------------------------
+
+_led_test_active = False
 
 def led_test_start():
-    global _led_test_active, _led_test_offset, _led_test_last_ms, _led_test_color_idx, _led_test_color_ms
-    _led_test_active    = True
-    _led_test_offset    = 0
-    _led_test_last_ms   = ticks_ms()
-    _led_test_color_idx = 0
-    _led_test_color_ms  = ticks_ms()
+    global _led_test_active
+    _led_test_active = True
+    _effect_start("marquee", {
+        "color":    [255, 255, 255],
+        "bulb_size": 4,
+        "gap_size":  4,
+        "speed_ms":  30,
+        "segment":  "all",
+    })
+    _effect_state["color_idx"] = 0
+    _effect_state["color_ms"]  = ticks_ms()
+
+_LED_TEST_COLORS = [(255,255,255),(255,200,0),(0,180,255),(0,255,100)]
+_LED_TEST_COLOR_INTERVAL = 2000
 
 def led_test_stop():
     global _led_test_active
     _led_test_active = False
-    _clear()
+    _effect_stop()
+    _fill(OFF); _show()
 
 def led_test_tick():
-    global _led_test_offset, _led_test_last_ms, _led_test_color_idx, _led_test_color_ms
     if not _led_test_active:
         return
     now = ticks_ms()
-
-    # Advance color on interval
-    if ticks_diff(now, _led_test_color_ms) >= _LED_TEST_COLOR_INTERVAL:
-        _led_test_color_idx = (_led_test_color_idx + 1) % len(_LED_TEST_COLORS)
-        _led_test_color_ms  = now
-
-    # Advance frame on step interval
-    if ticks_diff(now, _led_test_last_ms) < _LED_TEST_STEP_MS:
-        return
-    _led_test_last_ms = now
-
-    color   = _LED_TEST_COLORS[_led_test_color_idx]
-    period  = _LED_TEST_BULB + _LED_TEST_GAP
-    for i in range(NUM_LEDS):
-        pos = (i + _led_test_offset) % period
-        _set(i, color if pos < _LED_TEST_BULB else OFF)
-    _show()
-    _led_test_offset = (_led_test_offset + 1) % period
+    if ticks_diff(now, _effect_state.get("color_ms", now)) >= _LED_TEST_COLOR_INTERVAL:
+        idx = (_effect_state.get("color_idx", 0) + 1) % len(_LED_TEST_COLORS)
+        _effect_state["color_idx"] = idx
+        _effect_state["color_ms"]  = now
+        _effect_params["color"] = list(_LED_TEST_COLORS[idx])
 
 # ---------------------------------------------------------------------------
-# Clock countdown state
+# Effect tick dispatcher
 # ---------------------------------------------------------------------------
 
-_clock_active    = False
-_clock_start_ms  = 0
-_clock_duration  = 30000  # ms, overridden by event
-_clock_top_start = SEGMENTS["top"][0]
-_clock_top_count = SEGMENTS["top"][1] - SEGMENTS["top"][0] + 1
+_TICKERS = {
+    "solid":   _tick_solid,
+    "pulse":   _tick_pulse,
+    "marquee": _tick_marquee,
+    "sparkle": _tick_sparkle,
+    "rainbow": _tick_rainbow,
+    "clock":   _tick_clock,
+}
 
-def clock_start(duration_ms):
-    global _clock_active, _clock_start_ms, _clock_duration
-    _clock_active   = True
-    _clock_start_ms = ticks_ms()
-    _clock_duration = duration_ms
+def effect_tick():
+    ticker = _TICKERS.get(_effect_name)
+    if ticker:
+        ticker(_effect_params, _effect_state)
+
+# ---------------------------------------------------------------------------
+# Game event helpers
+# ---------------------------------------------------------------------------
+
+def _game_color(obj):
+    raw = obj.get("teamColor")
+    return tuple(raw) if raw else WHITE
+
+def game_idle():
+    _effect_start("pulse", {"color": list(WHITE), "bpm": 20, "min_bright": 0.02, "max_bright": 0.3})
+
+def game_armed():
+    _effect_start("pulse", {"color": [0, 60, 180], "bpm": 60, "min_bright": 0.1, "max_bright": 0.8})
+
+def game_buzz(color):
+    _effect_stop()
+    effect_flash(color, count=3, on_ms=80, off_ms=60)
+    _effect_start("solid", {"color": list(color)})
+
+def game_correct(color):
+    _effect_stop()
+    effect_wipe(GREEN, speed_ms=1)
+    sleep_ms(400)
+    _fill(color); _show(); sleep_ms(600)
+    _fill(OFF);   _show()
+    game_idle()
+
+def game_wrong():
+    _effect_stop()
+    effect_flash(RED, count=4, on_ms=120, off_ms=80)
+    game_idle()
+
+def game_steal(color):
+    _effect_stop()
+    effect_wipe(ORANGE, speed_ms=1)
+    sleep_ms(200)
+    _effect_start("marquee", {"color": list(color), "bulb_size": 5, "gap_size": 3, "speed_ms": 25})
+
+def game_reset():
+    _effect_stop()
+    effect_reset()
+    game_idle()
+
+# ---------------------------------------------------------------------------
+# Clock countdown
+# ---------------------------------------------------------------------------
+
+def clock_start(duration_ms, segment="top", mode="inward"):
+    _effect_start("clock", {"duration_ms": duration_ms, "segment": segment, "mode": mode})
 
 def clock_stop():
-    global _clock_active
-    _clock_active = False
-    # Clear top segment
-    _fill(OFF, SEGMENTS["top"][0], SEGMENTS["top"][1])
-    _show()
-
-def clock_tick():
-    """Call each loop iteration — updates top segment clock bar."""
-    if not _clock_active:
-        return
-    elapsed = ticks_diff(ticks_ms(), _clock_start_ms)
-    remaining = max(0, _clock_duration - elapsed)
-    frac = remaining / _clock_duration  # 1.0 → 0.0
-
-    # Color shifts green → yellow → red as time runs out
-    if frac > 0.5:
-        r = int((1.0 - frac) * 2 * 255)
-        g = 255
-    else:
-        r = 255
-        g = int(frac * 2 * 255)
-    color = (r, g, 0)
-
-    # Fill top segment proportionally from outside-in
-    lit = int(frac * _clock_top_count)
-    pad = (_clock_top_count - lit) // 2
-    for i in range(_clock_top_count):
-        idx = _clock_top_start + i
-        if i >= pad and i < _clock_top_count - pad:
-            _set(idx, color)
-        else:
-            _set(idx, OFF)
-    _show()
-
-    if remaining == 0:
-        clock_stop()
+    seg = _effect_params.get("segment", "top") if _effect_name == "clock" else "top"
+    _effect_stop()
+    s, e = _seg_range(seg)
+    _fill(OFF, s, e); _show()
 
 # ---------------------------------------------------------------------------
 # USB serial helpers
@@ -319,37 +493,50 @@ def usb_readline():
 
 def handle_event(obj):
     event = obj.get("event", "")
-    raw_color = obj.get("teamColor")
-    team_color = tuple(raw_color) if raw_color else WHITE
+    color = _game_color(obj)
 
     if event == "WINDOW_STATE":
         state = obj.get("windowState", "")
         if state == "ARMED":
-            effect_armed()
-        elif state in ("IDLE", "LOCKED"):
-            effect_idle()
+            game_armed()
+        elif state in ("IDLE",):
+            game_idle()
+        elif state == "LOCKED":
+            pass  # hold current effect until BUZZ_ACCEPTED
 
     elif event == "BUZZ_ACCEPTED":
-        effect_buzz(team_color)
+        game_buzz(color)
 
     elif event == "CORRECT":
-        effect_correct(team_color)
+        game_correct(color)
 
     elif event == "WRONG":
-        effect_wrong()
+        game_wrong()
 
     elif event == "STEAL":
-        effect_steal(team_color)
+        game_steal(color)
 
     elif event == "RESET":
-        effect_reset()
-        effect_idle()
+        game_reset()
 
     elif event == "CLOCK_START":
-        clock_start(obj.get("durationMs", 30000))
+        clock_start(
+            obj.get("durationMs", 30000),
+            obj.get("segment", "top"),
+            obj.get("mode", "inward"),
+        )
 
     elif event == "CLOCK_STOP":
         clock_stop()
+
+    elif event == "LED_EFFECT":
+        effect = obj.get("effect", "")
+        if effect == "off":
+            _effect_stop()
+            _fill(OFF); _show()
+        elif effect in _TICKERS:
+            params = {k: v for k, v in obj.items() if k != "event"}
+            _effect_start(effect, params)
 
     elif event == "LED_TEST":
         if obj.get("active"):
@@ -361,9 +548,8 @@ def handle_event(obj):
         idx = obj.get("index")
         if isinstance(idx, int) and 0 <= idx < NUM_LEDS:
             led_test_stop()
-            _clear()
-            _set(idx, WHITE)
-            _show()
+            _effect_stop()
+            _fill(OFF); _set(idx, WHITE); _show()
 
 # ---------------------------------------------------------------------------
 # Button setup
@@ -383,6 +569,7 @@ for gp, cid in BUTTON_MAP.items():
 
 sleep_ms(2000)
 effect_reset()  # white flash on boot to confirm LED strip is alive
+game_idle()     # start idle pulse
 print("Buzz Pico ready -- GP0-GP19 buttons, GP20 LED strip ({} LEDs)".format(NUM_LEDS))
 
 # ---------------------------------------------------------------------------
@@ -411,10 +598,8 @@ while True:
         except Exception:
             pass
 
-    # --- Clock tick ---
-    clock_tick()
-
-    # --- LED test tick ---
+    # --- Effect tick (all non-blocking effects) ---
+    effect_tick()
     led_test_tick()
 
-    sleep_ms(10)  # 10ms loop — fast enough for buttons, smooth for clock
+    sleep_ms(10)  # 10ms loop — fast enough for buttons, smooth for effects
