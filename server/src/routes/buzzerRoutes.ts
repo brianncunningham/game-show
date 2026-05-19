@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { judgeController } from '../buzzer/judgeController.js';
 import { simulateInput } from '../buzzer/inputs/simulationInput.js';
+import { sendToPico } from '../buzzer/inputs/hardwareInput.js';
 import type { BuzzerWindow } from '../buzzer/types.js';
 
 const router = Router();
@@ -83,6 +84,25 @@ router.get('/state', (_req, res) => {
 router.post('/simulate/:controllerId', (req, res) => {
   simulateInput(req.params.controllerId);
   res.json(judgeController.getWindowState());
+});
+
+// ---------------------------------------------------------------------------
+// LED test
+// ---------------------------------------------------------------------------
+
+/**
+ * POST /led-test
+ * Body: { active: boolean }
+ * Sends LED_TEST start/stop event to the Pico over serial.
+ */
+router.post('/led-test', (req, res) => {
+  const { active } = req.body as { active?: boolean };
+  if (typeof active !== 'boolean') {
+    res.status(400).json({ error: 'active (boolean) required' });
+    return;
+  }
+  sendToPico({ event: 'LED_TEST', active });
+  res.json({ ok: true, active });
 });
 
 // ---------------------------------------------------------------------------

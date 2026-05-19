@@ -13,7 +13,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { openWindow, armWindow, closeWindow, resetJudge, simulateBuzz } from '../features/buzzer/buzzerApi';
+import { openWindow, armWindow, closeWindow, resetJudge, simulateBuzz, ledTest } from '../features/buzzer/buzzerApi';
 import { useGameShowState } from '../features/gameShow/useGameShowState';
 
 // ---------------------------------------------------------------------------
@@ -116,6 +116,9 @@ export const BuzzerDiagnosticsPage = () => {
   const [eventLog, setEventLog] = useState<BuzzerEvent[]>([]);
   const logEndRef     = useRef<HTMLDivElement | null>(null);
   const logSectionRef = useRef<HTMLDivElement | null>(null);
+
+  // LED test toggle
+  const [ledTestActive, setLedTestActive] = useState(false);
 
   // Open-window form state
   const [formWindowId,     setFormWindowId]     = useState('diag-window-1');
@@ -707,7 +710,37 @@ export const BuzzerDiagnosticsPage = () => {
         <Divider sx={{ borderColor: '#ffffff22' }} />
 
         {/* ================================================================ */}
-        {/* Event Log                                                        */}
+        {/* LED Test                                                         */}
+        {/* ================================================================ */}
+        <Box sx={{ border: '1px solid #ffffff18', borderRadius: 1, p: 2 }}>
+          <Typography variant="overline" color="text.secondary" display="block" sx={{ mb: 1 }}>
+            LED Strip Test
+          </Typography>
+          <Stack direction="row" spacing={2} alignItems="center">
+            <Button
+              variant={ledTestActive ? 'contained' : 'outlined'}
+              color={ledTestActive ? 'warning' : 'inherit'}
+              onClick={() => {
+                const next = !ledTestActive;
+                setLedTestActive(next);
+                void ledTest(next);
+              }}
+              sx={{ minWidth: 160 }}
+            >
+              {ledTestActive ? 'Stop LED Test' : 'Start LED Test'}
+            </Button>
+            <Typography variant="caption" color="text.disabled">
+              {ledTestActive
+                ? 'Strip is cycling through test pattern — press again to stop.'
+                : 'Starts a looping marquee/color test on the LED strip.'}
+            </Typography>
+          </Stack>
+        </Box>
+
+        <Divider sx={{ borderColor: '#ffffff22' }} />
+
+        {/* ================================================================ */}
+        {/* Event Log                                                         */}
         {/* ================================================================ */}
         <Stack spacing={1} ref={logSectionRef}>
           <Stack direction="row" justifyContent="space-between" alignItems="center">

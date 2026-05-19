@@ -59,3 +59,11 @@ export const simulateBuzz = async (controllerId: string): Promise<void> => {
     method: 'POST',
   });
 };
+
+export const ledTest = async (active: boolean): Promise<void> => {
+  await fetch(`${BASE}/led-test`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ active }),
+  });
+};

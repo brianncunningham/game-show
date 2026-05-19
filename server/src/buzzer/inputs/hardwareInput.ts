@@ -93,4 +93,18 @@ export const initHardwareInput = async (): Promise<void> => {
       port.write(JSON.stringify(msg) + '\n');
     }
   });
+
+  // Allow other modules to send arbitrary JSON to the Pico
+  picoWrite = (obj: Record<string, unknown>) => {
+    if (port.isOpen) {
+      port.write(JSON.stringify(obj) + '\n');
+    }
+  };
+};
+
+let picoWrite: ((obj: Record<string, unknown>) => void) | null = null;
+
+/** Send an arbitrary JSON event to the Pico over serial. No-op if hardware input is not active. */
+export const sendToPico = (obj: Record<string, unknown>): void => {
+  picoWrite?.(obj);
 };
