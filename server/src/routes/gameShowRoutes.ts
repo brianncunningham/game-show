@@ -95,7 +95,9 @@ router.post('/buzz/controller/:controllerId', (req, res) => {
     res.status(404).json({ error: `No controller assignment found for controllerId '${req.params.controllerId}'` });
     return;
   }
-  const color = teamColor(result.roundState.buzzWinnerTeamId);
+  // During a steal window, show the stealing team's color, not the original buzzer's
+  const activeTeamId = result.roundState.stealingTeamId ?? result.roundState.buzzWinnerTeamId;
+  const color = teamColor(activeTeamId);
   piLed({ effect: 'flash', color, flashes: 3, on_ms: 80, off_ms: 60, end_color: color });
   res.json(result);
 });
@@ -133,8 +135,10 @@ router.post('/steal/team/:teamId', (req, res) => {
 });
 
 router.post('/steal/success', (_req, res) => {
+  // Capture stealingTeamId BEFORE resolveSteal clears it from state
+  const stealingTeamId = gameShowStore.getState().roundState.stealingTeamId;
   const state = gameShowStore.resolveSteal(true);
-  const color = teamColor(state.roundState.stealingTeamId ?? state.roundState.buzzWinnerTeamId);
+  const color = teamColor(stealingTeamId ?? state.roundState.buzzWinnerTeamId);
   piLed({ effect: 'flash', color: [0, 255, 60], flashes: 4, on_ms: 150, off_ms: 80, end_color: color });
   res.json(state);
 });
