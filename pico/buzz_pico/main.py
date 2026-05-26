@@ -620,8 +620,12 @@ def handle_event(obj):
         if state == "ARMED":
             game_armed()
         elif state == "IDLE":
-            if ticks_diff(ticks_ms(), _hold_idle_until) >= 0:
-                game_idle()  # only go idle if no game effect is holding
+            # Only go idle if no piLed effect is holding (piLed is authority for game states)
+            now = ticks_ms()
+            hold_expired = ticks_diff(now, _hold_idle_until) >= 0
+            no_effect = _effect_name in (None, "pulse")
+            if hold_expired and no_effect:
+                game_idle()
         # LOCKED: hold current effect — piLed sends BUZZ_ACCEPTED flash via LED_EFFECT
 
     # BUZZ_ACCEPTED / CORRECT / WRONG / STEAL / RESET handled via piLed HTTP → LED_EFFECT
