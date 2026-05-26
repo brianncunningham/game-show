@@ -93,9 +93,14 @@ export const initHardwareInput = async (): Promise<void> => {
       // Strip eligibleControllers (too long) and inject penalizedControllerIds instead
       let msg: typeof event & { teamColor?: number[] } = event;
       if (event.type === 'WINDOW_STATE' && event.payload && 'eligibleControllers' in event.payload) {
-        const penalized = gameShowStore.getState().roundState.penalizedControllerIds ?? [];
+        const state = gameShowStore.getState();
+        const attemptedTeamIds = state.roundState.attemptedTeamIds ?? [];
+        // Controllers whose team has already attempted (wrong answer) are locked out
+        const failed = state.controllerAssignments
+          .filter(a => attemptedTeamIds.includes(a.teamId))
+          .map(a => a.controllerId);
         const { eligibleControllers: _, ...rest } = event.payload as unknown as Record<string, unknown>;
-        msg = { ...event, payload: { ...rest, failedControllers: penalized } } as unknown as typeof msg;
+        msg = { ...event, payload: { ...rest, failedControllers: failed } } as unknown as typeof msg;
       }
       // Inject teamColor for BUZZ_ACCEPTED so Pico can light team color
       if (event.type === 'BUZZ_ACCEPTED') {
