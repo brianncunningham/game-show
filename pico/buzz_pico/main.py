@@ -641,7 +641,11 @@ def handle_event(obj):
         _hold_idle(30000)  # steal window open — piLed handles effect
 
     elif event == "RESET":
-        game_reset()
+        # Only reset if no piLed effect is holding (e.g. after correct, hold keeps green solid)
+        hold_active = ticks_diff(ticks_ms(), _hold_idle_until) < 0
+        effect_active = _effect_name not in (None, "off", "pulse")
+        if not hold_active and not effect_active:
+            game_reset()
 
     elif event == "CLOCK_START":
         clock_start(
