@@ -10,10 +10,10 @@ const router = Router();
 // Team index → LED color (team-a=0, team-b=1, team-c=2, team-d=3)
 // Must match TEAM_LED_COLORS in hardwareInput.ts and screen TEAM_ACCENTS
 const TEAM_COLORS: Record<string, number[]> = {
-  'team-a': [0,   230, 255],  // Cyan   #00e6ff  (screen: #56d7ff)
-  'team-b': [255, 158,  61],  // Orange #ff9e3d
-  'team-c': [200, 140, 255],  // Purple #c88cff
-  'team-d': [ 80, 255, 160],  // Green  #50ffa0
+  'team-a': [0,   255, 100],  // Cyan   #00ff64
+  'team-b': [255,  60,   0],  // Orange #ff3c00
+  'team-c': [ 80,   0, 255],  // Purple #5000ff
+  'team-d': [255,   0,  40],  // Pink   #ff0028
 };
 const ALL_TEAM_COLORS = Object.values(TEAM_COLORS);
 
@@ -58,7 +58,8 @@ router.post('/start', (_req, res) => {
 
 router.post('/players/random-assign', (_req, res) => {
   const state = gameShowStore.randomAssignPlayers();
-  piLed({ effect: 'spin', colors: ALL_TEAM_COLORS, settle_colors: ALL_TEAM_COLORS, duration_ms: 3000 });
+  const VISIBLE_SETTLE = [TEAM_COLORS['team-a'], TEAM_COLORS['team-b'], TEAM_COLORS['team-c']];
+  piLed({ effect: 'spin', colors: ALL_TEAM_COLORS, settle_colors: VISIBLE_SETTLE, duration_ms: 3000 });
   res.json(state);
 });
 

@@ -34,7 +34,7 @@ const PHASE_DONE = 2;
 const CHAOS_DURATION = 3800;
 const SETTLE_DURATION = 1600;
 
-const TEAM_COLORS = ['#56d7ff', '#ff9e3d', '#c88cff', '#50ffa0'];
+const TEAM_COLORS = ['#00ff64', '#ff3c00', '#5000ff', '#ff0028'];
 
 export const TeamRandomizer = ({ state }: Props) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);

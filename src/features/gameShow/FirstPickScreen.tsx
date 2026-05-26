@@ -6,7 +6,7 @@ interface Props {
   state: GameShowState;
 }
 
-const TEAM_COLORS = ['#56d7ff', '#ff9e3d', '#c88cff', '#50ffa0'];
+const TEAM_COLORS = ['#00ff64', '#ff3c00', '#5000ff', '#ff0028'];
 const CYCLE_DURATION = 3200;  // total bounce time
 const SETTLE_DURATION = 800;  // flash-slow down time
 
