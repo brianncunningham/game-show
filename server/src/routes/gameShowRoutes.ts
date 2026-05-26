@@ -72,7 +72,7 @@ router.post('/reset', (_req, res) => {
 
 router.post('/scores/reset', (_req, res) => {
   const state = gameShowStore.resetScores();
-  piLed({ effect: 'wipe', speed_ms: 5, skew: 20 });
+  piLed({ effect: 'flash', color: [255, 255, 255], flashes: 3, on_ms: 120, off_ms: 80 });
   res.json(state);
 });
 
