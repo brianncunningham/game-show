@@ -79,7 +79,9 @@ router.post('/question/:questionId/select', (req, res) => {
 });
 
 router.post('/song/:songIndex/select', (req, res) => {
-  res.json(gameShowStore.selectSong(Number(req.params.songIndex)));
+  const state = gameShowStore.selectSong(Number(req.params.songIndex));
+  piLed({ effect: 'pulse', color: [0, 60, 180], bpm: 60, min_bright: 0.1, max_bright: 0.8 });
+  res.json(state);
 });
 
 router.post('/buzz/:teamId', (req, res) => {
@@ -108,8 +110,7 @@ router.delete('/penalized-controller/:controllerId', (req, res) => {
 
 router.post('/answer/correct', (_req, res) => {
   const state = gameShowStore.markCorrect();
-  const color = teamColor(state.roundState.buzzWinnerTeamId);
-  piLed({ effect: 'flash', color: [0, 255, 60], flashes: 3, on_ms: 150, off_ms: 80 });
+  piLed({ effect: 'flash', color: [0, 255, 60], flashes: 4, on_ms: 150, off_ms: 80, end_color: [0, 255, 60] });
   res.json(state);
 });
 
@@ -162,7 +163,9 @@ router.post('/round/next', (_req, res) => {
 });
 
 router.post('/round/reset', (_req, res) => {
-  res.json(gameShowStore.resetRound());
+  const state = gameShowStore.resetRound();
+  piLed({ effect: 'pulse', color: [0, 60, 180], bpm: 60, min_bright: 0.1, max_bright: 0.8 });
+  res.json(state);
 });
 
 router.post('/undo', (_req, res) => {
