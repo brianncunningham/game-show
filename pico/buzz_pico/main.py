@@ -419,14 +419,14 @@ def _tick_spin(p, s):
     frac     = min(elapsed / duration, 1.0)
 
     if frac < 0.75:
-        # Phase 1: rapid cycling — speed slows as frac increases
+        # Phase 1: rapid cycling through settle colors only (not all 4 if fewer teams)
         speed = int(40 + frac * 200)  # 40ms → 190ms
         if ticks_diff(now, s["last_ms"]) < speed:
             return
         s["last_ms"] = now
-        idx = (s.get("color_idx", 0) + 1) % len(colors)
+        idx = (s.get("color_idx", 0) + 1) % len(settle)
         s["color_idx"] = idx
-        _fill(tuple(colors[idx]))
+        _fill(tuple(settle[idx]))
         _show()
     elif frac < 1.0:
         # Phase 2: slow flicker between settle colors
@@ -456,8 +456,11 @@ def _tick_spin(p, s):
                         s2, e2 = SEGMENTS[seg_name]
                         _fill(tuple(settle[ci]), s2, e2)
             elif n == 2:
-                # 2 teams: team0=right + left half of top + left half of bottom
-                #          team1=left  + right half of top + right half of bottom
+                # 2 teams: team0=right side, team1=left side
+                # top runs right→left (pixel 36=top-right, 106=top-left)
+                #   so team0 gets the right portion (ts..mid) and team1 gets left (mid+1..te)
+                # bottom runs left→right (pixel 143=bottom-left, 211=bottom-right)
+                #   so team1 gets left portion (bs..mid) and team0 gets right (mid+1..be)
                 if "right" in SEGMENTS:
                     _fill(tuple(settle[0]), *SEGMENTS["right"])
                 if "left" in SEGMENTS:
@@ -465,13 +468,13 @@ def _tick_spin(p, s):
                 if "top" in SEGMENTS:
                     ts, te = SEGMENTS["top"]
                     mid = (ts + te) // 2
-                    _fill(tuple(settle[0]), ts, mid)
-                    _fill(tuple(settle[1]), mid + 1, te)
+                    _fill(tuple(settle[0]), ts, mid)      # right half of top
+                    _fill(tuple(settle[1]), mid + 1, te)  # left half of top
                 if "bottom" in SEGMENTS:
                     bs, be = SEGMENTS["bottom"]
                     mid = (bs + be) // 2
-                    _fill(tuple(settle[0]), bs, mid)
-                    _fill(tuple(settle[1]), mid + 1, be)
+                    _fill(tuple(settle[1]), bs, mid)      # left half of bottom
+                    _fill(tuple(settle[0]), mid + 1, be)  # right half of bottom
             elif n == 1:
                 _fill(tuple(settle[0]), *SEGMENTS.get("all", (0, NUM_LEDS - 1)))
             _show()
@@ -559,12 +562,12 @@ def game_correct(color):
     sleep_ms(400)
     _fill(color); _show(); sleep_ms(600)
     _fill(OFF);   _show()
-    game_idle()
+    # stay dark — host will trigger next state (show-board, next round etc)
 
 def game_wrong():
     _effect_stop()
     effect_flash(RED, count=4, on_ms=120, off_ms=80)
-    game_idle()
+    # stay dark — host will trigger steal window or next state
 
 def game_steal(color):
     _effect_stop()
