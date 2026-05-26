@@ -556,7 +556,8 @@ def _hold_idle(ms=8000):
     _hold_idle_until = ticks_ms() + ms
 
 def game_idle():
-    _effect_start("pulse", {"color": list(WHITE), "bpm": 20, "min_bright": 0.02, "max_bright": 0.3})
+    _effect_stop()
+    _fill(OFF); _show()
 
 def game_armed():
     _effect_start("pulse", {"color": [0, 60, 180], "bpm": 60, "min_bright": 0.1, "max_bright": 0.8})
@@ -621,13 +622,7 @@ def handle_event(obj):
         if state == "ARMED":
             game_armed()
         elif state == "IDLE":
-            # Only go idle if hold has expired AND no active game effect
-            # piLed is the authority — serial IDLE must not override active effects
-            now = ticks_ms()
-            hold_active = ticks_diff(now, _hold_idle_until) < 0
-            effect_active = _effect_name not in (None, "pulse")
-            if not hold_active and not effect_active:
-                game_idle()
+            pass  # dark by default; piLed drives all active states
         elif state == "LOCKED":
             _hold_idle(15000)  # hold for 15s — piLed will deliver the actual effect shortly after
 
@@ -699,7 +694,7 @@ for gp, cid in BUTTON_MAP.items():
 
 sleep_ms(2000)
 effect_reset()  # white flash on boot to confirm LED strip is alive
-game_idle()     # start idle pulse
+_fill(OFF); _show()  # start dark
 print("Buzz Pico ready -- GP0-GP19 buttons, GP20 LED strip ({} LEDs)".format(NUM_LEDS))
 
 # ---------------------------------------------------------------------------

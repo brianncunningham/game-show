@@ -197,7 +197,7 @@ router.post('/first-pick/dismiss', (_req, res) => {
 
 router.post('/show-board', (_req, res) => {
   const state = gameShowStore.showBoard();
-  piLed({ effect: 'pulse', color: [255,255,255], bpm: 20, min_bright: 0.02, max_bright: 0.3 });
+  piLed({ effect: 'pulse', color: [0, 60, 180], bpm: 60, min_bright: 0.1, max_bright: 0.8 });
   res.json(state);
 });
 
