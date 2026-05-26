@@ -271,7 +271,15 @@ def _tick_marquee(p, s):
 
 def _tick_sparkle(p, s):
     import urandom
-    now   = ticks_ms()
+    now      = ticks_ms()
+    duration = p.get("duration_ms", 0)
+    if duration and ticks_diff(now, s["started_ms"]) >= duration:
+        end_color = p.get("end_color")
+        if end_color:
+            _effect_start("solid", {"color": list(end_color)})
+        else:
+            _effect_stop(); _fill(OFF); _show()
+        return
     speed = p.get("speed_ms", 50)
     if ticks_diff(now, s["last_ms"]) < speed:
         return
@@ -610,7 +618,6 @@ def usb_readline():
 def handle_event(obj):
     # Judge protocol uses "type" + nested "payload"; LED commands use flat "event"
     event = obj.get("event") or obj.get("type", "")
-    print("EVT:{} eff:{} hold:{}".format(event, _effect_name, ticks_diff(ticks_ms(), _hold_idle_until)))
     payload = obj.get("payload", {}) or {}
     # Merge top-level and payload so callers can use obj for both formats
     merged = dict(payload)
@@ -618,7 +625,10 @@ def handle_event(obj):
     color = _game_color(merged)
 
     if event == "WINDOW_STATE":
+        global _failed_controllers
         state = merged.get("windowState", payload.get("windowState", ""))
+        failed = merged.get("failedControllers", [])
+        _failed_controllers = set(str(c) for c in failed)
         if state == "ARMED":
             game_armed()
         elif state == "IDLE":
@@ -640,7 +650,15 @@ def handle_event(obj):
     elif event == "STEAL":
         _hold_idle(30000)  # steal window open — piLed handles effect
 
+    elif event == "BUZZ_REJECTED":
+        reason = merged.get("reason", "")
+        if reason in ("PENALIZED", "LOCKED"):
+            # Brief red flash to signal lockout — don't disturb main effect
+            pass  # handled locally in button loop via _failed_controllers
+
     elif event == "RESET":
+        global _failed_controllers
+        _failed_controllers = set()  # clear lockouts on round reset
         # Only reset if no piLed effect is holding (e.g. after correct, hold keeps green solid)
         hold_active = ticks_diff(ticks_ms(), _hold_idle_until) < 0
         effect_active = _effect_name not in (None, "off", "pulse")
@@ -686,6 +704,7 @@ def handle_event(obj):
 
 buttons = {}
 last_press_ms = {}
+_failed_controllers = set()  # controller IDs locked out this round
 
 for gp, cid in BUTTON_MAP.items():
     pin = Pin(gp, Pin.IN, Pin.PULL_UP)
@@ -714,7 +733,11 @@ while True:
             elapsed = ticks_diff(now, last_press_ms[gp])
             if elapsed > DEBOUNCE_MS:
                 last_press_ms[gp] = now
-                usb_send({"controllerId": cid})
+                if cid in _failed_controllers:
+                    # Locked out — flash red briefly, don't send buzz
+                    effect_flash(RED, count=2, on_ms=80, off_ms=60)
+                else:
+                    usb_send({"controllerId": cid})
 
     # --- Check for incoming state from Pi ---
     for _ in range(16):

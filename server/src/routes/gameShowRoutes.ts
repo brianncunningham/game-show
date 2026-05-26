@@ -117,7 +117,10 @@ router.post('/answer/correct', (_req, res) => {
 });
 
 router.post('/answer/artist-bonus', (_req, res) => {
-  res.json(gameShowStore.awardArtistBonus());
+  const state = gameShowStore.awardArtistBonus();
+  const color = teamColor(state.roundState.buzzWinnerTeamId);
+  piLed({ effect: 'sparkle', color, density: 0.12, speed_ms: 40, duration_ms: 3000, end_color: color });
+  res.json(state);
 });
 
 router.post('/answer/wrong', (_req, res) => {
