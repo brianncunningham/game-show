@@ -300,7 +300,15 @@ def _tick_sparkle(p, s):
 # ---------------------------------------------------------------------------
 
 def _tick_rainbow(p, s):
-    now   = ticks_ms()
+    now      = ticks_ms()
+    duration = p.get("duration_ms", 0)
+    if duration and ticks_diff(now, s["started_ms"]) >= duration:
+        end_color = p.get("end_color")
+        if end_color:
+            _effect_start("solid", {"color": list(end_color)})
+        else:
+            _effect_stop(); _fill(OFF); _show()
+        return
     speed = p.get("speed_ms", 20)
     if ticks_diff(now, s["last_ms"]) < speed:
         return
@@ -315,6 +323,34 @@ def _tick_rainbow(p, s):
         _set(start + i, _scale(_hsv_to_rgb(hue, 1.0, bright), 1.0))
     _show()
     s["offset"] = (offset + 2) % 360
+
+# ---------------------------------------------------------------------------
+# Tick-based effect: wipe
+# params: color, speed_ms, direction ("cw"|"ccw"), end_color
+# ---------------------------------------------------------------------------
+
+def _tick_wipe(p, s):
+    now   = ticks_ms()
+    speed = p.get("speed_ms", 3)
+    if ticks_diff(now, s["last_ms"]) < speed:
+        return
+    s["last_ms"] = now
+    color  = tuple(p.get("color", list(WHITE)))
+    start, end = _seg_range(p.get("segment", "all"))
+    total  = end - start + 1
+    pos    = s.get("pos", 0)
+    ccw    = p.get("direction", "cw") == "ccw"
+    idx    = (end - pos) if ccw else (start + pos)
+    _set(idx, color); _show()
+    pos += 1
+    if pos >= total:
+        end_color = p.get("end_color")
+        if end_color:
+            _effect_start("solid", {"color": list(end_color)})
+        else:
+            _effect_stop(); _fill(OFF); _show()
+        return
+    s["pos"] = pos
 
 # ---------------------------------------------------------------------------
 # Tick-based effect: clock_bar (outside-in shrink with color shift)
@@ -539,6 +575,7 @@ _TICKERS = {
     "marquee": _tick_marquee,
     "sparkle": _tick_sparkle,
     "rainbow": _tick_rainbow,
+    "wipe":    _tick_wipe,
     "clock":   _tick_clock,
     "spin":    _tick_spin,
     "flash":   _tick_flash,

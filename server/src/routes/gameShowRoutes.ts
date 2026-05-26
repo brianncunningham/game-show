@@ -71,7 +71,9 @@ router.post('/reset', (_req, res) => {
 });
 
 router.post('/scores/reset', (_req, res) => {
-  res.json(gameShowStore.resetScores());
+  const state = gameShowStore.resetScores();
+  piLed({ effect: 'wipe', color: [255, 255, 255], speed_ms: 2 });
+  res.json(state);
 });
 
 router.post('/question/:questionId/select', (req, res) => {
@@ -166,7 +168,9 @@ router.post('/teams/:teamId/reinstate', (req, res) => {
 });
 
 router.post('/round/next', (_req, res) => {
-  res.json(gameShowStore.nextRound());
+  const state = gameShowStore.nextRound();
+  piLed({ effect: 'rainbow', speed_ms: 15, brightness: 0.9, duration_ms: 4000, end_color: [0, 60, 180] });
+  res.json(state);
 });
 
 router.post('/round/reset', (_req, res) => {
@@ -234,7 +238,10 @@ router.post('/game/end', (req, res) => {
     res.status(400).json({ error: 'winnerTeamId is required' });
     return;
   }
-  res.json(gameShowStore.endGame(winnerTeamId));
+  const state = gameShowStore.endGame(winnerTeamId);
+  // Golden sparkle celebration for game winner
+  piLed({ effect: 'sparkle', color: [255, 180, 0], density: 0.2, speed_ms: 30 });
+  res.json(state);
 });
 
 router.put('/config', (req, res) => {
