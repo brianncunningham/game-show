@@ -584,11 +584,16 @@ def usb_readline():
 # ---------------------------------------------------------------------------
 
 def handle_event(obj):
-    event = obj.get("event", "")
-    color = _game_color(obj)
+    # Judge protocol uses "type" + nested "payload"; LED commands use flat "event"
+    event = obj.get("event") or obj.get("type", "")
+    payload = obj.get("payload", {}) or {}
+    # Merge top-level and payload so callers can use obj for both formats
+    merged = dict(payload)
+    merged.update({k: v for k, v in obj.items() if k not in ("type", "payload")})
+    color = _game_color(merged)
 
     if event == "WINDOW_STATE":
-        state = obj.get("windowState", "")
+        state = merged.get("windowState", payload.get("windowState", ""))
         if state == "ARMED":
             game_armed()
         elif state in ("IDLE",):
@@ -613,31 +618,31 @@ def handle_event(obj):
 
     elif event == "CLOCK_START":
         clock_start(
-            obj.get("durationMs", 30000),
-            obj.get("segment", "top"),
-            obj.get("mode", "inward"),
+            merged.get("durationMs", 30000),
+            merged.get("segment", "top"),
+            merged.get("mode", "inward"),
         )
 
     elif event == "CLOCK_STOP":
         clock_stop()
 
     elif event == "LED_EFFECT":
-        effect = obj.get("effect", "")
+        effect = merged.get("effect", "")
         if effect == "off":
             _effect_stop()
             _fill(OFF); _show()
         elif effect in _TICKERS:
-            params = {k: v for k, v in obj.items() if k != "event"}
+            params = {k: v for k, v in merged.items() if k not in ("event", "type")}
             _effect_start(effect, params)
 
     elif event == "LED_TEST":
-        if obj.get("active"):
+        if merged.get("active"):
             led_test_start()
         else:
             led_test_stop()
 
     elif event == "LED_PIXEL":
-        idx = obj.get("index")
+        idx = merged.get("index")
         if isinstance(idx, int) and 0 <= idx < NUM_LEDS:
             led_test_stop()
             _effect_stop()

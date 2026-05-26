@@ -103,11 +103,11 @@ export const initHardwareInput = async (): Promise<void> => {
       if (event.type === 'BUZZ_ACCEPTED') {
         const controllerId = (event.payload as { controllerId?: string }).controllerId;
         const state = gameShowStore.getState();
+        // Try controllerAssignments first (hardware/phone mode)
         const assignment = state.controllerAssignments.find(a => a.controllerId === controllerId);
-        if (assignment) {
-          const color = TEAM_LED_COLORS[assignment.teamId];
-          if (color) msg = { ...msg, teamColor: color };
-        }
+        const teamId = assignment?.teamId ?? state.roundState.buzzWinnerTeamId ?? null;
+        const color = teamId ? TEAM_LED_COLORS[teamId] : null;
+        if (color) msg = { ...msg, teamColor: color };
       }
       port.write(JSON.stringify(msg) + '\n');
     }
