@@ -332,11 +332,9 @@ def _tick_rainbow(p, s):
 # ---------------------------------------------------------------------------
 
 def _tick_wipe(p, s):
-    # Columnar left-to-right wipe across the physical rectangle:
-    #   col 0       = entire left side (all LEDs 107-142)
-    #   cols 1..N   = one pixel on top (106 down to 37) + one pixel on bottom (143 up to 210)
-    #   last col    = entire right side (all LEDs 0-35)
-    # direction="ccw" reverses: right→left
+    # Columnar left-to-right wipe across the physical rectangle.
+    # skew > 0: top edge leads, bottom trails — creates a diagonal sweep.
+    # direction="ccw" reverses to right→left.
     now   = ticks_ms()
     speed = p.get("speed_ms", 5)
     if ticks_diff(now, s["last_ms"]) < speed:
@@ -344,34 +342,45 @@ def _tick_wipe(p, s):
     s["last_ms"] = now
     end_color = tuple(p.get("end_color", list(OFF)))
     ccw       = p.get("direction", "cw") == "ccw"
+    skew      = p.get("skew", 0)   # bottom trails top by this many columns
     rs, re = SEGMENTS["right"]   # 0-35
     ts, te = SEGMENTS["top"]     # 36-106  (te=106=top-left)
     ls, le = SEGMENTS["left"]    # 107-142
     bs, be = SEGMENTS["bottom"]  # 143-211 (bs=143=bottom-left)
-    # top has 71 px (36-106), bottom has 69 px (143-211)
-    # interior columns = min of top/bottom span - 1 each side
-    top_span = te - ts       # 70  (indices 36..106)
-    bot_span = be - bs       # 68  (indices 143..211)
+    top_span = te - ts      # 70
+    bot_span = be - bs      # 68
     n_cols   = min(top_span, bot_span)  # 68 interior columns
+    # total sweep ticks = n_cols + 2 sides + skew (extra ticks for bottom to catch up)
+    total_cols = n_cols + 2 + skew
     col = s.get("col", 0)
-    # total columns: 1 (left side) + n_cols (interior) + 1 (right side)
-    total_cols = n_cols + 2
-    if ccw:
-        col_idx = total_cols - 1 - col
-    else:
-        col_idx = col
-    if col_idx == 0:
-        # Left side — wipe entire left segment
-        _fill(end_color, ls, le)
-    elif col_idx == total_cols - 1:
-        # Right side — wipe entire right segment
-        _fill(end_color, rs, re)
-    else:
-        # Interior — one pixel on top (top-left to top-right) and one on bottom
-        top_pixel = te - (col_idx - 1)        # 106, 105, 104 ... moving rightward
-        bot_pixel = bs + (col_idx - 1)        # 143, 144, 145 ... moving rightward
-        _set(top_pixel, end_color)
-        _set(bot_pixel, end_color)
+    front = total_cols - 1 - col if ccw else col  # leading edge position
+
+    def _wipe_col(ci):
+        if ci < 0 or ci >= total_cols:
+            return
+        if ci == 0:
+            _fill(end_color, ls, le)
+        elif ci == total_cols - 1:
+            _fill(end_color, rs, re)
+        elif 1 <= ci <= n_cols:
+            top_pixel = te - (ci - 1)
+            _set(top_pixel, end_color)
+
+    def _wipe_bot(ci):
+        # Bottom column index offset by skew
+        bi = ci - skew
+        if bi < 0 or bi >= total_cols:
+            return
+        if bi == 0:
+            pass  # left side already handled by top pass
+        elif bi == total_cols - 1:
+            pass  # right side already handled by top pass
+        elif 1 <= bi <= n_cols:
+            bot_pixel = bs + (bi - 1)
+            _set(bot_pixel, end_color)
+
+    _wipe_col(front)
+    _wipe_bot(front)
     _show()
     col += 1
     if col >= total_cols:
