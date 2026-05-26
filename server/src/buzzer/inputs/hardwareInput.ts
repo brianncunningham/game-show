@@ -90,14 +90,12 @@ export const initHardwareInput = async (): Promise<void> => {
   // Expose a function to send state events down to the Pico
   judgeController.onEvent((event) => {
     if (port.isOpen) {
-      // Replace eligibleControllers with failedControllers (ineligible) to keep serial short
+      // Strip eligibleControllers (too long) and inject penalizedControllerIds instead
       let msg: typeof event & { teamColor?: number[] } = event;
       if (event.type === 'WINDOW_STATE' && event.payload && 'eligibleControllers' in event.payload) {
-        const eligible = (event.payload as { eligibleControllers?: string[] }).eligibleControllers ?? [];
-        const ALL_CONTROLLERS = Array.from({ length: 20 }, (_, i) => String(i + 1));
-        const failed = ALL_CONTROLLERS.filter(c => !eligible.includes(c));
-        const { eligibleControllers: _, ...rest } = event.payload;
-        msg = { ...event, payload: { ...rest, failedControllers: failed } } as typeof msg;
+        const penalized = gameShowStore.getState().roundState.penalizedControllerIds ?? [];
+        const { eligibleControllers: _, ...rest } = event.payload as unknown as Record<string, unknown>;
+        msg = { ...event, payload: { ...rest, failedControllers: penalized } } as unknown as typeof msg;
       }
       // Inject teamColor for BUZZ_ACCEPTED so Pico can light team color
       if (event.type === 'BUZZ_ACCEPTED') {
