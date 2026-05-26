@@ -173,7 +173,7 @@ router.post('/sudden-death', (_req, res) => {
 router.post('/first-pick/random', (_req, res) => {
   const state = gameShowStore.randomFirstPick();
   const color = teamColor(state.firstPickTeamId);
-  piLed({ effect: 'spin', colors: ALL_TEAM_COLORS, settle_colors: [color], duration_ms: 4000 });
+  piLed({ effect: 'spin', colors: ALL_TEAM_COLORS, settle_colors: [color], duration_ms: 5500 });
   res.json(state);
 });
 
