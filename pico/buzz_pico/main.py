@@ -609,6 +609,7 @@ def usb_readline():
 def handle_event(obj):
     # Judge protocol uses "type" + nested "payload"; LED commands use flat "event"
     event = obj.get("event") or obj.get("type", "")
+    print("EVT:{} eff:{} hold:{}".format(event, _effect_name, ticks_diff(ticks_ms(), _hold_idle_until)))
     payload = obj.get("payload", {}) or {}
     # Merge top-level and payload so callers can use obj for both formats
     merged = dict(payload)
