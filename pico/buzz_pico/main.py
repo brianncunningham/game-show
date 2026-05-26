@@ -438,18 +438,18 @@ def _tick_spin(p, s):
         _fill(tuple(settle[idx]))
         _show()
     else:
-        # Settled: divide strip evenly among settle colors
+        # Settled: paint each physical side a settle color
+        # Uses segment order: right, top, left, bottom
         if not s.get("settled"):
             s["settled"] = True
-            count  = SEGMENTS["all"][1] - SEGMENTS["all"][0] + 1 if "all" in SEGMENTS else NUM_LEDS
-            start  = SEGMENTS["all"][0] if "all" in SEGMENTS else 0
-            n      = len(settle)
-            chunk  = count // n
-            _fill((0,0,0))
-            for ci, col in enumerate(settle):
-                s2 = start + ci * chunk
-                e2 = s2 + chunk - 1 if ci < n - 1 else start + count - 1
-                _fill(tuple(col), s2, e2)
+            side_order = ["right", "top", "left", "bottom"]
+            _fill((0, 0, 0))
+            n = len(settle)
+            for ci, seg_name in enumerate(side_order):
+                col = settle[ci % n]
+                if seg_name in SEGMENTS:
+                    s2, e2 = SEGMENTS[seg_name]
+                    _fill(tuple(col), s2, e2)
             _show()
 
 # ---------------------------------------------------------------------------
