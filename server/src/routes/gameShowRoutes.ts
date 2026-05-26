@@ -8,11 +8,12 @@ import { sendToPico } from '../buzzer/inputs/hardwareInput.js';
 const router = Router();
 
 // Team index → LED color (team-a=0, team-b=1, team-c=2, team-d=3)
+// Must match TEAM_LED_COLORS in hardwareInput.ts and screen TEAM_ACCENTS
 const TEAM_COLORS: Record<string, number[]> = {
-  'team-a': [0,   255, 100],  // Cyan
-  'team-b': [255, 60,  0  ],  // Orange
-  'team-c': [80,  0,   255],  // Purple
-  'team-d': [255, 0,   40 ],  // Pink
+  'team-a': [0,   230, 255],  // Cyan   #00e6ff  (screen: #56d7ff)
+  'team-b': [255, 158,  61],  // Orange #ff9e3d
+  'team-c': [200, 140, 255],  // Purple #c88cff
+  'team-d': [ 80, 255, 160],  // Green  #50ffa0
 };
 const ALL_TEAM_COLORS = Object.values(TEAM_COLORS);
 
@@ -100,7 +101,10 @@ router.delete('/penalized-controller/:controllerId', (req, res) => {
 });
 
 router.post('/answer/correct', (_req, res) => {
-  res.json(gameShowStore.markCorrect());
+  const state = gameShowStore.markCorrect();
+  const color = teamColor(state.roundState.buzzWinnerTeamId);
+  piLed({ effect: 'flash', color: [0, 255, 60], flashes: 3, on_ms: 150, off_ms: 80 });
+  res.json(state);
 });
 
 router.post('/answer/artist-bonus', (_req, res) => {
@@ -108,7 +112,9 @@ router.post('/answer/artist-bonus', (_req, res) => {
 });
 
 router.post('/answer/wrong', (_req, res) => {
-  res.json(gameShowStore.markWrong());
+  const state = gameShowStore.markWrong();
+  piLed({ effect: 'flash', color: [255, 20, 0], flashes: 4, on_ms: 120, off_ms: 80 });
+  res.json(state);
 });
 
 router.post('/steal/arm', (_req, res) => {

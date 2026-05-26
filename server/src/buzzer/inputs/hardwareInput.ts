@@ -16,6 +16,15 @@
  */
 
 import { judgeController } from '../judgeController.js';
+import { gameShowStore } from '../../services/gameShowStore.js';
+
+// Must match TEAM_COLORS in gameShowRoutes.ts and screen TEAM_ACCENTS
+const TEAM_LED_COLORS: Record<string, number[]> = {
+  'team-a': [0,   230, 255],  // Cyan   #00e6ff
+  'team-b': [255, 158,  61],  // Orange #ff9e3d
+  'team-c': [200, 140, 255],  // Purple #c88cff
+  'team-d': [ 80, 255, 160],  // Green  #50ffa0
+};
 
 const ENABLED = process.env['HARDWARE_INPUT'] === '1';
 const PICO_PORT = process.env['PICO_PORT'] ?? '/dev/ttyACM0';
@@ -82,13 +91,23 @@ export const initHardwareInput = async (): Promise<void> => {
   judgeController.onEvent((event) => {
     if (port.isOpen) {
       // Replace eligibleControllers with failedControllers (ineligible) to keep serial short
-      let msg = event;
+      let msg: typeof event & { teamColor?: number[] } = event;
       if (event.type === 'WINDOW_STATE' && event.payload && 'eligibleControllers' in event.payload) {
         const eligible = (event.payload as { eligibleControllers?: string[] }).eligibleControllers ?? [];
         const ALL_CONTROLLERS = Array.from({ length: 20 }, (_, i) => String(i + 1));
         const failed = ALL_CONTROLLERS.filter(c => !eligible.includes(c));
         const { eligibleControllers: _, ...rest } = event.payload;
-        msg = { ...event, payload: { ...rest, failedControllers: failed } } as typeof event;
+        msg = { ...event, payload: { ...rest, failedControllers: failed } } as typeof msg;
+      }
+      // Inject teamColor for BUZZ_ACCEPTED so Pico can light team color
+      if (event.type === 'BUZZ_ACCEPTED') {
+        const controllerId = (event.payload as { controllerId?: string }).controllerId;
+        const state = gameShowStore.getState();
+        const assignment = state.controllerAssignments.find(a => a.controllerId === controllerId);
+        if (assignment) {
+          const color = TEAM_LED_COLORS[assignment.teamId];
+          if (color) msg = { ...msg, teamColor: color };
+        }
       }
       port.write(JSON.stringify(msg) + '\n');
     }

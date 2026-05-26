@@ -453,6 +453,44 @@ def _tick_spin(p, s):
             _show()
 
 # ---------------------------------------------------------------------------
+# Tick-based effect: flash (non-blocking)
+# params: color, flashes, on_ms, off_ms
+# ---------------------------------------------------------------------------
+
+def _tick_flash(p, s):
+    now     = ticks_ms()
+    flashes = p.get("flashes", 3)
+    on_ms   = p.get("on_ms", 100)
+    off_ms  = p.get("off_ms", 80)
+    color   = tuple(p.get("color", WHITE))
+    phase   = s.get("phase", "on")
+    done    = s.get("flash_count", 0)
+
+    if done >= flashes:
+        _fill(OFF); _show()
+        _effect_stop()
+        return
+
+    elapsed = ticks_diff(now, s["last_ms"])
+    if phase == "on":
+        if s.get("needs_draw", True):
+            _fill(color); _show()
+            s["needs_draw"] = False
+        if elapsed >= on_ms:
+            s["phase"]      = "off"
+            s["last_ms"]    = now
+            s["needs_draw"] = True
+    else:
+        if s.get("needs_draw", True):
+            _fill(OFF); _show()
+            s["needs_draw"] = False
+        if elapsed >= off_ms:
+            s["phase"]       = "on"
+            s["last_ms"]     = now
+            s["flash_count"] = done + 1
+            s["needs_draw"]  = True
+
+# ---------------------------------------------------------------------------
 # Effect tick dispatcher
 # ---------------------------------------------------------------------------
 
@@ -464,6 +502,7 @@ _TICKERS = {
     "rainbow": _tick_rainbow,
     "clock":   _tick_clock,
     "spin":    _tick_spin,
+    "flash":   _tick_flash,
 }
 
 def effect_tick():
