@@ -549,6 +549,12 @@ def _game_color(obj):
     raw = obj.get("teamColor")
     return tuple(raw) if raw else WHITE
 
+_hold_idle_until = 0  # ticks_ms value — suppress IDLE transitions until this time
+
+def _hold_idle(ms=8000):
+    global _hold_idle_until
+    _hold_idle_until = ticks_ms() + ms
+
 def game_idle():
     _effect_start("pulse", {"color": list(WHITE), "bpm": 20, "min_bright": 0.02, "max_bright": 0.3})
 
@@ -613,21 +619,27 @@ def handle_event(obj):
         state = merged.get("windowState", payload.get("windowState", ""))
         if state == "ARMED":
             game_armed()
-        elif state in ("IDLE",):
-            game_idle()
-        elif state == "LOCKED":
-            pass  # hold current effect until BUZZ_ACCEPTED
+        elif state == "IDLE":
+            if ticks_diff(ticks_ms(), _hold_idle_until) >= 0:
+                game_idle()  # only go idle if no game effect is holding
+        # LOCKED: hold current effect — piLed sends BUZZ_ACCEPTED flash via LED_EFFECT
 
+    # BUZZ_ACCEPTED / CORRECT / WRONG / STEAL / RESET handled via piLed HTTP → LED_EFFECT
+    # Serial path is fallback only (no JUDGE_URL)
     elif event == "BUZZ_ACCEPTED":
+        _hold_idle(8000)
         game_buzz(color)
 
     elif event == "CORRECT":
+        _hold_idle(4000)
         game_correct(color)
 
     elif event == "WRONG":
+        _hold_idle(4000)
         game_wrong()
 
     elif event == "STEAL":
+        _hold_idle(8000)
         game_steal(color)
 
     elif event == "RESET":
@@ -649,6 +661,7 @@ def handle_event(obj):
             _effect_stop()
             _fill(OFF); _show()
         elif effect in _TICKERS:
+            _hold_idle(10000)  # suppress serial IDLE for 10s after any piLed command
             params = {k: v for k, v in merged.items() if k not in ("event", "type")}
             _effect_start(effect, params)
 
