@@ -620,31 +620,29 @@ def handle_event(obj):
         if state == "ARMED":
             game_armed()
         elif state == "IDLE":
-            # Only go idle if no piLed effect is holding (piLed is authority for game states)
+            # Only go idle if hold has expired AND no active game effect
+            # piLed is the authority — serial IDLE must not override active effects
             now = ticks_ms()
-            hold_expired = ticks_diff(now, _hold_idle_until) >= 0
-            no_effect = _effect_name in (None, "pulse")
-            if hold_expired and no_effect:
+            hold_active = ticks_diff(now, _hold_idle_until) < 0
+            effect_active = _effect_name not in (None, "pulse")
+            if not hold_active and not effect_active:
                 game_idle()
-        # LOCKED: hold current effect — piLed sends BUZZ_ACCEPTED flash via LED_EFFECT
+        elif state == "LOCKED":
+            _hold_idle(15000)  # hold for 15s — piLed will deliver the actual effect shortly after
 
     # BUZZ_ACCEPTED / CORRECT / WRONG / STEAL / RESET handled via piLed HTTP → LED_EFFECT
     # Serial path is fallback only (no JUDGE_URL)
     elif event == "BUZZ_ACCEPTED":
-        _hold_idle(8000)
-        game_buzz(color)
+        _hold_idle(15000)  # piLed HTTP will deliver actual flash+color shortly after
 
     elif event == "CORRECT":
-        _hold_idle(4000)
-        game_correct(color)
+        _hold_idle(30000)  # hold until song select / round reset clears it via piLed
 
     elif event == "WRONG":
-        _hold_idle(4000)
-        game_wrong()
+        _hold_idle(15000)
 
     elif event == "STEAL":
-        _hold_idle(8000)
-        game_steal(color)
+        _hold_idle(30000)  # steal window open — piLed handles effect
 
     elif event == "RESET":
         game_reset()
