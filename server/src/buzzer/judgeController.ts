@@ -166,10 +166,18 @@ export class JudgeController {
     // Window not yet armed.
     if (win.state === 'WAITING') {
       if (win.earlyBuzzPenalty) {
+        // Lock this controller out for the rest of this window
+        if (!win.eligibleControllers.includes(controllerId)) {
+          // Already locked out — just reject silently
+          this.reject(controllerId, win.windowId, 'INELIGIBLE');
+          return;
+        }
+        win.eligibleControllers = win.eligibleControllers.filter(c => c !== controllerId);
         this.emit(makeBuzzerMessage<'BUZZ_EARLY', BuzzEarlyPayload>(
           'BUZZ_EARLY',
           { windowId: win.windowId, controllerId },
         ));
+        this.emitWindowState();  // re-broadcast updated eligibleControllers
       } else {
         this.reject(controllerId, win.windowId, 'NOT_ARMED');
       }

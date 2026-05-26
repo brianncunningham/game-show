@@ -93,12 +93,10 @@ export const initHardwareInput = async (): Promise<void> => {
       // Strip eligibleControllers (too long) and inject penalizedControllerIds instead
       let msg: typeof event & { teamColor?: number[] } = event;
       if (event.type === 'WINDOW_STATE' && event.payload && 'eligibleControllers' in event.payload) {
-        const state = gameShowStore.getState();
-        const attemptedTeamIds = state.roundState.attemptedTeamIds ?? [];
-        // Controllers whose team has already attempted (wrong answer) are locked out
-        const failed = state.controllerAssignments
-          .filter(a => attemptedTeamIds.includes(a.teamId))
-          .map(a => a.controllerId);
+        // eligibleControllers is the source of truth — judgeController removes early buzzers from it
+        const eligible = (event.payload as { eligibleControllers?: string[] }).eligibleControllers ?? [];
+        const allControllers = Array.from({ length: 15 }, (_, i) => String(i + 1));
+        const failed = allControllers.filter(c => !eligible.includes(c));
         const { eligibleControllers: _, ...rest } = event.payload as unknown as Record<string, unknown>;
         msg = { ...event, payload: { ...rest, failedControllers: failed } } as unknown as typeof msg;
       }
