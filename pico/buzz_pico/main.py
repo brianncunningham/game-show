@@ -494,8 +494,12 @@ def _tick_flash(p, s):
     done    = s.get("flash_count", 0)
 
     if done >= flashes:
-        _fill(OFF); _show()
-        _effect_stop()
+        end_color = p.get("end_color")
+        if end_color:
+            _effect_start("solid", {"color": list(end_color)})
+        else:
+            _fill(OFF); _show()
+            _effect_stop()
         return
 
     elapsed = ticks_diff(now, s["last_ms"])
@@ -552,32 +556,18 @@ def game_armed():
     _effect_start("pulse", {"color": [0, 60, 180], "bpm": 60, "min_bright": 0.1, "max_bright": 0.8})
 
 def game_buzz(color):
-    _effect_stop()
-    effect_flash(color, count=3, on_ms=80, off_ms=60)
-    _effect_start("solid", {"color": list(color)})
+    _effect_start("flash", {"color": list(color), "flashes": 3, "on_ms": 80, "off_ms": 60, "end_color": list(color)})
 
 def game_correct(color):
-    _effect_stop()
-    effect_wipe(GREEN, speed_ms=1)
-    sleep_ms(400)
-    _fill(color); _show(); sleep_ms(600)
-    _fill(OFF);   _show()
-    # stay dark — host will trigger next state (show-board, next round etc)
+    _effect_start("flash", {"color": list(GREEN), "flashes": 4, "on_ms": 120, "off_ms": 60})
 
 def game_wrong():
-    _effect_stop()
-    effect_flash(RED, count=4, on_ms=120, off_ms=80)
-    # stay dark — host will trigger steal window or next state
+    _effect_start("flash", {"color": list(RED), "flashes": 4, "on_ms": 120, "off_ms": 80})
 
 def game_steal(color):
-    _effect_stop()
-    effect_wipe(ORANGE, speed_ms=1)
-    sleep_ms(200)
-    _effect_start("marquee", {"color": list(color), "bulb_size": 5, "gap_size": 3, "speed_ms": 25})
+    _effect_start("flash", {"color": list(ORANGE), "flashes": 3, "on_ms": 100, "off_ms": 60, "end_color": list(color)})
 
 def game_reset():
-    _effect_stop()
-    effect_reset()
     game_idle()
 
 # ---------------------------------------------------------------------------
