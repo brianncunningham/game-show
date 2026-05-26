@@ -373,8 +373,8 @@ export const ShowBoard = ({ state }: { state: GameShowState }) => {
 
           <Grid container spacing={2} alignItems="stretch" sx={{ width: '100%', m: 0 }}>
             {state.teams.map((team, index) => {
-              const TEAM_ACCENTS = ['#00ff64', '#ff3c00', '#5000ff', '#ff0028'];
-              const TEAM_GLOWS = ['rgba(0,255,100,0.45)', 'rgba(255,60,0,0.45)', 'rgba(80,0,255,0.45)', 'rgba(255,0,40,0.45)'];
+              const TEAM_ACCENTS = ['#00e5ff', '#ff6a00', '#9d00ff', '#ff0080'];
+              const TEAM_GLOWS = ['rgba(0,229,255,0.45)', 'rgba(255,106,0,0.45)', 'rgba(157,0,255,0.45)', 'rgba(255,0,128,0.45)'];
               const accent = TEAM_ACCENTS[index % TEAM_ACCENTS.length];
               const glow = TEAM_GLOWS[index % TEAM_GLOWS.length];
               const isEliminated = team.eliminated ?? false;
@@ -527,7 +527,7 @@ export const ShowBoard = ({ state }: { state: GameShowState }) => {
               : state.controllerAssignments.find(a => a.controllerId === state.roundState.buzzWinnerControllerId);
             const buzzerPlayer = buzzerAssignment?.playerName ?? null;
             const buzzerTeamIdx = state.teams.findIndex(t => t.id === activeTeamId);
-            const TEAM_ACCENTS = ['#00ff64', '#ff3c00', '#5000ff', '#ff0028'];
+            const TEAM_ACCENTS = ['#00e5ff', '#ff6a00', '#9d00ff', '#ff0080'];
             const teamColor = TEAM_ACCENTS[buzzerTeamIdx % TEAM_ACCENTS.length];
             if (!buzzerTeam) return null;
             return (

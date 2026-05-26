@@ -438,17 +438,42 @@ def _tick_spin(p, s):
         _fill(tuple(settle[idx]))
         _show()
     else:
-        # Settled: paint each physical side a settle color
+        # Settled: paint sides based on team count
         if not s.get("settled"):
             s["settled"] = True
-            side_order = ["right", "top", "left", "bottom"]
-            _fill((0, 0, 0))
             n = len(settle)
-            for ci, seg_name in enumerate(side_order):
-                col = settle[ci % n]
-                if seg_name in SEGMENTS:
-                    s2, e2 = SEGMENTS[seg_name]
-                    _fill(tuple(col), s2, e2)
+            _fill((0, 0, 0))
+            if n >= 4:
+                # 4 teams: one color per side
+                for ci, seg_name in enumerate(["right", "top", "left", "bottom"]):
+                    if seg_name in SEGMENTS:
+                        s2, e2 = SEGMENTS[seg_name]
+                        _fill(tuple(settle[ci % n]), s2, e2)
+            elif n == 3:
+                # 3 teams: right/top/left one each, bottom off
+                for ci, seg_name in enumerate(["right", "top", "left"]):
+                    if seg_name in SEGMENTS:
+                        s2, e2 = SEGMENTS[seg_name]
+                        _fill(tuple(settle[ci]), s2, e2)
+            elif n == 2:
+                # 2 teams: team0=right + left half of top + left half of bottom
+                #          team1=left  + right half of top + right half of bottom
+                if "right" in SEGMENTS:
+                    _fill(tuple(settle[0]), *SEGMENTS["right"])
+                if "left" in SEGMENTS:
+                    _fill(tuple(settle[1]), *SEGMENTS["left"])
+                if "top" in SEGMENTS:
+                    ts, te = SEGMENTS["top"]
+                    mid = (ts + te) // 2
+                    _fill(tuple(settle[0]), ts, mid)
+                    _fill(tuple(settle[1]), mid + 1, te)
+                if "bottom" in SEGMENTS:
+                    bs, be = SEGMENTS["bottom"]
+                    mid = (bs + be) // 2
+                    _fill(tuple(settle[0]), bs, mid)
+                    _fill(tuple(settle[1]), mid + 1, be)
+            elif n == 1:
+                _fill(tuple(settle[0]), *SEGMENTS.get("all", (0, NUM_LEDS - 1)))
             _show()
 
 # ---------------------------------------------------------------------------
