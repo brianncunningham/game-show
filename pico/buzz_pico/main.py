@@ -629,6 +629,7 @@ def handle_event(obj):
         state = merged.get("windowState", payload.get("windowState", ""))
         failed = merged.get("failedControllers", [])
         _failed_controllers = set(str(c) for c in failed)
+        print("FAILED:", _failed_controllers, "STATE:", state)
         if state == "ARMED":
             game_armed()
         elif state == "IDLE":
