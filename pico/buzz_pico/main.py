@@ -285,13 +285,15 @@ def _tick_sparkle(p, s):
         return
     s["last_ms"] = now
     color   = tuple(p.get("color", WHITE))
+    color2  = p.get("color2")
     density = p.get("density", 0.05)
     start, end = _seg_range(p.get("segment", "all"))
     _fill(OFF, start, end)
     count = end - start + 1
     for i in range(count):
         if urandom.random() < density:
-            _set(start + i, color)
+            c = tuple(color2) if color2 and urandom.random() < 0.5 else color
+            _set(start + i, c)
     _show()
 
 # ---------------------------------------------------------------------------
@@ -330,23 +332,31 @@ def _tick_rainbow(p, s):
 # ---------------------------------------------------------------------------
 
 def _tick_wipe(p, s):
+    # Wipe sweeps away current LEDs to reveal end_color (or dark) from one end to the other
+    # On first tick: fill the strip with `color`, then erase pixel-by-pixel to end_color/dark
     now   = ticks_ms()
     speed = p.get("speed_ms", 3)
+    start, end = _seg_range(p.get("segment", "all"))
+    total  = end - start + 1
+    if not s.get("init"):
+        s["init"] = True
+        color = tuple(p.get("color", list(WHITE)))
+        _fill(color, start, end); _show()
+        s["pos"] = 0
+        s["last_ms"] = now
+        return
     if ticks_diff(now, s["last_ms"]) < speed:
         return
     s["last_ms"] = now
-    color  = tuple(p.get("color", list(WHITE)))
-    start, end = _seg_range(p.get("segment", "all"))
-    total  = end - start + 1
-    pos    = s.get("pos", 0)
-    ccw    = p.get("direction", "cw") == "ccw"
-    idx    = (end - pos) if ccw else (start + pos)
-    _set(idx, color); _show()
+    pos       = s.get("pos", 0)
+    end_color = tuple(p.get("end_color", list(OFF)))
+    ccw       = p.get("direction", "cw") == "ccw"
+    idx       = (end - pos) if ccw else (start + pos)
+    _set(idx, end_color); _show()
     pos += 1
     if pos >= total:
-        end_color = p.get("end_color")
-        if end_color:
-            _effect_start("solid", {"color": list(end_color)})
+        if p.get("end_color"):
+            _effect_start("solid", {"color": list(p["end_color"])})
         else:
             _effect_stop(); _fill(OFF); _show()
         return

@@ -239,8 +239,9 @@ router.post('/game/end', (req, res) => {
     return;
   }
   const state = gameShowStore.endGame(winnerTeamId);
-  // Golden sparkle celebration for game winner
-  piLed({ effect: 'sparkle', color: [255, 180, 0], density: 0.2, speed_ms: 30 });
+  const winColor = teamColor(winnerTeamId);
+  // Gold + winner team color sparkle celebration
+  piLed({ effect: 'sparkle', color: [255, 180, 0], color2: winColor, density: 0.2, speed_ms: 30 });
   res.json(state);
 });
 
