@@ -56,6 +56,28 @@ cd server && npm run build
 sudo systemctl restart game-show
 ```
 
+## 5. Install mpremote for flashing the Pico from the Pi
+
+```bash
+pip3 install mpremote --break-system-packages
+```
+
+Verify: `python3 -m mpremote --version`
+
+## 6. Flash updated Pico firmware from the Pi
+
+After any change to `pico/buzz_pico/main.py`:
+
+```bash
+cd ~/game-show && git pull
+sudo systemctl stop game-show
+python3 -m mpremote connect /dev/ttyACM0 fs cp pico/buzz_pico/main.py :main.py
+python3 -m mpremote connect /dev/ttyACM0 reset
+sudo systemctl start game-show
+```
+
+The server must be stopped before flashing — both compete for `/dev/ttyACM0`.
+
 ## Notes
 - Buzz Pico must be plugged into the Pi's USB port before or after boot — the server will retry the serial port every 3s on disconnect
 - If the Pico is on a different port than `/dev/ttyACM0`, set `PICO_PORT=/dev/ttyACM1` in the service Environment lines
