@@ -332,9 +332,25 @@ def _tick_rainbow(p, s):
 # ---------------------------------------------------------------------------
 
 def _tick_wipe(p, s):
-    # Diagonal left-to-right wipe. Builds two ordered pixel lists — one for the
-    # top edge (left-side top→bottom, top-row left→right, right-side top→bottom)
-    # and one for the bottom edge (same columns). skew offsets bottom behind top.
+    # Diagonal left-to-right wipe.
+    # Columns are vertical slices of the rectangle, left=0 to right=N.
+    # Each column has one top-edge pixel and one bottom-edge pixel.
+    # The rectangle (viewed from front, LED winding):
+    #   Left side:   LEDs 107-142, winds top-left(107) → bottom-left(142)
+    #   Top row:     LEDs 36-106,  winds top-right(36) → top-left(106)  [right→left physically]
+    #   Right side:  LEDs 0-35,    winds bottom-right(0) → top-right(35)
+    #   Bottom row:  LEDs 143-211, winds bottom-left(143) → bottom-right(211)
+    #
+    # Column 0 = leftmost. Top-edge col 0 = LED 107 (top-left corner).
+    # Column N = rightmost. Top-edge col N = LED 35 (top-right corner).
+    #
+    # Top-edge sequence left→right:
+    #   left side top pixel = 107, then top row from left: 106,105,...36, then right side top = 35
+    # Bottom-edge sequence left→right:
+    #   left side bottom pixel = 142, then bottom row from left: 143,144,...211, then right side bottom = 0
+    #
+    # Both sequences have equal length = 1 + 71 + 1 = 73 columns (matched by index).
+
     now   = ticks_ms()
     speed = p.get("speed_ms", 5)
     if ticks_diff(now, s["last_ms"]) < speed:
@@ -343,58 +359,57 @@ def _tick_wipe(p, s):
     end_color = tuple(p.get("end_color", list(OFF)))
     skew      = p.get("skew", 0)
     ccw       = p.get("direction", "cw") == "ccw"
-    rs, re = SEGMENTS["right"]   # 0-35   bottom-right→top-right
-    ts, te = SEGMENTS["top"]     # 36-106 top-right→top-left
-    ls, le = SEGMENTS["left"]    # 107-142 top-left→bottom-left
-    bs, be = SEGMENTS["bottom"]  # 143-211 bottom-left→bottom-right
 
-    # Build column sequences left→right:
-    # top_seq: left-side pixels (le→ls, i.e. top-left→bottom-left reversed = top first),
-    #          then top row right→left (te→ts+1),
-    #          then right-side pixels (re→rs, top-right→bottom-right reversed)
-    # bot_seq: left-side pixels (ls→le, bottom-left first),
-    #          then bottom row left→right (bs→be),
-    #          then right-side pixels (rs→re, bottom-right last)
-    left_len  = le - ls + 1   # 36
-    top_len   = te - ts + 1   # 71
-    right_len = re - rs + 1   # 36
-    bot_len   = be - bs + 1   # 69
-    n_cols = left_len + top_len + right_len  # 143 columns total
+    # top_cols[i] = LED index of top-edge pixel at column i (left→right)
+    # col 0: top-left corner = LED 107
+    # cols 1-71: top row from left→right = LEDs 106,105,...36
+    # col 72: top-right corner = LED 35
+    # bottom_cols[i] = LED index of bottom-edge pixel at column i
+    # col 0: bottom-left corner = LED 142
+    # cols 1-71: bottom row left→right = LEDs 143,144,...213 (capped at 211)
+    # col 72: bottom-right corner = LED 0
+    # Column map: 143 columns total (matches left 36 + top/bot interior 71 + right 36)
+    # top-edge left→right: left side top→bot (107..142), top row left→right (106..36), right side top→bot (35..0)
+    # bot-edge left→right: left side top→bot (107..142) mirrored, bot row (143..211), right side mirrored
+    # Each column i has:
+    #   top_led(i): traces top perimeter left→right
+    #   bot_led(i): traces bottom perimeter left→right
+    LEFT  = 36   # pixels on left side
+    MID   = 71   # pixels on top/bottom interior
+    RIGHT = 36   # pixels on right side
+    n_cols = LEFT + MID + RIGHT  # 143
+
+    def top_led(i):
+        if i < LEFT:
+            return 107 + i          # left side: 107(top-left)→142(bot-left)
+        elif i < LEFT + MID:
+            return 106 - (i - LEFT) # top row left→right: 106→36
+        else:
+            return 35 - (i - LEFT - MID)  # right side: 35(top-right)→0(bot-right)
+
+    def bot_led(i):
+        if i < LEFT:
+            return 107 + i              # left side: same pixels as top (vertical strip)
+        elif i < LEFT + MID:
+            return min(143 + (i - LEFT), 211)  # bottom row left→right: 143→211
+        else:
+            return i - LEFT - MID       # right side: 0(bot-right)→35(top-right)
 
     col = s.get("col", 0)
-    if ccw:
-        top_i = n_cols - 1 - col
-        bot_i = top_i + skew
-    else:
-        top_i = col
-        bot_i = col - skew
-
-    def _pixel_top(i):
-        # Left side: columns 0..left_len-1 → pixels le down to ls (top of left side first)
-        if i < 0 or i >= n_cols:
-            return
-        if i < left_len:
-            _set(le - i, end_color)
-        elif i < left_len + top_len:
-            _set(te - (i - left_len), end_color)
-        else:
-            _set(re - (i - left_len - top_len), end_color)
-
-    def _pixel_bot(i):
-        if i < 0 or i >= n_cols:
-            return
-        if i < left_len:
-            _set(ls + i, end_color)
-        elif i < left_len + bot_len:
-            _set(bs + (i - left_len), end_color)
-        else:
-            _set(rs + (i - left_len - bot_len), end_color)
-
-    _pixel_top(top_i)
-    _pixel_bot(bot_i)
-    _show()
-    col += 1
     total = n_cols + skew
+
+    top_i = (n_cols - 1 - col) if ccw else col
+    bot_i = top_i - skew if not ccw else top_i + skew
+
+    if 0 <= top_i < n_cols:
+        tl = top_led(top_i)
+        _set(tl, end_color)
+    if 0 <= bot_i < n_cols:
+        bl = bot_led(bot_i)
+        _set(bl, end_color)
+    _show()
+
+    col += 1
     if col >= total:
         if p.get("end_color"):
             _effect_start("solid", {"color": list(p["end_color"])})
