@@ -6,6 +6,8 @@ import MusicNoteIcon from '@mui/icons-material/MusicNote';
 import OndemandVideoIcon from '@mui/icons-material/OndemandVideo';
 import RadioIcon from '@mui/icons-material/Radio';
 import AlbumIcon from '@mui/icons-material/Album';
+import HeadphonesIcon from '@mui/icons-material/Headphones';
+import PianoIcon from '@mui/icons-material/Piano';
 import TheaterComedyIcon from '@mui/icons-material/TheaterComedy';
 import VolumeUpIcon from '@mui/icons-material/VolumeUp';
 import { Box, Grid, Stack, Typography } from '@mui/material';
@@ -399,7 +401,11 @@ export const ShowBoard = ({ state }: { state: GameShowState }) => {
                         ? <VolumeUpIcon sx={{ fontSize: 'clamp(44px, 5.5vw, 110px)' }} />
                         : index === 0
                           ? <RadioIcon sx={{ fontSize: 'clamp(40px, 5vw, 100px)' }} />
-                          : <AlbumIcon sx={{ fontSize: 'clamp(40px, 5vw, 100px)' }} />;
+                          : index === 1
+                            ? <AlbumIcon sx={{ fontSize: 'clamp(40px, 5vw, 100px)' }} />
+                            : index === 2
+                              ? <HeadphonesIcon sx={{ fontSize: 'clamp(40px, 5vw, 100px)' }} />
+                              : <PianoIcon sx={{ fontSize: 'clamp(40px, 5vw, 100px)' }} />;
 
               const gridCols = state.teams.length <= 2 ? 6 : state.teams.length === 3 ? 4 : 3;
               return (
@@ -645,11 +651,11 @@ export const ShowBoard = ({ state }: { state: GameShowState }) => {
                               +{floatingPoints?.value} PTS
                             </Box>
                           )}
-                          <Box sx={{ position: 'relative', color: isCorrectPhase && isActive ? '#7dff74' : songStyle.color, filter: `drop-shadow(0 0 14px ${songStyle.glow})`, '& svg': { fontSize: 'clamp(36px, 4vw, 80px) !important' } }}>
-                            {songStyle.icon}
-                            {isCorrectPhase && isActive && (
-                              <CheckCircleIcon sx={{ position: 'absolute', right: -18, top: -18, fontSize: 34, color: '#8eff65', filter: 'drop-shadow(0 0 12px rgba(125,255,116,0.9))' }} />
-                            )}
+                          <Box sx={{ color: isCorrectPhase && isActive ? '#7dff74' : songStyle.color, filter: `drop-shadow(0 0 14px ${songStyle.glow})`, '& svg': { fontSize: 'clamp(36px, 4vw, 80px) !important' } }}>
+                            {isCorrectPhase && isActive
+                              ? <CheckCircleIcon />
+                              : songStyle.icon
+                            }
                           </Box>
                           <Typography sx={{ color: isCorrectPhase && isActive ? '#9eff85' : songStyle.color, textAlign: 'center', fontWeight: 900, fontSize: 'clamp(1rem, 1.6vw, 2.6rem)', textTransform: 'uppercase', textShadow: `0 0 12px ${songStyle.glow}` }}>
                             Song {i + 1}
