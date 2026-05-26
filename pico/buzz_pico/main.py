@@ -419,14 +419,14 @@ def _tick_spin(p, s):
     frac     = min(elapsed / duration, 1.0)
 
     if frac < 0.75:
-        # Phase 1: rapid cycling through settle colors only (not all 4 if fewer teams)
+        # Phase 1: rapid cycling through colors (always all team colors for visual effect)
         speed = int(40 + frac * 200)  # 40ms → 190ms
         if ticks_diff(now, s["last_ms"]) < speed:
             return
         s["last_ms"] = now
-        idx = (s.get("color_idx", 0) + 1) % len(settle)
+        idx = (s.get("color_idx", 0) + 1) % len(colors)
         s["color_idx"] = idx
-        _fill(tuple(settle[idx]))
+        _fill(tuple(colors[idx]))
         _show()
     elif frac < 1.0:
         # Phase 2: slow flicker between settle colors
