@@ -2,8 +2,22 @@ import { Router } from 'express';
 import { gameShowStore } from '../services/gameShowStore.js';
 import { createSave, deleteSave, listSaves, loadSave } from '../services/gameSaveService.js';
 import { addKnownPlayers, deleteKnownPlayer, listKnownPlayers } from '../services/knownPlayersService.js';
+import { sendToPico } from '../buzzer/inputs/hardwareInput.js';
 
 const router = Router();
+
+// Team index → LED color (team-a=0, team-b=1, team-c=2, team-d=3)
+const TEAM_COLORS: Record<string, number[]> = {
+  'team-a': [0,   255, 100],  // Cyan
+  'team-b': [255, 60,  0  ],  // Orange
+  'team-c': [80,  0,   255],  // Purple
+  'team-d': [255, 0,   40 ],  // Pink
+};
+const ALL_TEAM_COLORS = Object.values(TEAM_COLORS);
+
+function teamColor(teamId: string | null | undefined): number[] {
+  return TEAM_COLORS[teamId ?? ''] ?? [255, 255, 255];
+}
 
 router.get('/state', (_req, res) => {
   res.json(gameShowStore.getState());
@@ -14,7 +28,9 @@ router.post('/start', (_req, res) => {
 });
 
 router.post('/players/random-assign', (_req, res) => {
-  res.json(gameShowStore.randomAssignPlayers());
+  const state = gameShowStore.randomAssignPlayers();
+  sendToPico({ event: 'LED_EFFECT', effect: 'spin', colors: ALL_TEAM_COLORS, settle_colors: ALL_TEAM_COLORS, duration_ms: 3000 });
+  res.json(state);
 });
 
 router.post('/reset', (_req, res) => {
@@ -117,7 +133,10 @@ router.post('/sudden-death', (_req, res) => {
 });
 
 router.post('/first-pick/random', (_req, res) => {
-  res.json(gameShowStore.randomFirstPick());
+  const state = gameShowStore.randomFirstPick();
+  const color = teamColor(state.firstPickTeamId);
+  sendToPico({ event: 'LED_EFFECT', effect: 'spin', colors: ALL_TEAM_COLORS, settle_colors: [color], duration_ms: 3000 });
+  res.json(state);
 });
 
 router.post('/first-pick/dismiss', (_req, res) => {
@@ -125,7 +144,9 @@ router.post('/first-pick/dismiss', (_req, res) => {
 });
 
 router.post('/show-board', (_req, res) => {
-  res.json(gameShowStore.showBoard());
+  const state = gameShowStore.showBoard();
+  sendToPico({ event: 'LED_EFFECT', effect: 'pulse', color: [255,255,255], bpm: 20, min_bright: 0.02, max_bright: 0.3 });
+  res.json(state);
 });
 
 router.post('/wand-test', (_req, res) => {
@@ -133,7 +154,9 @@ router.post('/wand-test', (_req, res) => {
 });
 
 router.post('/show-rules/on', (_req, res) => {
-  res.json(gameShowStore.toggleShowRules(true));
+  const state = gameShowStore.toggleShowRules(true);
+  sendToPico({ event: 'LED_EFFECT', effect: 'off' });
+  res.json(state);
 });
 
 router.post('/show-rules/off', (_req, res) => {
@@ -141,7 +164,9 @@ router.post('/show-rules/off', (_req, res) => {
 });
 
 router.post('/show-intro/on', (_req, res) => {
-  res.json(gameShowStore.toggleShowIntro(true));
+  const state = gameShowStore.toggleShowIntro(true);
+  sendToPico({ event: 'LED_EFFECT', effect: 'marquee', color: [255,200,0], color2: [0,180,255], bulb_size: 4, gap_size: 2, speed_ms: 25 });
+  res.json(state);
 });
 
 router.post('/show-intro/off', (_req, res) => {

@@ -404,6 +404,55 @@ def led_test_tick():
         _effect_params["color"] = list(_LED_TEST_COLORS[idx])
 
 # ---------------------------------------------------------------------------
+# Tick-based effect: spin (rapid color cycling → settle on final colors)
+# params: colors [[r,g,b],...], settle_colors [[r,g,b],...], duration_ms
+# Phase 1: rapid full-strip flashing through colors list
+# Phase 2: slow down and land on settle_colors (split evenly across strip)
+# ---------------------------------------------------------------------------
+
+def _tick_spin(p, s):
+    now      = ticks_ms()
+    duration = p.get("duration_ms", 3000)
+    elapsed  = ticks_diff(now, s["started_ms"])
+    colors   = p.get("colors", [[255,255,255]])
+    settle   = p.get("settle_colors", colors)
+    frac     = min(elapsed / duration, 1.0)
+
+    if frac < 0.75:
+        # Phase 1: rapid cycling — speed slows as frac increases
+        speed = int(40 + frac * 200)  # 40ms → 190ms
+        if ticks_diff(now, s["last_ms"]) < speed:
+            return
+        s["last_ms"] = now
+        idx = (s.get("color_idx", 0) + 1) % len(colors)
+        s["color_idx"] = idx
+        _fill(tuple(colors[idx]))
+        _show()
+    elif frac < 1.0:
+        # Phase 2: slow flicker between settle colors
+        if ticks_diff(now, s["last_ms"]) < 300:
+            return
+        s["last_ms"] = now
+        idx = (s.get("color_idx", 0) + 1) % len(settle)
+        s["color_idx"] = idx
+        _fill(tuple(settle[idx]))
+        _show()
+    else:
+        # Settled: divide strip evenly among settle colors
+        if not s.get("settled"):
+            s["settled"] = True
+            count  = SEGMENTS["all"][1] - SEGMENTS["all"][0] + 1 if "all" in SEGMENTS else NUM_LEDS
+            start  = SEGMENTS["all"][0] if "all" in SEGMENTS else 0
+            n      = len(settle)
+            chunk  = count // n
+            _fill((0,0,0))
+            for ci, col in enumerate(settle):
+                s2 = start + ci * chunk
+                e2 = s2 + chunk - 1 if ci < n - 1 else start + count - 1
+                _fill(tuple(col), s2, e2)
+            _show()
+
+# ---------------------------------------------------------------------------
 # Effect tick dispatcher
 # ---------------------------------------------------------------------------
 
@@ -414,6 +463,7 @@ _TICKERS = {
     "sparkle": _tick_sparkle,
     "rainbow": _tick_rainbow,
     "clock":   _tick_clock,
+    "spin":    _tick_spin,
 }
 
 def effect_tick():
@@ -469,6 +519,7 @@ def game_reset():
 # ---------------------------------------------------------------------------
 
 def clock_start(duration_ms, segment="top", mode="inward"):
+    _fill((0, 0, 0)); _show()  # clear full strip before clock
     _effect_start("clock", {"duration_ms": duration_ms, "segment": segment, "mode": mode})
 
 def clock_stop():
