@@ -332,58 +332,70 @@ def _tick_rainbow(p, s):
 # ---------------------------------------------------------------------------
 
 def _tick_wipe(p, s):
-    # Columnar left-to-right wipe across the physical rectangle.
-    # skew > 0: top edge leads, bottom trails — creates a diagonal sweep.
-    # direction="ccw" reverses to right→left.
+    # Diagonal left-to-right wipe. Builds two ordered pixel lists — one for the
+    # top edge (left-side top→bottom, top-row left→right, right-side top→bottom)
+    # and one for the bottom edge (same columns). skew offsets bottom behind top.
     now   = ticks_ms()
     speed = p.get("speed_ms", 5)
     if ticks_diff(now, s["last_ms"]) < speed:
         return
     s["last_ms"] = now
     end_color = tuple(p.get("end_color", list(OFF)))
+    skew      = p.get("skew", 0)
     ccw       = p.get("direction", "cw") == "ccw"
-    skew      = p.get("skew", 0)   # bottom trails top by this many columns
-    rs, re = SEGMENTS["right"]   # 0-35
-    ts, te = SEGMENTS["top"]     # 36-106  (te=106=top-left)
-    ls, le = SEGMENTS["left"]    # 107-142
-    bs, be = SEGMENTS["bottom"]  # 143-211 (bs=143=bottom-left)
-    top_span = te - ts      # 70
-    bot_span = be - bs      # 68
-    n_cols   = min(top_span, bot_span)  # 68 interior columns
-    # total sweep ticks = n_cols + 2 sides + skew (extra ticks for bottom to catch up)
-    total_cols = n_cols + 2 + skew
+    rs, re = SEGMENTS["right"]   # 0-35   bottom-right→top-right
+    ts, te = SEGMENTS["top"]     # 36-106 top-right→top-left
+    ls, le = SEGMENTS["left"]    # 107-142 top-left→bottom-left
+    bs, be = SEGMENTS["bottom"]  # 143-211 bottom-left→bottom-right
+
+    # Build column sequences left→right:
+    # top_seq: left-side pixels (le→ls, i.e. top-left→bottom-left reversed = top first),
+    #          then top row right→left (te→ts+1),
+    #          then right-side pixels (re→rs, top-right→bottom-right reversed)
+    # bot_seq: left-side pixels (ls→le, bottom-left first),
+    #          then bottom row left→right (bs→be),
+    #          then right-side pixels (rs→re, bottom-right last)
+    left_len  = le - ls + 1   # 36
+    top_len   = te - ts + 1   # 71
+    right_len = re - rs + 1   # 36
+    bot_len   = be - bs + 1   # 69
+    n_cols = left_len + top_len + right_len  # 143 columns total
+
     col = s.get("col", 0)
-    front = total_cols - 1 - col if ccw else col  # leading edge position
+    if ccw:
+        top_i = n_cols - 1 - col
+        bot_i = top_i + skew
+    else:
+        top_i = col
+        bot_i = col - skew
 
-    def _wipe_col(ci):
-        if ci < 0 or ci >= total_cols:
+    def _pixel_top(i):
+        # Left side: columns 0..left_len-1 → pixels le down to ls (top of left side first)
+        if i < 0 or i >= n_cols:
             return
-        if ci == 0:
-            _fill(end_color, ls, le)
-        elif ci == total_cols - 1:
-            _fill(end_color, rs, re)
-        elif 1 <= ci <= n_cols:
-            top_pixel = te - (ci - 1)
-            _set(top_pixel, end_color)
+        if i < left_len:
+            _set(le - i, end_color)
+        elif i < left_len + top_len:
+            _set(te - (i - left_len), end_color)
+        else:
+            _set(re - (i - left_len - top_len), end_color)
 
-    def _wipe_bot(ci):
-        # Bottom column index offset by skew
-        bi = ci - skew
-        if bi < 0 or bi >= total_cols:
+    def _pixel_bot(i):
+        if i < 0 or i >= n_cols:
             return
-        if bi == 0:
-            pass  # left side already handled by top pass
-        elif bi == total_cols - 1:
-            pass  # right side already handled by top pass
-        elif 1 <= bi <= n_cols:
-            bot_pixel = bs + (bi - 1)
-            _set(bot_pixel, end_color)
+        if i < left_len:
+            _set(ls + i, end_color)
+        elif i < left_len + bot_len:
+            _set(bs + (i - left_len), end_color)
+        else:
+            _set(rs + (i - left_len - bot_len), end_color)
 
-    _wipe_col(front)
-    _wipe_bot(front)
+    _pixel_top(top_i)
+    _pixel_bot(bot_i)
     _show()
     col += 1
-    if col >= total_cols:
+    total = n_cols + skew
+    if col >= total:
         if p.get("end_color"):
             _effect_start("solid", {"color": list(p["end_color"])})
         else:
