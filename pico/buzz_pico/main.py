@@ -332,35 +332,55 @@ def _tick_rainbow(p, s):
 # ---------------------------------------------------------------------------
 
 def _tick_wipe(p, s):
-    # Wipe sweeps away current LEDs to reveal end_color (or dark) from one end to the other
-    # On first tick: fill the strip with `color`, then erase pixel-by-pixel to end_color/dark
+    # Columnar left-to-right wipe across the physical rectangle:
+    #   col 0       = entire left side (all LEDs 107-142)
+    #   cols 1..N   = one pixel on top (106 down to 37) + one pixel on bottom (143 up to 210)
+    #   last col    = entire right side (all LEDs 0-35)
+    # direction="ccw" reverses: right→left
     now   = ticks_ms()
-    speed = p.get("speed_ms", 3)
-    start, end = _seg_range(p.get("segment", "all"))
-    total  = end - start + 1
-    if not s.get("init"):
-        s["init"] = True
-        color = tuple(p.get("color", list(WHITE)))
-        _fill(color, start, end); _show()
-        s["pos"] = 0
-        s["last_ms"] = now
-        return
+    speed = p.get("speed_ms", 5)
     if ticks_diff(now, s["last_ms"]) < speed:
         return
     s["last_ms"] = now
-    pos       = s.get("pos", 0)
     end_color = tuple(p.get("end_color", list(OFF)))
     ccw       = p.get("direction", "cw") == "ccw"
-    idx       = (end - pos) if ccw else (start + pos)
-    _set(idx, end_color); _show()
-    pos += 1
-    if pos >= total:
+    rs, re = SEGMENTS["right"]   # 0-35
+    ts, te = SEGMENTS["top"]     # 36-106  (te=106=top-left)
+    ls, le = SEGMENTS["left"]    # 107-142
+    bs, be = SEGMENTS["bottom"]  # 143-211 (bs=143=bottom-left)
+    # top has 71 px (36-106), bottom has 69 px (143-211)
+    # interior columns = min of top/bottom span - 1 each side
+    top_span = te - ts       # 70  (indices 36..106)
+    bot_span = be - bs       # 68  (indices 143..211)
+    n_cols   = min(top_span, bot_span)  # 68 interior columns
+    col = s.get("col", 0)
+    # total columns: 1 (left side) + n_cols (interior) + 1 (right side)
+    total_cols = n_cols + 2
+    if ccw:
+        col_idx = total_cols - 1 - col
+    else:
+        col_idx = col
+    if col_idx == 0:
+        # Left side — wipe entire left segment
+        _fill(end_color, ls, le)
+    elif col_idx == total_cols - 1:
+        # Right side — wipe entire right segment
+        _fill(end_color, rs, re)
+    else:
+        # Interior — one pixel on top (top-left to top-right) and one on bottom
+        top_pixel = te - (col_idx - 1)        # 106, 105, 104 ... moving rightward
+        bot_pixel = bs + (col_idx - 1)        # 143, 144, 145 ... moving rightward
+        _set(top_pixel, end_color)
+        _set(bot_pixel, end_color)
+    _show()
+    col += 1
+    if col >= total_cols:
         if p.get("end_color"):
             _effect_start("solid", {"color": list(p["end_color"])})
         else:
             _effect_stop(); _fill(OFF); _show()
         return
-    s["pos"] = pos
+    s["col"] = col
 
 # ---------------------------------------------------------------------------
 # Tick-based effect: clock_bar (outside-in shrink with color shift)
