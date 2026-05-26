@@ -58,8 +58,7 @@ router.post('/start', (_req, res) => {
 
 router.post('/players/random-assign', (_req, res) => {
   const state = gameShowStore.randomAssignPlayers();
-  const VISIBLE_SETTLE = [TEAM_COLORS['team-a'], TEAM_COLORS['team-b'], TEAM_COLORS['team-c']];
-  piLed({ effect: 'spin', colors: ALL_TEAM_COLORS, settle_colors: VISIBLE_SETTLE, duration_ms: 3000 });
+  piLed({ effect: 'spin', colors: ALL_TEAM_COLORS, settle_colors: ALL_TEAM_COLORS, duration_ms: 3000 });
   res.json(state);
 });
 

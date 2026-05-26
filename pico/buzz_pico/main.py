@@ -438,11 +438,10 @@ def _tick_spin(p, s):
         _fill(tuple(settle[idx]))
         _show()
     else:
-        # Settled: paint each visible side a settle color
-        # bottom (143-211) runs under the crate and is not visible
+        # Settled: paint each physical side a settle color
         if not s.get("settled"):
             s["settled"] = True
-            side_order = ["right", "top", "left"]
+            side_order = ["right", "top", "left", "bottom"]
             _fill((0, 0, 0))
             n = len(settle)
             for ci, seg_name in enumerate(side_order):
