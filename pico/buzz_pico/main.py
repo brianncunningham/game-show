@@ -69,19 +69,21 @@ LED_PIN    = 20
 NUM_LEDS   = 320
 BRIGHTNESS = 0.4   # 0.0–1.0
 
-# Segment map — update after physical install
+# Segment map — measured after physical install
 # Format: (first_led_index, last_led_index) inclusive
+# Visible LEDs: 0–211. 212–319 are under the crate (still lit, just not visible).
 SEGMENTS = {
-    "right":  (0,   79),
-    "top":    (80,  159),
-    "left":   (160, 239),
-    "bottom": (240, 319),
+    "right":  (0,   35),   # bottom-right corner up to top-right corner
+    "top":    (36,  106),  # top-right across to top-left
+    "left":   (107, 142),  # top-left down to bottom-left corner
+    "bottom": (143, 211),  # bottom-left across to bottom-right (visible)
+    "all":    (0,   211),  # all visible LEDs
 }
 
 def _seg_range(segment="all"):
-    if segment == "all" or segment not in SEGMENTS:
-        return (0, NUM_LEDS - 1)
-    return SEGMENTS[segment]
+    if segment in SEGMENTS:
+        return SEGMENTS[segment]
+    return (0, NUM_LEDS - 1)
 
 # ---------------------------------------------------------------------------
 # PIO WS2812B driver
