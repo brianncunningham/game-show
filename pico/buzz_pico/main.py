@@ -636,15 +636,16 @@ def _tick_flash(p, s):
 # ---------------------------------------------------------------------------
 
 _TICKERS = {
-    "solid":   _tick_solid,
-    "pulse":   _tick_pulse,
-    "marquee": _tick_marquee,
-    "sparkle": _tick_sparkle,
-    "rainbow": _tick_rainbow,
-    "wipe":    _tick_wipe,
-    "clock":   _tick_clock,
-    "spin":    _tick_spin,
-    "flash":   _tick_flash,
+    "solid":     _tick_solid,
+    "pulse":     _tick_pulse,
+    "marquee":   _tick_marquee,
+    "sparkle":   _tick_sparkle,
+    "rainbow":   _tick_rainbow,
+    "wipe":      _tick_wipe,
+    "clock":     _tick_clock,
+    "clock_bar": _tick_clock,   # alias — server sends 'clock_bar'
+    "spin":      _tick_spin,
+    "flash":     _tick_flash,
 }
 
 def effect_tick():
