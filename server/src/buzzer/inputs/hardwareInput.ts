@@ -70,6 +70,32 @@ export const initHardwareInput = async (): Promise<void> => {
       const msg = JSON.parse(trimmed) as Record<string, unknown>;
       const controllerId = msg['controllerId'];
       if (typeof controllerId === 'string' && controllerId.length > 0) {
+        // Clock vote routing: if clock is enabled, a buzz winner exists (guessing phase),
+        // and the clock is not already running, route presses from non-guessing teams to clockVote.
+        const state = gameShowStore.getState();
+        const { clockConfig, roundState, controllerAssignments } = state;
+        const guessingTeamId = roundState.buzzWinnerTeamId;
+        const clockEnabled = clockConfig?.enabled ?? false;
+        const clockIdle = (roundState.clockState ?? 'idle') === 'idle';
+
+        if (clockEnabled && guessingTeamId && clockIdle) {
+          // Find which team this controller belongs to
+          const assignment = controllerAssignments.find(a => a.controllerId === controllerId);
+          if (assignment && assignment.teamId !== guessingTeamId) {
+            // This is a non-guessing team member pressing during guessing phase — clock vote
+            console.log(`[HardwareInput] Clock vote from controller ${controllerId} (team ${assignment.teamId})`);
+            const { state: newState, clockFired } = gameShowStore.clockVote(controllerId);
+            if (clockFired) {
+              const durationMs = newState.clockConfig.durationSecs * 1000;
+              // Notify Pico to start clock bar effect
+              if (picoWrite) {
+                picoWrite({ event: 'CLOCK_START', durationMs, segment: 'top', mode: 'smooth' });
+              }
+            }
+            return; // don't pass to judgeController
+          }
+        }
+
         console.log(`[HardwareInput] Buzz received from controller ${controllerId}`);
         judgeController.receiveBuzz(controllerId);
       }

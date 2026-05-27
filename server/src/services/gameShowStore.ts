@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url';
 import type {
   BuzzerMode,
   ControllerAssignment,
+  GameShowClockConfig,
   GameShowQuestion,
   GameShowRoundState,
   GameShowSocketMessage,
@@ -45,6 +46,15 @@ const DEFAULT_TEAMS: GameShowTeam[] = [
   { id: 'team-d', name: 'Woodwinds', players: [], score: 0, eliminated: false },
 ];
 
+const DEFAULT_CLOCK_CONFIG: GameShowClockConfig = {
+  enabled: false,
+  clocksPerTeam: 2,
+  durationSecs: 10,
+  minDelaySecs: 5,
+  penalizeClocked: false,
+  penalizeClocking: false,
+};
+
 const EMPTY_ROUND_STATE = (): GameShowRoundState => ({
   selectedQuestionId: null,
   activeSongIndex: null,
@@ -62,6 +72,11 @@ const EMPTY_ROUND_STATE = (): GameShowRoundState => ({
   lastPointsAwarded: null,
   artistBonusUsed: false,
   revealState: 'none',
+  clockState: 'idle',
+  clockingTeamId: null,
+  clockStartedAt: null,
+  clockVotes: {},
+  clockBuzzedAt: null,
 });
 
 const EMPTY_SONGS = [
@@ -120,6 +135,9 @@ const buildControllerAssignments = (teams: GameShowTeam[], teamCount: number): C
   return assignments;
 };
 
+const buildClockInventory = (teams: GameShowTeam[], clocksPerTeam: number): Record<string, number> =>
+  Object.fromEntries(teams.map(t => [t.id, clocksPerTeam]));
+
 const createInitialState = (): GameShowState => ({
   id: 'default-game',
   status: 'setup',
@@ -145,6 +163,8 @@ const createInitialState = (): GameShowState => ({
     wrongBuzzPenalty: false,
     roundMultipliers: [1, 1, 2, 2, 3],
   },
+  clockConfig: DEFAULT_CLOCK_CONFIG,
+  clockInventory: buildClockInventory(DEFAULT_TEAMS, DEFAULT_CLOCK_CONFIG.clocksPerTeam),
   questions: DEFAULT_QUESTIONS,
   roundState: EMPTY_ROUND_STATE(),
   eventLog: [],
@@ -157,6 +177,8 @@ const migrateState = (state: GameShowState): GameShowState => ({
   eliminationEnabled: state.eliminationEnabled ?? false,
   buzzerMode: state.buzzerMode ?? 'manual',
   controllerAssignments: state.controllerAssignments ?? [],
+  clockConfig: state.clockConfig ?? DEFAULT_CLOCK_CONFIG,
+  clockInventory: state.clockInventory ?? buildClockInventory(state.teams ?? DEFAULT_TEAMS, (state.clockConfig ?? DEFAULT_CLOCK_CONFIG).clocksPerTeam),
   wandTestSeq: state.wandTestSeq ?? 0,
   teams: (state.teams ?? DEFAULT_TEAMS).map(t => ({ ...t, eliminated: t.eliminated ?? false })),
   questions: state.questions.map((q) => ({
@@ -683,6 +705,7 @@ class GameShowStore extends EventEmitter {
       currentRound: nextRound,
       multiplier: nextMultiplier,
       chooserTeamId: nextChooser?.id ?? null,
+      clockInventory: buildClockInventory(this.state.teams, this.state.clockConfig.clocksPerTeam),
       roundState: EMPTY_ROUND_STATE(),
     });
   }
@@ -781,6 +804,163 @@ class GameShowStore extends EventEmitter {
     return this.commit('toggle_host_lock', {
       ...this.state,
       hostLocked: !this.state.hostLocked,
+    });
+  }
+
+  updateClockConfig(config: Partial<GameShowClockConfig>): GameShowState {
+    const next = { ...this.state.clockConfig, ...config };
+    return this.commit('update_clock_config', {
+      ...this.state,
+      clockConfig: next,
+      clockInventory: buildClockInventory(this.state.teams, next.clocksPerTeam),
+    });
+  }
+
+  /** Host or system starts the clock directly. */
+  startClock(calledByTeamId: string | null): GameShowState {
+    const { buzzWinnerTeamId } = this.state.roundState;
+    if (!buzzWinnerTeamId || this.state.roundState.clockState === 'active') return this.state;
+    // Consume one clock from calledByTeamId inventory (null = host, no deduction)
+    const nextInventory = calledByTeamId
+      ? { ...this.state.clockInventory, [calledByTeamId]: Math.max(0, (this.state.clockInventory[calledByTeamId] ?? 0) - 1) }
+      : this.state.clockInventory;
+    return this.commit('clock_start', {
+      ...this.state,
+      clockInventory: nextInventory,
+      roundState: {
+        ...this.state.roundState,
+        clockState: 'active',
+        clockingTeamId: calledByTeamId,
+        clockStartedAt: new Date().toISOString(),
+        clockVotes: {},
+      },
+    });
+  }
+
+  /** Record a clock vote from a controller. Returns null if clock not fired yet (still collecting votes). */
+  clockVote(controllerId: string): { state: GameShowState; clockFired: boolean } {
+    const { buzzWinnerTeamId, clockState, clockBuzzedAt, clockVotes } = this.state.roundState;
+    const { clockConfig, clockInventory, controllerAssignments, teams } = this.state;
+
+    // Must have a buzz winner, clock must be idle, clocks must be enabled
+    if (!buzzWinnerTeamId || clockState !== 'idle' || !clockConfig.enabled) {
+      return { state: this.state, clockFired: false };
+    }
+
+    // Check min delay
+    if (clockBuzzedAt) {
+      const elapsed = (Date.now() - new Date(clockBuzzedAt).getTime()) / 1000;
+      if (elapsed < clockConfig.minDelaySecs) return { state: this.state, clockFired: false };
+    }
+
+    // Which team does this controller belong to?
+    const assignment = controllerAssignments.find(a => a.controllerId === controllerId);
+    if (!assignment) return { state: this.state, clockFired: false };
+    const { teamId } = assignment;
+
+    // Can't clock your own team (guessing team)
+    if (teamId === buzzWinnerTeamId) return { state: this.state, clockFired: false };
+
+    // Must have clocks remaining
+    if ((clockInventory[teamId] ?? 0) <= 0) return { state: this.state, clockFired: false };
+
+    // Already voted?
+    const existing = clockVotes[teamId] ?? [];
+    if (existing.includes(controllerId)) return { state: this.state, clockFired: false };
+
+    const nextVotes: Record<string, string[]> = { ...clockVotes, [teamId]: [...existing, controllerId] };
+
+    // Check if all team members have voted
+    const team = teams.find(t => t.id === teamId);
+    const teamControllers = controllerAssignments.filter(a => a.teamId === teamId).map(a => a.controllerId);
+    const allVoted = teamControllers.every(cid => nextVotes[teamId]?.includes(cid));
+
+    if (!allVoted) {
+      // Store partial votes, not yet fired
+      const nextState = this.commit('clock_vote_partial', {
+        ...this.state,
+        roundState: { ...this.state.roundState, clockVotes: nextVotes },
+      });
+      return { state: nextState, clockFired: false };
+    }
+
+    // First complete team wins — fire the clock
+    void team; // used above
+    const nextState = this.startClock(teamId);
+    // startClock already committed — but we need to apply the votes first then start
+    // Actually startClock resets clockVotes to {} which is correct
+    return { state: nextState, clockFired: true };
+  }
+
+  /** Cancel a running clock (host action). */
+  cancelClock(): GameShowState {
+    if (this.state.roundState.clockState !== 'active') return this.state;
+    return this.commit('clock_cancel', {
+      ...this.state,
+      roundState: {
+        ...this.state.roundState,
+        clockState: 'idle',
+        clockingTeamId: null,
+        clockStartedAt: null,
+        clockVotes: {},
+      },
+    });
+  }
+
+  /** Clock timer has expired. Apply penalties if configured. */
+  expireClock(): GameShowState {
+    if (this.state.roundState.clockState !== 'active') return this.state;
+    const { buzzWinnerTeamId, clockingTeamId } = this.state.roundState;
+    const { clockConfig, multiplier } = this.state;
+
+    const pointValue = (this.state.roundState.selectedQuestionId
+      ? (this.state.questions.find(q => q.id === this.state.roundState.selectedQuestionId)?.basePoints ?? 100)
+      : 100) * multiplier;
+
+    let teams = this.state.teams;
+    if (clockConfig.penalizeClocked && buzzWinnerTeamId) {
+      teams = teams.map(t => t.id === buzzWinnerTeamId ? { ...t, score: t.score - pointValue } : t);
+    }
+
+    return this.commit('clock_expire', {
+      ...this.state,
+      teams,
+      roundState: {
+        ...this.state.roundState,
+        clockState: 'expired',
+        clockVotes: {},
+      },
+    });
+  }
+
+  /** Called when guessing team answers correctly mid-clock. Penalizes clocking team if configured. */
+  resolveClockCorrect(): GameShowState {
+    const { clockState, clockingTeamId } = this.state.roundState;
+    if (clockState !== 'active' || !clockingTeamId || !this.state.clockConfig.penalizeClocking) {
+      // Just clear the clock state, no penalty
+      return this.commit('clock_resolve_correct', {
+        ...this.state,
+        roundState: { ...this.state.roundState, clockState: 'idle', clockingTeamId: null, clockStartedAt: null, clockVotes: {} },
+      });
+    }
+    const pointValue = (this.state.roundState.selectedQuestionId
+      ? (this.state.questions.find(q => q.id === this.state.roundState.selectedQuestionId)?.basePoints ?? 100)
+      : 100) * this.state.multiplier;
+    const teams = this.state.teams.map(t =>
+      t.id === clockingTeamId ? { ...t, score: t.score - pointValue } : t
+    );
+    return this.commit('clock_resolve_correct', {
+      ...this.state,
+      teams,
+      roundState: { ...this.state.roundState, clockState: 'idle', clockingTeamId: null, clockStartedAt: null, clockVotes: {} },
+    });
+  }
+
+  /** Record when the guessing team buzzed in (used for min-delay calculation). */
+  recordClockBuzzedAt(): GameShowState {
+    return this.commit('clock_buzz_recorded', {
+      ...this.state,
+      roundState: { ...this.state.roundState, clockBuzzedAt: new Date().toISOString() },
     });
   }
 

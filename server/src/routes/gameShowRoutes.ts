@@ -87,7 +87,9 @@ router.post('/song/:songIndex/select', (req, res) => {
 });
 
 router.post('/buzz/:teamId', (req, res) => {
-  res.json(gameShowStore.setBuzzWinner(req.params.teamId));
+  const state = gameShowStore.setBuzzWinner(req.params.teamId);
+  gameShowStore.recordClockBuzzedAt();
+  res.json(state);
 });
 
 /** Resolve a judge controllerId → teamId and set the buzz winner (phone/hardware mode). */
@@ -97,6 +99,7 @@ router.post('/buzz/controller/:controllerId', (req, res) => {
     res.status(404).json({ error: `No controller assignment found for controllerId '${req.params.controllerId}'` });
     return;
   }
+  gameShowStore.recordClockBuzzedAt();
   // During a steal window, show the stealing team's color, not the original buzzer's
   const activeTeamId = result.roundState.stealingTeamId ?? result.roundState.buzzWinnerTeamId;
   const color = teamColor(activeTeamId);
@@ -113,6 +116,7 @@ router.delete('/penalized-controller/:controllerId', (req, res) => {
 });
 
 router.post('/answer/correct', (_req, res) => {
+  gameShowStore.resolveClockCorrect();
   const state = gameShowStore.markCorrect();
   piLed({ effect: 'flash', color: [0, 255, 60], flashes: 4, on_ms: 150, off_ms: 80, end_color: [0, 255, 60] });
   res.json(state);
@@ -247,6 +251,40 @@ router.post('/game/end', (req, res) => {
 
 router.put('/config', (req, res) => {
   res.json(gameShowStore.updateConfig(req.body));
+});
+
+// ── Clock routes ──────────────────────────────────────────────────────────────
+
+router.put('/clock/config', (req, res) => {
+  res.json(gameShowStore.updateClockConfig(req.body));
+});
+
+router.post('/clock/start', (_req, res) => {
+  const state = gameShowStore.startClock(null); // null = host initiated
+  const durationMs = state.clockConfig.durationSecs * 1000;
+  piLed({ effect: 'clock_bar', duration_ms: durationMs, segment: 'top', mode: 'smooth' });
+  res.json(state);
+});
+
+router.post('/clock/cancel', (_req, res) => {
+  const state = gameShowStore.cancelClock();
+  piLed({ effect: 'pulse', color: [0, 60, 180], bpm: 60, min_bright: 0.1, max_bright: 0.8 });
+  res.json(state);
+});
+
+router.post('/clock/expire', (_req, res) => {
+  const state = gameShowStore.expireClock();
+  piLed({ effect: 'flash', color: [255, 60, 0], flashes: 3, on_ms: 200, off_ms: 100 });
+  res.json(state);
+});
+
+router.post('/clock/vote/:controllerId', (req, res) => {
+  const { state, clockFired } = gameShowStore.clockVote(req.params.controllerId);
+  if (clockFired) {
+    const durationMs = state.clockConfig.durationSecs * 1000;
+    piLed({ effect: 'clock_bar', duration_ms: durationMs, segment: 'top', mode: 'smooth' });
+  }
+  res.json({ state, clockFired });
 });
 
 router.post('/buzzer-mode', (req, res) => {

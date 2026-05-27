@@ -1,4 +1,4 @@
-import type { BuzzerMode, GameShowQuestion, GameShowRules, GameShowState, GameShowTeam } from './types';
+import type { BuzzerMode, GameShowClockConfig, GameShowQuestion, GameShowRules, GameShowState, GameShowTeam } from './types';
 
 const API_BASE = '/api/game-show';
 
@@ -219,5 +219,34 @@ export const setBuzzerMode = async (mode: BuzzerMode): Promise<GameShowState> =>
     body: JSON.stringify({ mode }),
   });
   if (!response.ok) throw new Error('Failed to set buzzer mode');
+  return response.json();
+};
+
+export const updateClockConfig = async (config: Partial<GameShowClockConfig>): Promise<GameShowState> => {
+  const response = await fetch(`${API_BASE}/clock/config`, {
+    method: 'PUT',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(config),
+  });
+  if (!response.ok) throw new Error('Failed to update clock config');
+  return response.json();
+};
+
+export const startClock = async (): Promise<GameShowState> => {
+  const response = await fetch(`${API_BASE}/clock/start`, { method: 'POST', credentials: 'include' });
+  if (!response.ok) throw new Error('Failed to start clock');
+  return response.json();
+};
+
+export const cancelClock = async (): Promise<GameShowState> => {
+  const response = await fetch(`${API_BASE}/clock/cancel`, { method: 'POST', credentials: 'include' });
+  if (!response.ok) throw new Error('Failed to cancel clock');
+  return response.json();
+};
+
+export const expireClock = async (): Promise<GameShowState> => {
+  const response = await fetch(`${API_BASE}/clock/expire`, { method: 'POST', credentials: 'include' });
+  if (!response.ok) throw new Error('Failed to expire clock');
   return response.json();
 };

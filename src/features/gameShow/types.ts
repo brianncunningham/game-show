@@ -39,6 +39,15 @@ export interface GameShowRules {
   roundMultipliers: number[];
 }
 
+export interface GameShowClockConfig {
+  enabled: boolean;
+  clocksPerTeam: number;
+  durationSecs: number;
+  minDelaySecs: number;
+  penalizeClocked: boolean;
+  penalizeClocking: boolean;
+}
+
 export interface GameShowRoundState {
   selectedQuestionId: string | null;
   activeSongIndex: number | null;
@@ -56,6 +65,11 @@ export interface GameShowRoundState {
   lastPointsAwarded: number | null;
   artistBonusUsed: boolean;
   revealState: 'none' | 'title' | 'artist' | 'both';
+  clockState: 'idle' | 'active' | 'expired';
+  clockingTeamId: string | null;
+  clockStartedAt: string | null;
+  clockVotes: Record<string, string[]>;
+  clockBuzzedAt: string | null;
 }
 
 export interface GameShowState {
@@ -79,6 +93,8 @@ export interface GameShowState {
   controllerAssignments: ControllerAssignment[];
   teams: GameShowTeam[];
   rules: GameShowRules;
+  clockConfig: GameShowClockConfig;
+  clockInventory: Record<string, number>;
   questions: GameShowQuestion[];
   roundState: GameShowRoundState;
   eventLog: Array<{

@@ -180,7 +180,7 @@ export const ShowPage = () => {
   if (state.showRules) {
     return (
       <GameShowStandaloneShell hideCursor>
-        <RulesScreen />
+        <RulesScreen clockConfig={state.clockConfig} />
       </GameShowStandaloneShell>
     );
   }

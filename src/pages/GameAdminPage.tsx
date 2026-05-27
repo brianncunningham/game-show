@@ -7,6 +7,7 @@ import { GameShowSharedView } from '../features/gameShow/GameShowSharedView';
 import { TeamSetup } from '../features/gameShow/TeamSetup';
 import { useGameShowState } from '../features/gameShow/useGameShowState';
 import { BuzzerModeCard } from '../features/buzzer/BuzzerModeCard';
+import { ClockConfigCard } from '../features/gameShow/ClockConfigCard';
 
 export const GameAdminPage = () => {
   const { state, isLoading, error } = useGameShowState();
@@ -131,6 +132,8 @@ export const GameAdminPage = () => {
         />
 
         <SaveManager />
+
+        {state.clockConfig && <ClockConfigCard clockConfig={state.clockConfig} />}
 
         <Box>
           <Button variant="outlined" size="small" href="/buzzer-diagnostics" target="_blank" rel="noopener">

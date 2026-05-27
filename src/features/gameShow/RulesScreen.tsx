@@ -1,4 +1,5 @@
 import { Box, Grid, Stack, Typography } from '@mui/material';
+import type { GameShowClockConfig } from './types';
 
 const GOLD = '#ffd700';
 const CYAN = '#40d8ff';
@@ -55,7 +56,11 @@ const rules = [
   },
 ];
 
-export const RulesScreen = () => {
+interface Props {
+  clockConfig?: GameShowClockConfig;
+}
+
+export const RulesScreen = ({ clockConfig }: Props) => {
   return (
     <Box sx={{
       position: 'fixed',
@@ -104,7 +109,20 @@ export const RulesScreen = () => {
 
       {/* Rule panels */}
       <Grid container spacing={{ xs: 1, md: 1.5 }} sx={{ flex: 1, width: '100%', maxWidth: '1400px' }}>
-        {rules.map((rule) => (
+        {[...rules, ...(clockConfig?.enabled ? [{
+          number: '05',
+          icon: '⏱',
+          title: 'Clock Mechanism',
+          subtitle: '',
+          color: '#ffb300',
+          items: [
+            `Any opposing team can call a clock after ${clockConfig.minDelaySecs}s — all members must press their buzzer.`,
+            `Host may also start a clock directly from the control panel.`,
+            `Clock runs for ${clockConfig.durationSecs} seconds. Each team has ${clockConfig.clocksPerTeam} clock${clockConfig.clocksPerTeam !== 1 ? 's' : ''} per round.`,
+            ...(clockConfig.penalizeClocked ? [`If the clock expires: the guessing team loses the current point value.`] : []),
+            ...(clockConfig.penalizeClocking ? [`If the clocked team answers correctly: the clocking team loses the current point value.`] : []),
+          ],
+        }] : [])].map((rule) => (
           <Grid item xs={12} sm={6} key={rule.number} sx={{ display: 'flex' }}>
             <Box sx={{
               flex: 1,

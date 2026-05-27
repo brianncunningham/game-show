@@ -45,6 +45,15 @@ export interface GameShowRules {
   roundMultipliers: number[];
 }
 
+export interface GameShowClockConfig {
+  enabled: boolean;
+  clocksPerTeam: number;          // per round
+  durationSecs: number;           // how long the clock runs
+  minDelaySecs: number;           // min seconds after buzz-in before clock can be called
+  penalizeClocked: boolean;       // deduct points from guessing team on expiry
+  penalizeClocking: boolean;      // deduct points from clocking team if guessing team answers correctly
+}
+
 export interface GameShowRoundState {
   selectedQuestionId: string | null;
   activeSongIndex: number | null;
@@ -62,6 +71,12 @@ export interface GameShowRoundState {
   lastPointsAwarded: number | null;
   artistBonusUsed: boolean;
   revealState: 'none' | 'title' | 'artist' | 'both';
+  // Clock state
+  clockState: 'idle' | 'active' | 'expired';
+  clockingTeamId: string | null;          // team that called the clock
+  clockStartedAt: string | null;          // ISO timestamp
+  clockVotes: Record<string, string[]>;   // teamId → controllerIds that have voted
+  clockBuzzedAt: string | null;           // ISO timestamp when guessing team buzzed in
 }
 
 export interface GameShowState {
@@ -85,6 +100,8 @@ export interface GameShowState {
   controllerAssignments: ControllerAssignment[];
   teams: GameShowTeam[];
   rules: GameShowRules;
+  clockConfig: GameShowClockConfig;
+  clockInventory: Record<string, number>;  // teamId → clocks remaining this round
   questions: GameShowQuestion[];
   roundState: GameShowRoundState;
   eventLog: Array<{

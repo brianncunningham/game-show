@@ -16,6 +16,12 @@ import type { GameShowState } from './types';
 const buzzAudio = new Audio('/buzz.mp3');
 buzzAudio.preload = 'auto';
 
+// Placeholder audio hooks — replace paths with real sound files when available
+const clockCalledAudio = new Audio('/clock-called.mp3');
+clockCalledAudio.preload = 'auto';
+const clockExpiredAudio = new Audio('/clock-expired.mp3');
+clockExpiredAudio.preload = 'auto';
+
 const themeStyles = [
   { color: '#ff4fd8', glow: 'rgba(255,79,216,0.55)', icon: <MicIcon sx={{ fontSize: 44 }} /> },
   { color: '#40d8ff', glow: 'rgba(64,216,255,0.55)', icon: <AlbumIcon sx={{ fontSize: 44 }} /> },
@@ -59,6 +65,29 @@ export const ShowBoard = ({ state }: { state: GameShowState }) => {
   const [stealOriginalBuzzerId, setStealOriginalBuzzerId] = useState<string | null>(null);
   const prevStealStateRef = useRef<string>('idle');
   const prevStealingTeamIdRef = useRef<string | null>(null);
+
+  // Clock state
+  const clockState = state.roundState.clockState ?? 'idle';
+  const clockingTeamId = state.roundState.clockingTeamId ?? null;
+  const clockingTeam = clockingTeamId ? state.teams.find(t => t.id === clockingTeamId) ?? null : null;
+  const [clockOverlayVisible, setClockOverlayVisible] = useState(false);
+  const prevClockStateRef = useRef<string>('idle');
+
+  useEffect(() => {
+    const prev = prevClockStateRef.current;
+    prevClockStateRef.current = clockState;
+    if (prev !== 'active' && clockState === 'active') {
+      setClockOverlayVisible(true);
+      clockCalledAudio.currentTime = 0;
+      void clockCalledAudio.play().catch(() => { /* autoplay blocked */ });
+      const t = window.setTimeout(() => setClockOverlayVisible(false), 2500);
+      return () => window.clearTimeout(t);
+    }
+    if (prev === 'active' && clockState === 'expired') {
+      clockExpiredAudio.currentTime = 0;
+      void clockExpiredAudio.play().catch(() => { /* autoplay blocked */ });
+    }
+  }, [clockState]);
 
   useEffect(() => {
     if (buzzWinnerTeamId) {
@@ -304,6 +333,48 @@ export const ShowBoard = ({ state }: { state: GameShowState }) => {
           }}
         />
 
+        {/* Clock overlay — flashes for 2.5s when clock starts */}
+        {clockOverlayVisible && (
+          <Box sx={{
+            position: 'absolute',
+            inset: 0,
+            zIndex: 20,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'radial-gradient(ellipse at center, rgba(255,140,0,0.22), transparent 70%)',
+            animation: 'clockOverlayFade 2500ms ease-out forwards',
+            '@keyframes clockOverlayFade': { '0%': { opacity: 1 }, '70%': { opacity: 1 }, '100%': { opacity: 0 } },
+            pointerEvents: 'none',
+          }}>
+            <Typography sx={{
+              fontSize: 'clamp(2rem, 5vw, 7rem)',
+              fontWeight: 900,
+              color: '#ffb300',
+              textShadow: '0 0 40px rgba(255,150,0,0.9), 0 0 80px rgba(255,100,0,0.6)',
+              letterSpacing: '0.06em',
+              textTransform: 'uppercase',
+              animation: 'clockTextPop 300ms cubic-bezier(0.34,1.56,0.64,1)',
+              '@keyframes clockTextPop': { '0%': { transform: 'scale(0.7)' }, '100%': { transform: 'scale(1)' } },
+            }}>
+              ⏱ CLOCK!
+            </Typography>
+            {clockingTeam && (
+              <Typography sx={{
+                fontSize: 'clamp(1rem, 2.5vw, 3.5rem)',
+                color: 'rgba(255,200,100,0.9)',
+                fontWeight: 700,
+                mt: 1,
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+              }}>
+                Called by {clockingTeam.name}
+              </Typography>
+            )}
+          </Box>
+        )}
+
         {isCorrectPhase && (
           <>
             <Box
@@ -387,7 +458,8 @@ export const ShowBoard = ({ state }: { state: GameShowState }) => {
               const isStealingTeam = isStealAvailable && stealingTeamId === team.id;
               const isStealWinner = stealSuccessFlash && stealSuccessTeamId === team.id;
               const isOriginalBuzzer = (isStealAvailable || stealSuccessFlash) && !stealFailFlash && buzzWinnerTeamId === team.id;
-              const isDimmed = !stealFailFlash && Boolean(buzzWinnerTeamId) && !isBuzzWinner && !isWinningTeam && !isWrongTeam && !isArtistBonusTeam && !isStealingTeam && !isStealWinner && !isOriginalBuzzer;
+              const isClocked = clockState === 'active' && team.id === buzzWinnerTeamId;
+              const isDimmed = !stealFailFlash && Boolean(buzzWinnerTeamId) && !isBuzzWinner && !isWinningTeam && !isWrongTeam && !isArtistBonusTeam && !isStealingTeam && !isStealWinner && !isOriginalBuzzer && !isClocked;
               const isScoreAnimating = scoreAnimatingTeamId === team.id;
               const sideIcon = isStealWinner
                 ? <CheckCircleIcon sx={{ fontSize: 'clamp(44px, 5.5vw, 110px)' }} />
@@ -416,7 +488,7 @@ export const ShowBoard = ({ state }: { state: GameShowState }) => {
                       borderRadius: 4,
                       px: 3,
                       py: 2.5,
-                      border: `2px solid ${isWrongTeam ? '#ff2020' : isArtistBonusTeam ? '#ffe047' : isStealWinner ? '#ff8c00' : isStealingTeam ? '#ff8c00' : isOriginalBuzzer ? 'rgba(255,80,0,0.25)' : isWinningTeam ? '#dfffb2' : isBuzzWinner ? '#fff2d6' : accent}`,
+                      border: `2px solid ${isClocked ? '#ffb300' : isWrongTeam ? '#ff2020' : isArtistBonusTeam ? '#ffe047' : isStealWinner ? '#ff8c00' : isStealingTeam ? '#ff8c00' : isOriginalBuzzer ? 'rgba(255,80,0,0.25)' : isWinningTeam ? '#dfffb2' : isBuzzWinner ? '#fff2d6' : accent}`,
                       boxShadow: isWrongTeam
                         ? '0 0 24px rgba(255,20,20,0.95), 0 0 52px rgba(200,0,0,0.8), 0 0 90px rgba(180,0,0,0.5), inset 0 0 28px rgba(255,20,20,0.18)'
                         : isArtistBonusTeam
@@ -448,7 +520,7 @@ export const ShowBoard = ({ state }: { state: GameShowState }) => {
                       filter: isEliminated ? 'grayscale(1) brightness(0.35)' : isDimmed ? 'grayscale(0.85) brightness(0.6)' : isOriginalBuzzer ? 'grayscale(0.7) brightness(0.4)' : 'none',
                       opacity: isEliminated ? 0.55 : 1,
                       transform: isWrongTeam ? 'scale(1.02)' : isArtistBonusTeam ? 'scale(1.05)' : isStealWinner || isStealingTeam ? 'scale(1.04)' : isWinningTeam || isBuzzWinner ? 'scale(1.03)' : 'scale(1)',
-                      animation: isWrongTeam ? 'wrongPulse 700ms ease-in-out infinite' : isArtistBonusTeam ? 'artistPulse 600ms ease-in-out infinite' : isStealWinner || isStealingTeam ? 'stealPulse 550ms ease-in-out infinite' : isWinningTeam ? 'winPulse 1100ms ease-in-out infinite' : isBuzzWinner ? 'buzzPulse 900ms ease-in-out infinite' : 'none',
+                      animation: isClocked ? 'clockedPulse 800ms ease-in-out infinite' : isWrongTeam ? 'wrongPulse 700ms ease-in-out infinite' : isArtistBonusTeam ? 'artistPulse 600ms ease-in-out infinite' : isStealWinner || isStealingTeam ? 'stealPulse 550ms ease-in-out infinite' : isWinningTeam ? 'winPulse 1100ms ease-in-out infinite' : isBuzzWinner ? 'buzzPulse 900ms ease-in-out infinite' : 'none',
                       transition: 'all 220ms ease',
                       '@keyframes buzzPulse': {
                         '0%': { boxShadow: '0 0 18px rgba(255,255,255,0.85), 0 0 34px rgba(255,158,61,0.72), 0 0 58px rgba(255,120,35,0.42)' },
@@ -475,6 +547,11 @@ export const ShowBoard = ({ state }: { state: GameShowState }) => {
                         '50%': { boxShadow: '0 0 30px rgba(231,255,163,1), 0 0 56px rgba(66,255,124,0.84), 0 0 96px rgba(255,214,74,0.6)' },
                         '100%': { boxShadow: '0 0 22px rgba(210,255,127,0.9), 0 0 36px rgba(66,255,124,0.6), 0 0 64px rgba(255,214,74,0.34)' },
                       },
+                      '@keyframes clockedPulse': {
+                        '0%': { boxShadow: '0 0 20px rgba(255,180,0,0.75), 0 0 40px rgba(255,140,0,0.5), 0 0 70px rgba(255,100,0,0.3)' },
+                        '50%': { boxShadow: '0 0 34px rgba(255,200,0,1), 0 0 66px rgba(255,160,0,0.85), 0 0 110px rgba(255,100,0,0.55)' },
+                        '100%': { boxShadow: '0 0 20px rgba(255,180,0,0.75), 0 0 40px rgba(255,140,0,0.5), 0 0 70px rgba(255,100,0,0.3)' },
+                      },
                     }}
                   >
                     <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2}>
@@ -488,6 +565,23 @@ export const ShowBoard = ({ state }: { state: GameShowState }) => {
                             ELIMINATED
                           </Typography>
                         )}
+                        {state.clockConfig?.enabled && (() => {
+                          const remaining = state.clockInventory?.[team.id] ?? state.clockConfig.clocksPerTeam;
+                          const total = state.clockConfig.clocksPerTeam;
+                          if (total === 0) return null;
+                          return (
+                            <Box sx={{ display: 'flex', gap: '3px', mt: 0.5 }}>
+                              {Array.from({ length: total }).map((_, i) => (
+                                <Typography key={i} component="span" sx={{
+                                  fontSize: 'clamp(0.65rem, 1vw, 1.4rem)',
+                                  opacity: i < remaining ? (isClocked ? 1 : 0.7) : 0.18,
+                                  filter: i < remaining && isClocked ? 'drop-shadow(0 0 6px rgba(255,180,0,0.9))' : 'none',
+                                  transition: 'opacity 300ms',
+                                }}>⏱</Typography>
+                              ))}
+                            </Box>
+                          );
+                        })()}
                         </Box>
                         <Typography sx={{ color: isWrongTeam ? '#888' : isOriginalBuzzer ? 'rgba(255,255,255,0.2)' : isArtistBonusTeam || isScoreAnimating ? '#fff' : 'white', fontWeight: 900, fontSize: 'clamp(2.5rem, 6vw, 9rem)', lineHeight: 1, textShadow: isWrongTeam ? 'none' : isArtistBonusTeam ? '0 0 10px rgba(255,255,255,1), 0 0 24px rgba(255,230,60,0.95), 0 0 50px rgba(40,210,255,0.7)' : isWinningTeam ? '0 0 14px rgba(255,223,115,0.9), 0 0 28px rgba(147,255,80,0.7)' : isBuzzWinner ? '0 0 14px rgba(255,255,255,0.9), 0 0 28px rgba(255,175,80,0.65)' : 'none', opacity: isWrongTeam ? 0.55 : 1, animation: isArtistBonusTeam ? 'artistScoreFlash 300ms ease-in-out infinite' : isScoreAnimating ? 'scoreFlash 260ms ease-in-out infinite' : isWinningTeam ? 'scoreFlash 900ms ease-in-out infinite' : 'none', transition: 'color 300ms ease, opacity 300ms ease', '@keyframes artistScoreFlash': { '0%': { color: '#ffffff', transform: 'scale(1)' }, '50%': { color: '#ffe566', transform: 'scale(1.06)' }, '100%': { color: '#ffffff', transform: 'scale(1)' } }, '@keyframes scoreFlash': { '0%': { color: '#ffffff' }, '50%': { color: '#ffe98b' }, '100%': { color: '#ffffff' } } }}>
                           {scoreMap[team.id]}
