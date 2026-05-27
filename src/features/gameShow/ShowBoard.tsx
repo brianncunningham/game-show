@@ -573,10 +573,13 @@ export const ShowBoard = ({ state }: { state: GameShowState }) => {
                             <Box sx={{ display: 'flex', gap: '3px', mt: 0.5 }}>
                               {Array.from({ length: total }).map((_, i) => (
                                 <Typography key={i} component="span" sx={{
-                                  fontSize: 'clamp(0.65rem, 1vw, 1.4rem)',
-                                  opacity: i < remaining ? (isClocked ? 1 : 0.7) : 0.18,
-                                  filter: i < remaining && isClocked ? 'drop-shadow(0 0 6px rgba(255,180,0,0.9))' : 'none',
-                                  transition: 'opacity 300ms',
+                                  fontSize: 'clamp(1.2rem, 2.2vw, 3.2rem)',
+                                  lineHeight: 1,
+                                  opacity: i < remaining ? (isClocked ? 1 : 0.75) : 0.15,
+                                  filter: i < remaining && isClocked ? 'drop-shadow(0 0 8px rgba(255,180,0,1))' : 'none',
+                                  transition: 'opacity 300ms, filter 300ms',
+                                  animation: i < remaining && isClocked ? 'clockIconPulse 800ms ease-in-out infinite' : 'none',
+                                  '@keyframes clockIconPulse': { '0%': { opacity: 0.75 }, '50%': { opacity: 1 }, '100%': { opacity: 0.75 } },
                                 }}>⏱</Typography>
                               ))}
                             </Box>

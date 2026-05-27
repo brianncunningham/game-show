@@ -661,7 +661,7 @@ export const HostPage = () => {
                     color="warning"
                     variant={state.roundState.clockState === 'idle' || state.roundState.clockState === 'expired' ? 'contained' : 'outlined'}
                     sx={bigBtnSx}
-                    disabled={!state.roundState.buzzWinnerTeamId || state.roundState.clockState === 'active'}
+                    disabled={state.roundState.clockState === 'active'}
                     onClick={() => void startClock()}
                   >
                     ⏱ Start Clock

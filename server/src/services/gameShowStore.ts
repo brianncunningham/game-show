@@ -819,7 +819,9 @@ class GameShowStore extends EventEmitter {
   /** Host or system starts the clock directly. */
   startClock(calledByTeamId: string | null): GameShowState {
     const { buzzWinnerTeamId } = this.state.roundState;
-    if (!buzzWinnerTeamId || this.state.roundState.clockState === 'active') return this.state;
+    // Team-initiated clocks require a buzz winner; host-initiated (null) can start anytime
+    if (calledByTeamId !== null && !buzzWinnerTeamId) return this.state;
+    if (this.state.roundState.clockState === 'active') return this.state;
     // Consume one clock from calledByTeamId inventory (null = host, no deduction)
     const nextInventory = calledByTeamId
       ? { ...this.state.clockInventory, [calledByTeamId]: Math.max(0, (this.state.clockInventory[calledByTeamId] ?? 0) - 1) }
