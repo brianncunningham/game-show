@@ -15,6 +15,7 @@
  * Set HARDWARE_INPUT=1 to enable. Otherwise runs as simulation-only stub.
  */
 
+import { request as httpRequest } from 'http';
 import { judgeController } from '../judgeController.js';
 import { gameShowStore } from '../../services/gameShowStore.js';
 
@@ -68,6 +69,30 @@ export const initHardwareInput = async (): Promise<void> => {
     if (!trimmed) return;
     try {
       const msg = JSON.parse(trimmed) as Record<string, unknown>;
+      // Pico notifies server when clock countdown finishes naturally
+      if (msg['event'] === 'CLOCK_EXPIRED') {
+        console.log('[HardwareInput] Clock expired naturally from Pico');
+        const gameUrl = process.env['GAME_URL'];
+        if (gameUrl) {
+          // Running on Pi — forward expire to VPS game server
+          try {
+            const u = new URL(gameUrl);
+            const req2 = httpRequest({
+              hostname: u.hostname,
+              port: Number(u.port) || 3001,
+              path: '/api/game-show/clock/expire',
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'Content-Length': 0 },
+            });
+            req2.on('error', () => { /* fire and forget */ });
+            req2.end();
+          } catch { /* ignore */ }
+        } else {
+          gameShowStore.expireClock();
+        }
+        return;
+      }
+
       const controllerId = msg['controllerId'];
       if (typeof controllerId === 'string' && controllerId.length > 0) {
         // Clock vote routing: if clock is enabled, a buzz winner exists (guessing phase),

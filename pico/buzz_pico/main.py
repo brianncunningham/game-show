@@ -472,8 +472,9 @@ def _tick_clock(p, s):
 
     if remaining == 0:
         _effect_stop()
-        _fill(OFF, start, end)
+        _fill(OFF)   # clear full strip, not just clock segment
         _show()
+        usb_send({"event": "CLOCK_EXPIRED"})  # notify server to expire clock state
 
 # ---------------------------------------------------------------------------
 # LED test pattern (multi-color marquee cycling through colors)
@@ -788,6 +789,9 @@ def handle_event(obj):
         elif effect in _TICKERS:
             _hold_idle(10000)  # suppress serial IDLE for 10s after any piLed command
             params = {k: v for k, v in merged.items() if k not in ("event", "type")}
+            if effect in ("clock", "clock_bar"):  # clear full strip before clock countdown
+                _effect_stop()
+                _fill(OFF); _show()
             _effect_start(effect, params)
 
     elif event == "LED_TEST":
