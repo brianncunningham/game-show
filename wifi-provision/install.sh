@@ -43,7 +43,8 @@ chmod +x /usr/local/bin/wifi-provision-success.sh
 # 5. Create state directory
 echo "[5/7] Creating state directory..."
 mkdir -p /var/lib/wifi-provision
-chown pi:pi /var/lib/wifi-provision
+REAL_USER=${SUDO_USER:-$(whoami)}
+chown "$REAL_USER:$REAL_USER" /var/lib/wifi-provision
 
 # 6. Install and enable systemd service
 echo "[6/7] Installing systemd service..."

@@ -94,7 +94,9 @@ on_success() {
   echo "{\"state\":\"connected\",\"ip\":\"$ip\"}" > "$STATUS_FILE"
   rm -f "$FORCE_AP_FLAG"
   log "Starting game-show-server via pm2..."
-  sudo -u pi /home/pi/.npm-global/bin/pm2 start game-show-server 2>/dev/null || true
+  PORTAL_USER=$(stat -c '%U' /opt/wifi-provision)
+  PM2_BIN=$(find /home/$PORTAL_USER/.npm-global/bin /usr/local/bin -name pm2 2>/dev/null | head -1 || true)
+  [[ -n "$PM2_BIN" ]] && sudo -u "$PORTAL_USER" "$PM2_BIN" start game-show-server 2>/dev/null || true
 }
 
 main() {
