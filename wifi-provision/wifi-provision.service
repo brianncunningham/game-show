@@ -1,0 +1,19 @@
+[Unit]
+Description=Wi-Fi Provisioning Service
+After=network-pre.target NetworkManager.service
+Before=pm2-pi.service
+Wants=NetworkManager.service
+DefaultDependencies=no
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/wifi-provision.sh
+Restart=on-failure
+RestartSec=10
+TimeoutStartSec=300
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=wifi-provision
+
+[Install]
+WantedBy=multi-user.target

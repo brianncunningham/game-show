@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GameShow Wi-Fi Setup</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0f0f1a;
+      color: #e0e0e0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .card {
+      background: #1a1a2e;
+      border: 1px solid #2a2a4a;
+      border-radius: 12px;
+      padding: 2rem;
+      width: 100%;
+      max-width: 420px;
+    }
+    h1 {
+      font-size: 1.4rem;
+      color: #7b8cde;
+      margin-bottom: 0.25rem;
+    }
+    .subtitle {
+      font-size: 0.85rem;
+      color: #666;
+      margin-bottom: 1.5rem;
+    }
+    .section-title {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #555;
+      margin-bottom: 0.75rem;
+      margin-top: 1.5rem;
+    }
+    .saved-list { list-style: none; }
+    .saved-list li {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #12122a;
+      border: 1px solid #2a2a4a;
+      border-radius: 8px;
+      padding: 0.6rem 0.9rem;
+      margin-bottom: 0.5rem;
+      font-size: 0.9rem;
+    }
+    .saved-list li span { color: #aaa; }
+    .btn {
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      padding: 0.4rem 0.9rem;
+      font-weight: 600;
+      transition: opacity 0.15s;
+    }
+    .btn:hover { opacity: 0.85; }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-primary { background: #7b8cde; color: #fff; }
+    .btn-secondary { background: #2a2a4a; color: #aaa; }
+    .btn-sm { padding: 0.3rem 0.7rem; font-size: 0.8rem; }
+    .divider {
+      border: none;
+      border-top: 1px solid #2a2a4a;
+      margin: 1.5rem 0;
+    }
+    .form-group { margin-bottom: 1rem; }
+    label {
+      display: block;
+      font-size: 0.8rem;
+      color: #888;
+      margin-bottom: 0.35rem;
+    }
+    input[type="text"], input[type="password"] {
+      width: 100%;
+      background: #12122a;
+      border: 1px solid #2a2a4a;
+      border-radius: 6px;
+      color: #e0e0e0;
+      font-size: 0.95rem;
+      padding: 0.55rem 0.75rem;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    input:focus { border-color: #7b8cde; }
+    .status-box {
+      border-radius: 8px;
+      padding: 0.85rem 1rem;
+      font-size: 0.9rem;
+      margin-top: 1rem;
+      display: none;
+    }
+    .status-connecting { background: #1a2a1a; border: 1px solid #3a5a3a; color: #7dba7d; }
+    .status-failed { background: #2a1a1a; border: 1px solid #5a3a3a; color: #ba7d7d; }
+    .status-connected { background: #1a2a3a; border: 1px solid #3a5a7a; color: #7daaba; }
+    .scan-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.75rem;
+    }
+    .scan-results { list-style: none; margin-bottom: 0.75rem; }
+    .scan-results li {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.5rem 0.75rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.88rem;
+      transition: background 0.1s;
+    }
+    .scan-results li:hover { background: #1e1e38; }
+    .scan-results .ssid-name { flex: 1; }
+    .scan-results .signal { color: #666; font-size: 0.75rem; margin-left: 0.5rem; }
+    .empty-note { color: #555; font-size: 0.85rem; font-style: italic; }
+    #scan-spinner { display: none; color: #555; font-size: 0.8rem; margin-left: 0.5rem; }
+    .full-btn { width: 100%; padding: 0.65rem; font-size: 1rem; margin-top: 0.25rem; }
+  </style>
+</head>
+<body>
+<div class="card">
+  <h1>📡 GameShow Wi-Fi Setup</h1>
+  <p class="subtitle">Connect the Pi to a Wi-Fi network</p>
+
+  <div class="section-title">Saved Networks</div>
+  <ul class="saved-list" id="saved-list">
+    <li><span class="empty-note">Loading...</span></li>
+  </ul>
+
+  <hr class="divider" />
+
+  <div class="scan-row">
+    <div class="section-title" style="margin:0">New Network</div>
+    <div style="display:flex;align-items:center">
+      <span id="scan-spinner">Scanning...</span>
+      <button class="btn btn-secondary btn-sm" id="scan-btn" onclick="scanNetworks()">Scan</button>
+    </div>
+  </div>
+
+  <ul class="scan-results" id="scan-results"></ul>
+
+  <form id="connect-form" onsubmit="connectNew(event)">
+    <div class="form-group">
+      <label for="ssid">SSID (Network Name)</label>
+      <input type="text" id="ssid" name="ssid" placeholder="Your Wi-Fi name" autocomplete="off" />
+    </div>
+    <div class="form-group">
+      <label for="password">Password (leave blank if open)</label>
+      <input type="password" id="password" name="password" placeholder="Wi-Fi password" autocomplete="off" />
+    </div>
+    <button type="submit" class="btn btn-primary full-btn" id="connect-btn">Connect</button>
+  </form>
+
+  <div class="status-box" id="status-box"></div>
+</div>
+
+<script>
+  let pollInterval = null;
+
+  async function loadSavedNetworks() {
+    const res = await fetch('/api/networks');
+    const data = await res.json();
+    const list = document.getElementById('saved-list');
+    if (!data.networks || data.networks.length === 0) {
+      list.innerHTML = '<li><span class="empty-note">No saved networks</span></li>';
+      return;
+    }
+    list.innerHTML = data.networks.map(n => `
+      <li>
+        <span>${escHtml(n)}</span>
+        <button class="btn btn-primary btn-sm" onclick="connectSaved('${escHtml(n)}')">Connect</button>
+      </li>
+    `).join('');
+  }
+
+  async function connectSaved(name) {
+    showStatus('connecting', `Connecting to "${name}"...`);
+    disableAll(true);
+    await fetch('/api/connect', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ssid: name, saved: true })
+    });
+    startPolling();
+  }
+
+  async function connectNew(e) {
+    e.preventDefault();
+    const ssid = document.getElementById('ssid').value.trim();
+    const password = document.getElementById('password').value;
+    if (!ssid) return alert('Please enter an SSID.');
+    showStatus('connecting', `Connecting to "${ssid}"...`);
+    disableAll(true);
+    await fetch('/api/connect', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ssid, password })
+    });
+    startPolling();
+  }
+
+  async function scanNetworks() {
+    const btn = document.getElementById('scan-btn');
+    const spinner = document.getElementById('scan-spinner');
+    btn.disabled = true;
+    spinner.style.display = 'inline';
+    document.getElementById('scan-results').innerHTML = '';
+    try {
+      const res = await fetch('/api/scan', { method: 'POST' });
+      const data = await res.json();
+      const list = document.getElementById('scan-results');
+      if (!data.networks || data.networks.length === 0) {
+        list.innerHTML = '<li><span class="empty-note">No networks found</span></li>';
+        return;
+      }
+      list.innerHTML = data.networks.map(n => `
+        <li onclick="fillSSID('${escHtml(n.ssid)}')">
+          <span class="ssid-name">${escHtml(n.ssid)}</span>
+          <span class="signal">${n.signal}% ${n.security !== '--' ? '🔒' : ''}</span>
+        </li>
+      `).join('');
+    } catch(e) {
+      document.getElementById('scan-results').innerHTML = '<li><span class="empty-note">Scan failed</span></li>';
+    } finally {
+      btn.disabled = false;
+      spinner.style.display = 'none';
+    }
+  }
+
+  function fillSSID(ssid) {
+    document.getElementById('ssid').value = ssid;
+    document.getElementById('password').focus();
+  }
+
+  function startPolling() {
+    if (pollInterval) clearInterval(pollInterval);
+    pollInterval = setInterval(async () => {
+      try {
+        const res = await fetch('/api/status');
+        const data = await res.json();
+        if (data.state === 'connected') {
+          clearInterval(pollInterval);
+          showStatus('connected', `Connected to "${data.ssid}"! IP: ${data.ip || '?'}. AP shutting down in 5 seconds...`);
+          disableAll(false);
+        } else if (data.state === 'failed') {
+          clearInterval(pollInterval);
+          showStatus('failed', `Failed to connect to "${data.ssid}". ${data.error || ''}`);
+          disableAll(false);
+        }
+      } catch(e) {}
+    }, 2000);
+  }
+
+  function showStatus(type, msg) {
+    const box = document.getElementById('status-box');
+    box.className = `status-box status-${type}`;
+    box.textContent = msg;
+    box.style.display = 'block';
+  }
+
+  function disableAll(disabled) {
+    document.getElementById('connect-btn').disabled = disabled;
+    document.getElementById('scan-btn').disabled = disabled;
+    document.querySelectorAll('.saved-list button').forEach(b => b.disabled = disabled);
+  }
+
+  function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  loadSavedNetworks();
+</script>
+</body>
+</html>
