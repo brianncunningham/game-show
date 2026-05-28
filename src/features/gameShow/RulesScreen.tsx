@@ -61,6 +61,28 @@ interface Props {
 }
 
 export const RulesScreen = ({ clockConfig }: Props) => {
+  const hasClock = clockConfig?.enabled ?? false;
+
+  const clockRule = hasClock ? [{
+    number: '05',
+    icon: '⏱',
+    title: 'Clock Mechanism',
+    subtitle: '',
+    color: '#ffb300',
+    items: [
+      `Opposing teams call a clock (after ${clockConfig!.minDelaySecs}s) — all members must press their buzzer.`,
+      `Host may start a clock directly from the control panel.`,
+      `Clock runs ${clockConfig!.durationSecs}s. Each team has ${clockConfig!.clocksPerTeam} clock${clockConfig!.clocksPerTeam !== 1 ? 's' : ''} per round.`,
+      ...(clockConfig!.penalizeClocked ? [`Clock expires → guessing team loses the point value.`] : []),
+      ...(clockConfig!.penalizeClocking ? [`Clocked team answers correctly → clocking team loses the point value.`] : []),
+    ],
+  }] : [];
+
+  const allRules = [...rules, ...clockRule];
+
+  // 5 cards → 3-col grid (MUI sm=4); 4 cards → 2-col grid (MUI sm=6)
+  const cardCols = hasClock ? 4 : 6;
+
   return (
     <Box sx={{
       position: 'fixed',
@@ -71,26 +93,24 @@ export const RulesScreen = ({ clockConfig }: Props) => {
       flexDirection: 'column',
       alignItems: 'center',
       px: '3vw',
-      py: '2.5vh',
+      py: hasClock ? '1.2vh' : '2.5vh',
     }}>
 
       {/* Header */}
-      <Box sx={{ textAlign: 'center', mb: '2.5vh' }}>
-        {/* Crown + wreath decoration */}
-        <Typography sx={{ fontSize: 'clamp(1.2rem, 3vw, 3.5rem)', lineHeight: 1, mb: 0.5 }}>
+      <Box sx={{ textAlign: 'center', mb: hasClock ? '1vh' : '2.5vh' }}>
+        <Typography sx={{ fontSize: hasClock ? 'clamp(0.8rem, 2vw, 2rem)' : 'clamp(1.2rem, 3vw, 3.5rem)', lineHeight: 1, mb: 0.5 }}>
           👑
         </Typography>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.5 }}>
           <Box sx={{ height: 2, width: 'clamp(40px, 6vw, 100px)', background: `linear-gradient(90deg, transparent, ${GOLD})` }} />
-          <Typography sx={{ color: GOLD, fontSize: 'clamp(0.6rem, 0.9vw, 1rem)', letterSpacing: '0.3em', textTransform: 'uppercase', fontWeight: 700 }}>
+          <Typography sx={{ color: GOLD, fontSize: 'clamp(0.5rem, 0.75vw, 0.9rem)', letterSpacing: '0.3em', textTransform: 'uppercase', fontWeight: 700 }}>
             🎵 Name That Tune 🎵
           </Typography>
           <Box sx={{ height: 2, width: 'clamp(40px, 6vw, 100px)', background: `linear-gradient(90deg, ${GOLD}, transparent)` }} />
         </Box>
-
         <Typography sx={{
           fontWeight: 900,
-          fontSize: 'clamp(1.8rem, 5vw, 6.5rem)',
+          fontSize: hasClock ? 'clamp(1.4rem, 3.5vw, 4.5rem)' : 'clamp(1.8rem, 5vw, 6.5rem)',
           lineHeight: 1.05,
           textTransform: 'uppercase',
           letterSpacing: '0.08em',
@@ -104,48 +124,30 @@ export const RulesScreen = ({ clockConfig }: Props) => {
         }}>
           Official Rules
         </Typography>
-
       </Box>
 
       {/* Rule panels */}
-      <Grid container spacing={{ xs: 1, md: 1.5 }} sx={{ flex: 1, width: '100%', maxWidth: '1400px' }}>
-        {[...rules, ...(clockConfig?.enabled ? [{
-          number: '05',
-          icon: '⏱',
-          title: 'Clock Mechanism',
-          subtitle: '',
-          color: '#ffb300',
-          items: [
-            `Any opposing team can call a clock after ${clockConfig.minDelaySecs}s — all members must press their buzzer.`,
-            `Host may also start a clock directly from the control panel.`,
-            `Clock runs for ${clockConfig.durationSecs} seconds. Each team has ${clockConfig.clocksPerTeam} clock${clockConfig.clocksPerTeam !== 1 ? 's' : ''} per round.`,
-            ...(clockConfig.penalizeClocked ? [`If the clock expires: the guessing team loses the current point value.`] : []),
-            ...(clockConfig.penalizeClocking ? [`If the clocked team answers correctly: the clocking team loses the current point value.`] : []),
-          ],
-        }] : [])].map((rule) => (
-          <Grid item xs={12} sm={rule.number === '05' ? 12 : 6} key={rule.number} sx={{ display: 'flex' }}>
+      <Grid container spacing={1} sx={{ flex: 1, width: '100%', maxWidth: hasClock ? '1600px' : '1400px' }}>
+        {allRules.map((rule) => (
+          <Grid item xs={12} sm={cardCols} key={rule.number} sx={{ display: 'flex' }}>
             <Box sx={{
               flex: 1,
-              borderRadius: 4,
+              borderRadius: 3,
               border: `1.5px solid ${rule.color}55`,
               background: PANEL_BG,
               boxShadow: `0 0 24px ${rule.color}22, inset 0 0 24px ${rule.color}08`,
-              p: { xs: '1.2vh 2vw', md: '1.5vh 2vw' },
+              p: hasClock ? '1vh 1.4vw' : '1.5vh 2vw',
               display: 'flex',
               flexDirection: 'column',
               position: 'relative',
               overflow: 'hidden',
-              transition: 'box-shadow 300ms ease',
-              '&:hover': {
-                boxShadow: `0 0 40px ${rule.color}44, inset 0 0 30px ${rule.color}12`,
-              },
             }}>
               {/* Panel number watermark */}
               <Typography sx={{
                 position: 'absolute',
                 top: '-0.1em',
                 right: '0.2em',
-                fontSize: 'clamp(4rem, 10vw, 11rem)',
+                fontSize: hasClock ? 'clamp(3rem, 7vw, 8rem)' : 'clamp(4rem, 10vw, 11rem)',
                 fontWeight: 900,
                 color: `${rule.color}09`,
                 lineHeight: 1,
@@ -157,57 +159,46 @@ export const RulesScreen = ({ clockConfig }: Props) => {
               </Typography>
 
               {/* Icon + title */}
-              <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 1.5 }}>
-                <Typography sx={{ fontSize: 'clamp(1.4rem, 3vw, 3.2rem)', lineHeight: 1 }}>
+              <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: hasClock ? 0.8 : 1.5 }}>
+                <Typography sx={{ fontSize: hasClock ? 'clamp(1rem, 2vw, 2.2rem)' : 'clamp(1.4rem, 3vw, 3.2rem)', lineHeight: 1 }}>
                   {rule.icon}
                 </Typography>
-                <Box>
-                  <Typography sx={{
-                    fontWeight: 900,
-                    fontSize: 'clamp(0.9rem, 1.8vw, 2.2rem)',
-                    color: rule.color,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.08em',
-                    lineHeight: 1.1,
-                    textShadow: `0 0 12px ${rule.color}88`,
-                  }}>
-                    {rule.title}
-                  </Typography>
-                </Box>
+                <Typography sx={{
+                  fontWeight: 900,
+                  fontSize: hasClock ? 'clamp(0.75rem, 1.3vw, 1.6rem)' : 'clamp(0.9rem, 1.8vw, 2.2rem)',
+                  color: rule.color,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.08em',
+                  lineHeight: 1.1,
+                  textShadow: `0 0 12px ${rule.color}88`,
+                }}>
+                  {rule.title}
+                </Typography>
               </Stack>
 
               {/* Divider */}
-              <Box sx={{ height: '1px', background: `linear-gradient(90deg, ${rule.color}88, transparent)`, mb: 1.2 }} />
+              <Box sx={{ height: '1px', background: `linear-gradient(90deg, ${rule.color}88, transparent)`, mb: hasClock ? 0.8 : 1.2 }} />
 
               {/* Rule items */}
-              <Box sx={{
-                flex: 1,
-                display: 'grid',
-                gridTemplateColumns: rule.number === '05' ? 'repeat(2, 1fr)' : '1fr',
-                gap: '0.6vh 3vw',
-                alignContent: 'start',
-              }}>
+              <Stack spacing={hasClock ? 0.4 : 0.8} sx={{ flex: 1 }}>
                 {rule.items.map((item, i) => (
-                  <Stack key={i} direction="row" spacing={1.5} alignItems="center">
+                  <Stack key={i} direction="row" spacing={1} alignItems="flex-start">
                     <Box sx={{
-                      width: 6,
-                      height: 6,
-                      borderRadius: '50%',
-                      background: rule.color,
-                      boxShadow: `0 0 6px ${rule.color}`,
-                      flexShrink: 0,
+                      width: 5, height: 5, borderRadius: '50%',
+                      background: rule.color, boxShadow: `0 0 5px ${rule.color}`,
+                      flexShrink: 0, mt: '0.4em',
                     }} />
                     <Typography sx={{
                       color: 'rgba(255,255,255,0.88)',
-                      fontSize: 'clamp(0.9rem, 1.6vw, 1.9rem)',
-                      lineHeight: 1.45,
+                      fontSize: hasClock ? 'clamp(0.7rem, 1.1vw, 1.4rem)' : 'clamp(0.9rem, 1.6vw, 1.9rem)',
+                      lineHeight: 1.4,
                       fontWeight: 500,
                     }}>
                       {item}
                     </Typography>
                   </Stack>
                 ))}
-              </Box>
+              </Stack>
             </Box>
           </Grid>
         ))}
@@ -216,12 +207,12 @@ export const RulesScreen = ({ clockConfig }: Props) => {
       {/* Footer */}
       <Typography sx={{
         color: GOLD,
-        fontSize: 'clamp(1.4rem, 3vw, 4rem)',
+        fontSize: hasClock ? 'clamp(0.9rem, 1.8vw, 2.5rem)' : 'clamp(1.4rem, 3vw, 4rem)',
         fontWeight: 900,
         letterSpacing: '0.12em',
         textTransform: 'uppercase',
         textAlign: 'center',
-        mt: '2vh',
+        mt: hasClock ? '1vh' : '2vh',
         textShadow: '0 0 20px rgba(255,215,0,0.7), 0 0 50px rgba(255,215,0,0.3)',
         animation: 'rulesPulse 3s ease-in-out infinite',
         '@keyframes rulesPulse': { '0%': { opacity: 0.75 }, '50%': { opacity: 1 }, '100%': { opacity: 0.75 } },
