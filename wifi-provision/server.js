@@ -50,6 +50,20 @@ app.get('/api/networks', (req, res) => {
   res.json({ networks: getSavedNetworks() });
 });
 
+// Tears down the AP so wlan0 is free for NetworkManager to use
+function teardownAP(callback) {
+  const cmds = [
+    'systemctl stop hostapd',
+    'systemctl stop dnsmasq',
+    'nmcli device set wlan0 managed yes',
+    'sleep 2'
+  ].join(' && ');
+  exec(cmds, { timeout: 15000 }, (err) => {
+    if (err) console.error('AP teardown error (non-fatal):', err.message);
+    callback();
+  });
+}
+
 app.post('/api/connect', (req, res) => {
   const { ssid, password, saved } = req.body;
 
@@ -58,44 +72,48 @@ app.post('/api/connect', (req, res) => {
   }
 
   writeStatus({ state: 'connecting', ssid });
-  res.json({ ok: true, message: `Attempting to connect to ${ssid}...` });
+  res.json({ ok: true, message: `Tearing down AP and connecting to ${ssid}...` });
 
-  const connectCmd = saved
-    ? `nmcli connection up "${ssid}"`
-    : password
-      ? `nmcli device wifi connect "${ssid}" password "${password}"`
-      : `nmcli device wifi connect "${ssid}"`;
+  teardownAP(() => {
+    const connectCmd = saved
+      ? `nmcli connection up "${ssid}"`
+      : password
+        ? `nmcli device wifi connect "${ssid}" password "${password}"`
+        : `nmcli device wifi connect "${ssid}"`;
 
-  exec(connectCmd, { timeout: 30000 }, (err, stdout, stderr) => {
-    if (err) {
-      writeStatus({ state: 'failed', ssid, error: stderr || err.message });
-      return;
-    }
+    exec(connectCmd, { timeout: 30000 }, (err, stdout, stderr) => {
+      if (err) {
+        writeStatus({ state: 'failed', ssid, error: stderr || err.message });
+        return;
+      }
 
-    const ip = getCurrentIP();
-    writeStatus({ state: 'connected', ssid, ip });
+      const ip = getCurrentIP();
+      writeStatus({ state: 'connected', ssid, ip });
 
-    exec('/usr/local/bin/wifi-provision-success.sh', (err2) => {
-      if (err2) console.error('Success script error:', err2.message);
+      exec('/usr/local/bin/wifi-provision-success.sh', (err2) => {
+        if (err2) console.error('Success script error:', err2.message);
+      });
     });
   });
 });
 
 app.post('/api/scan', (req, res) => {
-  exec('nmcli device wifi rescan && sleep 2 && nmcli -t -f SSID,SIGNAL,SECURITY device wifi list', 
-    { timeout: 15000 }, 
-    (err, stdout) => {
-      if (err) return res.status(500).json({ error: 'Scan failed' });
-      const networks = stdout.trim().split('\n')
-        .filter(Boolean)
-        .map(line => {
-          const parts = line.split(':');
-          return { ssid: parts[0], signal: parts[1], security: parts[2] };
-        })
-        .filter(n => n.ssid);
-      res.json({ networks });
-    }
-  );
+  teardownAP(() => {
+    exec('nmcli device wifi rescan && sleep 2 && nmcli -t -f SSID,SIGNAL,SECURITY device wifi list',
+      { timeout: 20000 },
+      (err, stdout) => {
+        if (err) return res.status(500).json({ error: 'Scan failed' });
+        const networks = stdout.trim().split('\n')
+          .filter(Boolean)
+          .map(line => {
+            const parts = line.split(':');
+            return { ssid: parts[0], signal: parts[1], security: parts[2] };
+          })
+          .filter(n => n.ssid);
+        res.json({ networks });
+      }
+    );
+  });
 });
 
 app.listen(PORT, '0.0.0.0', () => {
