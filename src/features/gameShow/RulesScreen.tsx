@@ -131,12 +131,12 @@ export const RulesScreen = ({ clockConfig }: Props) => {
         {allRules.map((rule) => (
           <Grid item xs={12} sm={cardCols} key={rule.number} sx={{ display: 'flex' }}>
             <Box sx={{
-              flex: 1,
+              width: '100%',
               borderRadius: 3,
               border: `1.5px solid ${rule.color}55`,
               background: PANEL_BG,
               boxShadow: `0 0 24px ${rule.color}22, inset 0 0 24px ${rule.color}08`,
-              p: hasClock ? '1vh 1.4vw' : '1.5vh 2vw',
+              p: hasClock ? '1.5vh 1.6vw' : '1.5vh 2vw',
               display: 'flex',
               flexDirection: 'column',
               position: 'relative',
@@ -160,12 +160,12 @@ export const RulesScreen = ({ clockConfig }: Props) => {
 
               {/* Icon + title */}
               <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: hasClock ? 0.8 : 1.5 }}>
-                <Typography sx={{ fontSize: hasClock ? 'clamp(1rem, 2vw, 2.2rem)' : 'clamp(1.4rem, 3vw, 3.2rem)', lineHeight: 1 }}>
+                <Typography sx={{ fontSize: hasClock ? 'clamp(1.2rem, 2.2vw, 2.8rem)' : 'clamp(1.4rem, 3vw, 3.2rem)', lineHeight: 1 }}>
                   {rule.icon}
                 </Typography>
                 <Typography sx={{
                   fontWeight: 900,
-                  fontSize: hasClock ? 'clamp(0.75rem, 1.3vw, 1.6rem)' : 'clamp(0.9rem, 1.8vw, 2.2rem)',
+                  fontSize: hasClock ? 'clamp(0.85rem, 1.5vw, 1.9rem)' : 'clamp(0.9rem, 1.8vw, 2.2rem)',
                   color: rule.color,
                   textTransform: 'uppercase',
                   letterSpacing: '0.08em',
@@ -180,7 +180,7 @@ export const RulesScreen = ({ clockConfig }: Props) => {
               <Box sx={{ height: '1px', background: `linear-gradient(90deg, ${rule.color}88, transparent)`, mb: hasClock ? 0.8 : 1.2 }} />
 
               {/* Rule items */}
-              <Stack spacing={hasClock ? 0.4 : 0.8} sx={{ flex: 1 }}>
+              <Stack spacing={hasClock ? 0.6 : 0.8}>
                 {rule.items.map((item, i) => (
                   <Stack key={i} direction="row" spacing={1} alignItems="flex-start">
                     <Box sx={{
@@ -190,7 +190,7 @@ export const RulesScreen = ({ clockConfig }: Props) => {
                     }} />
                     <Typography sx={{
                       color: 'rgba(255,255,255,0.88)',
-                      fontSize: hasClock ? 'clamp(0.7rem, 1.1vw, 1.4rem)' : 'clamp(0.9rem, 1.6vw, 1.9rem)',
+                      fontSize: hasClock ? 'clamp(0.8rem, 1.25vw, 1.6rem)' : 'clamp(0.9rem, 1.6vw, 1.9rem)',
                       lineHeight: 1.4,
                       fontWeight: 500,
                     }}>

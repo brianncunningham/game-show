@@ -759,8 +759,8 @@ def handle_event(obj):
     elif event == "BUZZ_REJECTED":
         reason = merged.get("reason", "")
         if reason in ("PENALIZED", "LOCKED"):
-            # Brief red flash to signal lockout — don't disturb main effect
-            pass  # handled locally in button loop via _failed_controllers
+            # Flash red on the full strip briefly to signal lockout to the player
+            effect_flash(RED, count=2, on_ms=80, off_ms=60)
 
     elif event == "RESET":
         global _failed_controllers
