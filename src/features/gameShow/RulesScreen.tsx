@@ -123,7 +123,7 @@ export const RulesScreen = ({ clockConfig }: Props) => {
             ...(clockConfig.penalizeClocking ? [`If the clocked team answers correctly: the clocking team loses the current point value.`] : []),
           ],
         }] : [])].map((rule) => (
-          <Grid item xs={12} sm={6} key={rule.number} sx={{ display: 'flex' }}>
+          <Grid item xs={12} sm={rule.number === '05' ? 12 : 6} key={rule.number} sx={{ display: 'flex' }}>
             <Box sx={{
               flex: 1,
               borderRadius: 4,
@@ -180,7 +180,13 @@ export const RulesScreen = ({ clockConfig }: Props) => {
               <Box sx={{ height: '1px', background: `linear-gradient(90deg, ${rule.color}88, transparent)`, mb: 1.2 }} />
 
               {/* Rule items */}
-              <Stack spacing={0.8} sx={{ flex: 1 }}>
+              <Box sx={{
+                flex: 1,
+                display: 'grid',
+                gridTemplateColumns: rule.number === '05' ? 'repeat(2, 1fr)' : '1fr',
+                gap: '0.6vh 3vw',
+                alignContent: 'start',
+              }}>
                 {rule.items.map((item, i) => (
                   <Stack key={i} direction="row" spacing={1.5} alignItems="center">
                     <Box sx={{
@@ -201,7 +207,7 @@ export const RulesScreen = ({ clockConfig }: Props) => {
                     </Typography>
                   </Stack>
                 ))}
-              </Stack>
+              </Box>
             </Box>
           </Grid>
         ))}
