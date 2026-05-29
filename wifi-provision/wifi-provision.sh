@@ -39,7 +39,10 @@ start_portal() {
 start_ap() {
   log "Entering AP mode (SSID: $AP_SSID)..."
 
-  nmcli device set "$AP_IFACE" managed no
+  # Disconnect first so NetworkManager isn't mid-connect when we release the iface
+  timeout 10 nmcli device disconnect "$AP_IFACE" 2>/dev/null || true
+  timeout 10 nmcli device set "$AP_IFACE" managed no 2>/dev/null || true
+  sleep 1
 
   ip addr flush dev "$AP_IFACE"
   ip addr add "$AP_IP/24" dev "$AP_IFACE"
@@ -75,15 +78,15 @@ try_connect() {
 }
 
 get_home_network() {
-  nmcli -t -f NAME,TYPE connection show --order name \
+  nmcli -t -f NAME,TYPE connection show \
     | grep ':802-11-wireless' \
     | head -1 \
     | cut -d: -f1
 }
 
 get_all_wifi_connections() {
-  nmcli -t -f NAME,TYPE,TIMESTAMP connection show --order timestamp \
-    | grep ':802-11-wireless:' \
+  nmcli -t -f NAME,TYPE connection show \
+    | grep ':802-11-wireless' \
     | cut -d: -f1
 }
 
