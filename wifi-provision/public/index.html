@@ -185,7 +185,7 @@
   }
 
   async function connectSaved(name) {
-    showStatus('connecting', `Connecting to "${name}"...`);
+    showStatus('connecting', `Tearing down AP and connecting to "${name}"... This page will become unreachable — that's normal. Check your home network in ~15 seconds to confirm success.`);
     disableAll(true);
     await fetch('/api/connect', {
       method: 'POST',
@@ -200,7 +200,7 @@
     const ssid = document.getElementById('ssid').value.trim();
     const password = document.getElementById('password').value;
     if (!ssid) return alert('Please enter an SSID.');
-    showStatus('connecting', `Connecting to "${ssid}"...`);
+    showStatus('connecting', `Tearing down AP and connecting to "${ssid}"... This page will become unreachable — that's normal. Check your home network in ~15 seconds to confirm success.`);
     disableAll(true);
     await fetch('/api/connect', {
       method: 'POST',
