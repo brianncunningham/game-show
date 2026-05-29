@@ -21,12 +21,12 @@ If no known network is available, it creates its own Wi-Fi AP so you can configu
 |---|---|
 | AP Network Name (SSID) | `GameShow-Setup` |
 | AP Password | *(none — open network)* |
-| Portal URL | `http://gameshow.local:8080` |
+| Portal URL | `http://judge-controller.local:8080` |
 | Portal URL (fallback) | `http://192.168.4.1:8080` |
 
 **Steps when away from home:**
 1. On your phone/laptop, connect to `GameShow-Setup` Wi-Fi
-2. Open browser → `http://gameshow.local:8080`
+2. Open browser → `http://judge-controller.local:8080`
 3. Select a saved network or enter new SSID + password
 4. Pi connects, AP shuts down automatically
 
