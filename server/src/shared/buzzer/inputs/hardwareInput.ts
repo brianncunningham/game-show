@@ -17,7 +17,7 @@
 
 import { request as httpRequest } from 'http';
 import { judgeController } from '../judgeController.js';
-import { gameShowStore } from '../../services/gameShowStore.js';
+import { gameShowStore } from '../../../modes/nameThatTune/store.js';
 
 // Must match TEAM_COLORS in gameShowRoutes.ts and screen TEAM_ACCENTS
 const TEAM_LED_COLORS: Record<string, number[]> = {

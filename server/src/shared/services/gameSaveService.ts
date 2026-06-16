@@ -1,10 +1,10 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, unlinkSync, writeFileSync } from 'fs';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
-import type { GameShowQuestion } from '../types/gameShow.js';
+import type { GameShowQuestion } from '../../modes/nameThatTune/types.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const SAVES_DIR = join(__dirname, '../../../game-saves');
+const SAVES_DIR = join(__dirname, '../../../../game-data/name-that-tune');
 
 export interface GameSave {
   id: string;

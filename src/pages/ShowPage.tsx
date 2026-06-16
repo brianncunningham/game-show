@@ -1,17 +1,17 @@
 import { Box, Typography } from '@mui/material';
 import { useEffect, useRef, useState } from 'react';
-import { GameShowStandaloneShell } from '../features/gameShow/GameShowStandaloneShell';
-import { EliminationScreen } from '../features/gameShow/EliminationScreen';
-import { RevealScreen } from '../features/gameShow/RevealScreen';
-import { FirstPickScreen } from '../features/gameShow/FirstPickScreen';
-import { IntroScreen } from '../features/gameShow/IntroScreen';
-import { RulesScreen } from '../features/gameShow/RulesScreen';
-import { ShowBoard } from '../features/gameShow/ShowBoard';
-import { WandTestScreen } from '../features/gameShow/WandTestScreen';
-import { TeamRandomizer } from '../features/gameShow/TeamRandomizer';
-import { VictoryScreen } from '../features/gameShow/VictoryScreen';
-import type { GameShowTeam } from '../features/gameShow/types';
-import { useGameShowState } from '../features/gameShow/useGameShowState';
+import { GameShowStandaloneShell } from '../modes/nameThatTune/GameShowStandaloneShell';
+import { EliminationScreen } from '../modes/nameThatTune/EliminationScreen';
+import { RevealScreen } from '../modes/nameThatTune/RevealScreen';
+import { FirstPickScreen } from '../modes/nameThatTune/FirstPickScreen';
+import { IntroScreen } from '../modes/nameThatTune/IntroScreen';
+import { RulesScreen } from '../modes/nameThatTune/RulesScreen';
+import { ShowBoard } from '../modes/nameThatTune/ShowBoard';
+import { WandTestScreen } from '../modes/nameThatTune/WandTestScreen';
+import { TeamRandomizer } from '../modes/nameThatTune/TeamRandomizer';
+import { VictoryScreen } from '../modes/nameThatTune/VictoryScreen';
+import type { GameShowTeam } from '../modes/nameThatTune/types';
+import { useGameShowState } from '../modes/nameThatTune/useGameShowState';
 
 const unlockAudio = () => {
   const audio = new Audio('/buzz.mp3');

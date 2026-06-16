@@ -9,7 +9,7 @@
  */
 
 import { useEffect, useRef } from 'react';
-import type { BuzzerMode } from '../gameShow/types';
+import type { BuzzerMode } from '../../modes/nameThatTune/types';
 
 const GAME_API = '/api/game-show';
 

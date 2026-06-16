@@ -8,7 +8,7 @@
 import type { Server as HttpServer } from 'http';
 import { WebSocket } from 'ws';
 import { judgeController } from './judgeController.js';
-import { gameShowStore } from '../services/gameShowStore.js';
+import { gameShowStore } from '../../modes/nameThatTune/store.js';
 import { registerWsPath, initWebSocketManager } from '../services/webSocketManager.js';
 import type { JudgeToAppMessage } from './types.js';
 

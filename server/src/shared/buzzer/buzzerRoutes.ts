@@ -1,8 +1,8 @@
 import { Router } from 'express';
-import { judgeController } from '../buzzer/judgeController.js';
-import { simulateInput } from '../buzzer/inputs/simulationInput.js';
-import { sendToPico } from '../buzzer/inputs/hardwareInput.js';
-import type { BuzzerWindow } from '../buzzer/types.js';
+import { judgeController } from './judgeController.js';
+import { simulateInput } from './inputs/simulationInput.js';
+import { sendToPico } from './inputs/hardwareInput.js';
+import type { BuzzerWindow } from './types.js';
 
 const router = Router();
 

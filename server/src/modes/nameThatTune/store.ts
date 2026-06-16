@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events';
 import { existsSync, readFileSync, writeFileSync, renameSync } from 'fs';
-import { judgeController } from '../buzzer/judgeController.js';
+import { judgeController } from '../../shared/buzzer/judgeController.js';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import type {
@@ -12,10 +12,10 @@ import type {
   GameShowSocketMessage,
   GameShowState,
   GameShowTeam,
-} from '../types/gameShow.js';
+} from './types.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const PERSIST_PATH = join(__dirname, '../../../game-state.json');
+const PERSIST_PATH = join(__dirname, '../../../../game-state.json');
 
 const loadPersistedState = (): GameShowState | null => {
   try {

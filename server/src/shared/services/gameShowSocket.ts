@@ -1,8 +1,8 @@
 import type { Server as HttpServer } from 'http';
 import { WebSocket } from 'ws';
-import { gameShowStore } from './gameShowStore.js';
+import { gameShowStore } from '../../modes/nameThatTune/store.js';
 import { registerWsPath, initWebSocketManager } from './webSocketManager.js';
-import type { GameShowSocketMessage } from '../types/gameShow.js';
+import type { GameShowSocketMessage } from '../../modes/nameThatTune/types.js';
 
 const sockets = new Set<WebSocket>();
 
