@@ -3,7 +3,7 @@ import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const FILE_PATH = join(__dirname, '../../../known-players.json');
+const FILE_PATH = join(__dirname, '../../../../known-players.json');
 
 const load = (): string[] => {
   try {

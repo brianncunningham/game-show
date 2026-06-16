@@ -22,8 +22,8 @@ import {
   ToggleButtonGroup,
   Typography,
 } from '@mui/material';
-import { setBuzzerMode } from '../gameShow/api';
-import type { BuzzerMode, ControllerAssignment, GameShowTeam } from '../gameShow/types';
+import { setBuzzerMode } from '../../modes/nameThatTune/api';
+import type { BuzzerMode, ControllerAssignment, GameShowTeam } from '../../modes/nameThatTune/types';
 
 interface Props {
   buzzerMode: BuzzerMode;

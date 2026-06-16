@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { Box, Button, Card, CardContent, FormControlLabel, Stack, Switch, TextField, Typography } from '@mui/material';
-import { startGame, updateGameConfig } from '../features/gameShow/api';
-import { ContentManager } from '../features/gameShow/ContentManager';
-import { SaveManager } from '../features/gameShow/SaveManager';
-import { GameShowSharedView } from '../features/gameShow/GameShowSharedView';
-import { TeamSetup } from '../features/gameShow/TeamSetup';
-import { useGameShowState } from '../features/gameShow/useGameShowState';
+import { startGame, updateGameConfig } from '../modes/nameThatTune/api';
+import { ContentManager } from '../modes/nameThatTune/ContentManager';
+import { SaveManager } from '../modes/nameThatTune/SaveManager';
+import { GameShowSharedView } from '../modes/nameThatTune/GameShowSharedView';
+import { TeamSetup } from '../modes/nameThatTune/TeamSetup';
+import { useGameShowState } from '../modes/nameThatTune/useGameShowState';
 import { BuzzerModeCard } from '../features/buzzer/BuzzerModeCard';
-import { ClockConfigCard } from '../features/gameShow/ClockConfigCard';
+import { ClockConfigCard } from '../modes/nameThatTune/ClockConfigCard';
 
 export const GameAdminPage = () => {
   const { state, isLoading, error } = useGameShowState();

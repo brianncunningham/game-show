@@ -1,9 +1,9 @@
 import { Router } from 'express';
 import { request as httpRequest } from 'http';
-import { gameShowStore } from '../services/gameShowStore.js';
-import { createSave, deleteSave, listSaves, loadSave } from '../services/gameSaveService.js';
-import { addKnownPlayers, deleteKnownPlayer, listKnownPlayers } from '../services/knownPlayersService.js';
-import { sendToPico } from '../buzzer/inputs/hardwareInput.js';
+import { gameShowStore } from './store.js';
+import { createSave, deleteSave, listSaves, loadSave } from '../../shared/services/gameSaveService.js';
+import { addKnownPlayers, deleteKnownPlayer, listKnownPlayers } from '../../shared/services/knownPlayersService.js';
+import { sendToPico } from '../../shared/buzzer/inputs/hardwareInput.js';
 
 const router = Router();
 

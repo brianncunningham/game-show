@@ -42,10 +42,10 @@ import {
   startClock,
   cancelClock,
   expireClock,
-} from '../features/gameShow/api';
-import type { GameSaveMeta } from '../features/gameShow/api';
-import { GameShowSharedView } from '../features/gameShow/GameShowSharedView';
-import { useGameShowState } from '../features/gameShow/useGameShowState';
+} from '../modes/nameThatTune/api';
+import type { GameSaveMeta } from '../modes/nameThatTune/api';
+import { GameShowSharedView } from '../modes/nameThatTune/GameShowSharedView';
+import { useGameShowState } from '../modes/nameThatTune/useGameShowState';
 
 const sectionLabelSx = {
   fontWeight: 700,

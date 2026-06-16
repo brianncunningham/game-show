@@ -14,7 +14,7 @@ import {
   Typography,
 } from '@mui/material';
 import { openWindow, armWindow, closeWindow, resetJudge, simulateBuzz, ledTest, ledPixel, ledEffect } from '../features/buzzer/buzzerApi';
-import { useGameShowState } from '../features/gameShow/useGameShowState';
+import { useGameShowState } from '../modes/nameThatTune/useGameShowState';
 
 // ---------------------------------------------------------------------------
 // Types
