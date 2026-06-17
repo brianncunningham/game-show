@@ -146,7 +146,7 @@ const createInitialState = (): GameShowState => ({
   multiplier: 1,
   practiceMode: false,
   hostLocked: false,
-  showIntro: false,
+  showIntro: true,
   showRules: false,
   randomizerSeq: 0,
   firstPickSeq: 0,
