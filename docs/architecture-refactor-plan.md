@@ -80,6 +80,8 @@ Shared across all modes:
 
 ### Phase 1 — Reorganize into Mode Structure
 
+**Status: ✅ Complete — merged to master**
+
 **Goal:** Pure reorganization — no logic changes. Establish the folder structure.
 
 **Server:**
@@ -123,6 +125,8 @@ game-data/
 
 ### Phase 2 — Define the Game Engine Interface
 
+**Status: ✅ Complete**
+
 **Goal:** Create the TypeScript contract every mode must implement. Wire up the server and client shells to consume it.
 
 **Game mode interface (server):**
@@ -163,19 +167,38 @@ interface GameModeClient {
 
 ### Phase 3 — Mode Selection & Admin Polish
 
+**Status: ✅ Complete (two low-priority items deferred)**
+
 **Goal:** Make mode switching work end-to-end through `/gameadmin`.
 
-- Mode selector at the top of `/gameadmin` (dropdown or tab strip)
-- Switching mode: confirmation dialog → server reset → server switches mode → `/show` auto-transitions to new mode's intro screen → `/gameadmin` re-renders with new mode's admin section
-- Last-used mode persisted in localStorage on `/gameadmin`
-- Save manager filters displayed saves by current active mode
-- Save files are tagged with `modeId` in their JSON — save manager uses this to filter
+**Completed:**
+- Mode selector at top of `/gameadmin` (toggle button group)
+- Switching mode: confirmation dialog ("Switch & Reset") → server calls `switchMode()` → resets both modes → broadcasts `MODE_CHANGED` via `/ws/mode` WebSocket → all connected devices update live (no refresh needed)
+- Same-browser tabs also notified instantly via `BroadcastChannel`
+- NTT `createInitialState()` sets `showIntro: true` — mode switch always lands on intro screen
+- Family Feud stub mode registered (placeholder UI only) — proves multi-mode switcher works end-to-end
+- LED effects cleaned up: no ongoing "armed" effects; only one-shot event-driven effects remain
+- `show-board` → 2-flash blue (one-shot); `round/next` → rainbow fades to off; all other idle transitions → LEDs off
 
-**Named saves:** Already implemented in current app. Ensure mode tag is written on save and used as a filter. No other changes needed.
+**Deferred (non-blocking):**
+- Save manager filters displayed saves by active `modeId` — save files need `modeId` tag written on save
+- Socket event namespacing (`ntt:*`) — only needed once a second mode has real socket events
+
+**Key files added/modified in Phase 3:**
+- `server/src/shared/services/modeSocket.ts` — `/ws/mode` WebSocket, `broadcastModeChanged()`
+- `server/src/shared/routes/modeRoutes.ts` — calls `broadcastModeChanged()` after switch
+- `server/src/index.ts` — registers `familyFeudMode`, calls `initModeSocket()`
+- `server/src/modes/familyFeud/index.ts` — stub `GameModeServer`
+- `src/modes/familyFeud/` — stub client components (Show, Host, Admin) + `clientMode.ts`
+- `src/shared/hooks/useActiveMode.ts` — subscribes to `BroadcastChannel` + `/ws/mode` for live updates
+- `server/src/modes/nameThatTune/store.ts` — `showIntro: true` in `createInitialState()`
+- `server/src/modes/nameThatTune/routes.ts` — LED effect cleanup
 
 ---
 
 ### Phase 4 — NTT-Specific Cleanup During Reorganization
+
+**Status: ⏳ Not started**
 
 **Goal:** While reorganizing, make the shared infrastructure genuinely pluggable rather than just copied.
 
@@ -188,6 +211,8 @@ interface GameModeClient {
 ---
 
 ### Phase 5 — Family Feud Mode
+
+**Status: ⏳ Not started — begin with Step 1 (game mechanics design) before any code**
 
 **Prerequisite:** Phases 1–4 complete.
 
