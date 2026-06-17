@@ -1,7 +1,14 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, unlinkSync, writeFileSync } from 'fs';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
-import type { GameShowQuestion } from '../../modes/nameThatTune/types.js';
+import type { BuzzerMode, GameShowClockConfig, GameShowQuestion, GameShowRules } from '../../modes/nameThatTune/types.js';
+
+export interface GameSaveConfig {
+  rules: GameShowRules;
+  clockConfig: GameShowClockConfig;
+  teamCount: 2 | 3 | 4;
+  buzzerMode: BuzzerMode;
+}
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const SAVES_DIR = join(__dirname, '../../../../game-data/name-that-tune');
@@ -11,6 +18,7 @@ export interface GameSave {
   name: string;
   savedAt: string;
   questions: GameShowQuestion[];
+  config?: GameSaveConfig;
 }
 
 const ensureDir = () => {
@@ -37,10 +45,10 @@ export const listSaves = (): Omit<GameSave, 'questions'>[] => {
     .filter(Boolean) as Omit<GameSave, 'questions'>[];
 };
 
-export const createSave = (name: string, questions: GameShowQuestion[]): GameSave => {
+export const createSave = (name: string, questions: GameShowQuestion[], config?: GameSaveConfig): GameSave => {
   ensureDir();
   const id = `save-${Date.now()}`;
-  const save: GameSave = { id, name, savedAt: new Date().toISOString(), questions };
+  const save: GameSave = { id, name, savedAt: new Date().toISOString(), questions, ...(config ? { config } : {}) };
   writeFileSync(savePath(id), JSON.stringify(save, null, 2));
   return save;
 };

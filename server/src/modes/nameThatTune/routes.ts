@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { request as httpRequest } from 'http';
 import { gameShowStore } from './store.js';
 import { createSave, deleteSave, listSaves, loadSave } from '../../shared/services/gameSaveService.js';
+import type { GameSaveConfig } from '../../shared/services/gameSaveService.js';
 import { addKnownPlayers, deleteKnownPlayer, listKnownPlayers } from '../../shared/services/knownPlayersService.js';
 import { sendToPico } from '../../shared/buzzer/inputs/hardwareInput.js';
 
@@ -307,8 +308,14 @@ router.post('/saves', (req, res) => {
     res.status(400).json({ error: 'name is required' });
     return;
   }
-  const questions = gameShowStore.getState().questions;
-  res.json(createSave(name.trim(), questions));
+  const state = gameShowStore.getState();
+  const config: GameSaveConfig = {
+    rules: state.rules,
+    clockConfig: state.clockConfig,
+    teamCount: state.teamCount,
+    buzzerMode: state.buzzerMode,
+  };
+  res.json(createSave(name.trim(), state.questions, config));
 });
 
 router.post('/saves/:id/load', (req, res) => {
@@ -317,7 +324,14 @@ router.post('/saves/:id/load', (req, res) => {
     res.status(404).json({ error: 'Save not found' });
     return;
   }
-  res.json(gameShowStore.updateConfig({ questions: save.questions }));
+  const patch: Parameters<typeof gameShowStore.updateConfig>[0] = { questions: save.questions };
+  if (save.config) {
+    patch.rules = save.config.rules;
+    patch.clockConfig = save.config.clockConfig;
+    patch.teamCount = save.config.teamCount;
+    patch.buzzerMode = save.config.buzzerMode;
+  }
+  res.json(gameShowStore.updateConfig(patch));
 });
 
 router.delete('/saves/:id', (req, res) => {

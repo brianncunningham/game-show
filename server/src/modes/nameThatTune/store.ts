@@ -269,7 +269,7 @@ class GameShowStore extends EventEmitter {
     });
   }
 
-  updateConfig(config: Partial<Pick<GameShowState, 'practiceMode' | 'hostLocked' | 'playerPool' | 'teams' | 'questions' | 'rules' | 'teamCount' | 'eliminationEnabled'>>): GameShowState {
+  updateConfig(config: Partial<Pick<GameShowState, 'practiceMode' | 'hostLocked' | 'playerPool' | 'teams' | 'questions' | 'rules' | 'teamCount' | 'eliminationEnabled' | 'clockConfig' | 'buzzerMode'>>): GameShowState {
     return this.commit('update_config', {
       ...this.state,
       ...config,
