@@ -27,7 +27,15 @@ export const useActiveMode = () => {
 
     const channel = new BroadcastChannel(MODE_CHANNEL);
     channel.onmessage = () => { void fetchMode(); };
-    return () => channel.close();
+
+    const wsUrl = `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/ws/mode`;
+    const ws = new WebSocket(wsUrl);
+    ws.onmessage = () => { void fetchMode(); };
+
+    return () => {
+      channel.close();
+      ws.close();
+    };
   }, [fetchMode]);
 
   const switchMode = useCallback(async (modeId: string): Promise<boolean> => {

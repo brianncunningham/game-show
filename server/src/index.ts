@@ -13,6 +13,7 @@ import { request as httpRequest } from 'http';
 import { WebSocket } from 'ws';
 import { registerWsPath } from './shared/services/webSocketManager.js';
 import { registerMode, initModeRegistry } from './shared/services/modeRegistry.js';
+import { initModeSocket } from './shared/services/modeSocket.js';
 import { nameThatTuneMode } from './modes/nameThatTune/index.js';
 import { familyFeudMode } from './modes/familyFeud/index.js';
 
@@ -68,6 +69,7 @@ app.get('*', (_req, res) => {
 const server = createServer(app);
 
 attachGameShowSocket(server);
+initModeSocket();
 if (!JUDGE_URL) {
   attachBuzzerSocket(server);
 } else {

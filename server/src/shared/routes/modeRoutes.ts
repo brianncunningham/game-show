@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { getActiveModeId, getRegisteredModes, switchMode } from '../services/modeRegistry.js';
+import { broadcastModeChanged } from '../services/modeSocket.js';
 
 const router = Router();
 
@@ -23,6 +24,7 @@ router.post('/', (req, res) => {
     res.status(404).json({ error: `Unknown mode: ${modeId}` });
     return;
   }
+  broadcastModeChanged(modeId);
   res.json({ activeModeId: modeId });
 });
 
