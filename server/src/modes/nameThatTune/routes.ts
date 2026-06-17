@@ -267,6 +267,7 @@ router.post('/clock/start', (_req, res) => {
 
 router.post('/clock/cancel', (_req, res) => {
   const state = gameShowStore.cancelClock();
+  piLed({ effect: 'off' });
   res.json(state);
 });
 
