@@ -7,10 +7,13 @@ import { attachGameShowSocket } from './shared/services/gameShowSocket.js';
 import { attachBuzzerSocket } from './shared/buzzer/buzzerSocket.js';
 import gameShowRoutes from './modes/nameThatTune/routes.js';
 import buzzerRoutes from './shared/buzzer/buzzerRoutes.js';
+import modeRoutes from './shared/routes/modeRoutes.js';
 import { initHardwareInput } from './shared/buzzer/inputs/hardwareInput.js';
 import { request as httpRequest } from 'http';
 import { WebSocket } from 'ws';
 import { registerWsPath } from './shared/services/webSocketManager.js';
+import { registerMode, initModeRegistry } from './shared/services/modeRegistry.js';
+import { nameThatTuneMode } from './modes/nameThatTune/index.js';
 
 const PORT = Number(process.env.PORT ?? 3001);
 const JUDGE_URL = process.env['JUDGE_URL'] ?? null;
@@ -22,6 +25,7 @@ const app = express();
 app.use(cors({ origin: '*' }));
 app.use(express.json());
 
+app.use('/api/mode', modeRoutes);
 app.use('/api/game-show', gameShowRoutes);
 
 if (JUDGE_URL) {
@@ -81,6 +85,9 @@ if (!JUDGE_URL) {
     clientWs.on('error', () => piWs.close());
   });
 }
+
+registerMode(nameThatTuneMode);
+initModeRegistry();
 
 server.listen(PORT, () => {
   console.log(`Game show server listening on http://localhost:${PORT}`);

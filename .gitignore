@@ -7,3 +7,5 @@ dist/
 server/node_modules/
 server/dist/
 apps-script/.clasprc.json
+active-mode.json
+game-state.json
