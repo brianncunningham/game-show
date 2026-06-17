@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { ModeState } from '../types/gameMode';
 
+const MODE_CHANNEL = 'game-show:mode';
+
 export const useActiveMode = () => {
   const [modeState, setModeState] = useState<ModeState>({ activeModeId: null, modes: [] });
   const [isLoading, setIsLoading] = useState(true);
@@ -22,6 +24,10 @@ export const useActiveMode = () => {
 
   useEffect(() => {
     void fetchMode();
+
+    const channel = new BroadcastChannel(MODE_CHANNEL);
+    channel.onmessage = () => { void fetchMode(); };
+    return () => channel.close();
   }, [fetchMode]);
 
   const switchMode = useCallback(async (modeId: string): Promise<boolean> => {
@@ -33,6 +39,7 @@ export const useActiveMode = () => {
       });
       if (!res.ok) return false;
       await fetchMode();
+      new BroadcastChannel(MODE_CHANNEL).postMessage({ modeId });
       return true;
     } catch {
       return false;
