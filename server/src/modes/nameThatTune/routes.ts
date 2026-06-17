@@ -82,7 +82,6 @@ router.post('/question/:questionId/select', (req, res) => {
 
 router.post('/song/:songIndex/select', (req, res) => {
   const state = gameShowStore.selectSong(Number(req.params.songIndex));
-  piLed({ effect: 'pulse', color: [0, 60, 180], bpm: 60, min_bright: 0.1, max_bright: 0.8 });
   res.json(state);
 });
 
@@ -179,7 +178,6 @@ router.post('/round/next', (_req, res) => {
 
 router.post('/round/reset', (_req, res) => {
   const state = gameShowStore.resetRound();
-  piLed({ effect: 'pulse', color: [0, 60, 180], bpm: 60, min_bright: 0.1, max_bright: 0.8 });
   res.json(state);
 });
 
@@ -268,7 +266,6 @@ router.post('/clock/start', (_req, res) => {
 
 router.post('/clock/cancel', (_req, res) => {
   const state = gameShowStore.cancelClock();
-  piLed({ effect: 'pulse', color: [0, 60, 180], bpm: 60, min_bright: 0.1, max_bright: 0.8 });
   res.json(state);
 });
 
