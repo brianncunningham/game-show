@@ -758,6 +758,67 @@ export const NTTHostComponent = () => {
             </CardContent>
           </Card>
 
+          {/* Clock */}
+          {state?.clockConfig?.enabled && (
+            <Card sx={{ border: '1px solid', borderColor: state.roundState.clockState === 'active' ? 'warning.main' : 'divider' }}>
+              <CardContent>
+                <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1.5 }}>
+                  <Chip
+                    label="⏱"
+                    size="small"
+                    color={state.roundState.clockState === 'active' ? 'warning' : 'default'}
+                  />
+                  <Typography sx={sectionLabelSx} mb={0}>
+                    {state.roundState.clockState === 'active'
+                      ? `Clock running — called by ${state.roundState.clockingTeamId ? (state.teams.find(t => t.id === state.roundState.clockingTeamId)?.name ?? state.roundState.clockingTeamId) : 'Host'}`
+                      : state.roundState.clockState === 'expired'
+                      ? 'Clock expired'
+                      : 'Clock'}
+                  </Typography>
+                </Stack>
+                <Stack direction="row" spacing={1}>
+                  <Button
+                    fullWidth
+                    color="warning"
+                    variant={state.roundState.clockState === 'idle' || state.roundState.clockState === 'expired' ? 'contained' : 'outlined'}
+                    sx={bigBtnSx}
+                    disabled={state.roundState.clockState === 'active'}
+                    onClick={() => void startClock()}
+                  >
+                    ⏱ Start Clock
+                  </Button>
+                  <Button
+                    fullWidth
+                    color="inherit"
+                    variant="outlined"
+                    sx={bigBtnSx}
+                    disabled={state.roundState.clockState !== 'active'}
+                    onClick={() => void cancelClock()}
+                  >
+                    Cancel Clock
+                  </Button>
+                  <Button
+                    fullWidth
+                    color="error"
+                    variant="outlined"
+                    sx={bigBtnSx}
+                    disabled={state.roundState.clockState !== 'active'}
+                    onClick={() => void expireClock()}
+                  >
+                    Expire Now
+                  </Button>
+                </Stack>
+                <Stack direction="row" spacing={2} sx={{ mt: 1.5 }} flexWrap="wrap">
+                  {state.teams.slice(0, state.teamCount).map(team => (
+                    <Typography key={team.id} variant="caption" color="text.secondary">
+                      {team.name}: {state.clockInventory?.[team.id] ?? state.clockConfig.clocksPerTeam} clock{(state.clockInventory?.[team.id] ?? state.clockConfig.clocksPerTeam) !== 1 ? 's' : ''} left
+                    </Typography>
+                  ))}
+                </Stack>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Eliminate team */}
           {eliminationEnabled && (
             <Card sx={{ border: '1px solid', borderColor: 'error.dark' }}>
