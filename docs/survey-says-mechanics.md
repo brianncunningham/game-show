@@ -2,6 +2,7 @@
 
 > **Status: Design/documentation only — not yet implemented.**
 > Refer to NTT `/host` and `/gameadmin` pages as implementation starting points.
+> Last updated: mechanics Q&A complete — ready for implementation planning.
 
 ---
 
@@ -163,10 +164,49 @@ Score >= Winning Threshold?
 
 ---
 
-## 6. Open Design Questions / Notes
+## 6. Confirmed Design Decisions
 
-- **Text entry concern:** Main Play may also require host to type/match spoken answers to board slots. Consider whether answer matching should be click-only (pre-loaded slots) or require free text input. Click-only (reveal slot 1, slot 2, etc.) is simpler and less error-prone live.
-- **Multiplier display:** Show "DOUBLE POINTS" / "TRIPLE POINTS" text on `/show` rather than a numeric multiplier.
-- **Strike display:** 3 circular X icons on `/show` — red = active strike, gray = unused.
-- **Active team glow:** Active/guessing team's score panel should glow brighter on `/show` (lighting only, no text label).
-- All game settings (timers, sweep bonus, threshold, multiplier schedule) should be configurable in `/gameadmin` before game start.
+### Board & Question Reveal Flow
+- Slot count and answers are **baked into question data** (loaded per round in `/gameadmin`) — not a live host control.
+- Host announces "there are X answers on the board" → clicks a button to reveal the board slots on `/show` (unused slots greyed/absent, no number shown).
+- Host then clicks **"Reveal Question"** → question appears on `/show` + buzzers arm (hardware mode) or question appears and host manually selects who buzzed first (manual mode).
+- In manual mode: "Reveal Question" shows the question, host uses "Team 1 Buzz" / "Team 2 Buzz" to record who answered first (hands raised, etc.).
+
+### Host Answer Buttons
+- Host always sees the full answer list as labeled buttons (e.g. "1. Sandwiches") once the board is loaded.
+- Visible during face-off so host can judge correctness and click the matching slot to reveal it.
+- **No text entry** — host only clicks pre-loaded answer buttons.
+
+### Face-Off Strike
+- Face-off strike is **separate** from the 3-strike Main Play counter.
+- Shown as a single-strike overlay on `/show` for the face-off phase only. Clears when next pair steps up.
+
+### Main Play
+- No passing — any non-answer during Main Play is a strike. Order doesn't matter.
+
+### Post-Round Board Reveal
+- After round ends (steal success, steal fail, or sweep), host manually reveals all remaining unrevealed slots one at a time from `/host`.
+- **No points awarded** during post-round reveal phase.
+
+### Steal Answer Display
+- Stolen answer **reveals on the board** visually.
+- Stolen answer points are **not added** to the bank by default.
+- A toggle in `/gameadmin` can optionally include the stolen answer in points awarded. Default: OFF.
+
+### Multiplier Display
+- Multiplier panel on `/show` is **hidden entirely** at 1x. Only shown when multiplier > 1x.
+- Text label: "DOUBLE POINTS", "TRIPLE POINTS", etc. — no numeric notation.
+
+### Round Bank Display
+- Round total on `/show` shows the **live running bank** during play (updates as answers are revealed).
+
+### Team Names & Colors
+- Team names set in `/gameadmin` (same pattern as NTT).
+- **Fixed colors:** Family 1 = `#00e5ff` (cyan), Family 2 = `#ff6a00` (orange).
+- Active/guessing team's score panel glows brighter on `/show` — lighting only, no text label.
+
+### Empty Board Slots
+- Boards can have 1–8 answers. Unused slots are **absent or clearly greyed** with no number shown.
+
+### Strike Display
+- 3 circular X icons on `/show` — active strike = red X, unused = grey X.

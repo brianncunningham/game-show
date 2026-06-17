@@ -77,7 +77,7 @@ Large two-column grid of up to 8 numbered answer slots.
 
 ## Implementation Notes (for when we build this)
 
-- Team colors: Family 1 = red (`#ff2a2a` neon), Family 2 = blue (`#2a7aff` neon)
+- Team colors: Family 1 = cyan (`#00e5ff`), Family 2 = orange (`#ff6a00`) — fixed, not configurable
 - Gold accent: `#f5c518` or similar warm gold
 - Background: deep navy/purple, e.g. `#05071a` base with geometric overlay
 - Font: bold sans-serif, all caps — consider Impact, Barlow Condensed, or Bebas Neue
