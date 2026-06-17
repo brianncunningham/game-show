@@ -172,7 +172,7 @@ router.post('/teams/:teamId/reinstate', (req, res) => {
 
 router.post('/round/next', (_req, res) => {
   const state = gameShowStore.nextRound();
-  piLed({ effect: 'rainbow', speed_ms: 15, brightness: 0.9, duration_ms: 4000, end_color: [0, 60, 180] });
+  piLed({ effect: 'rainbow', speed_ms: 15, brightness: 0.9, duration_ms: 4000 });
   res.json(state);
 });
 
