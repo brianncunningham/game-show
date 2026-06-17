@@ -150,7 +150,56 @@ Score >= Winning Threshold?
 
 ---
 
-## 5. Lightning Round (Future / TBD)
+## 5. Data Format & Content Manager
+
+### CSV Format
+
+One line per board (question). Up to 8 answer/points pairs per line.
+
+```
+round, question, answer1, points1, answer2, points2, answer3, points3, ...
+```
+
+- **round** — integer (1-based). Boards are pre-sequenced; Round 1 = all boards tagged round 1, etc.
+- **question** — survey question text (quote if it contains commas)
+- **answerN** — answer text (quote if contains commas)
+- **pointsN** — integer point value (derived from survey percentage, e.g. 42% → 42 pts)
+- Up to 8 answer/points pairs (max 17 fields per line after round + question)
+- Answers should be ordered by rank (highest points first = rank 1)
+
+**Example:**
+```
+1, Name something you bring to a picnic, Sandwiches, 42, Blanket, 26, Fruit, 18, Drinks, 8, Sunscreen, 4
+2, Name a reason you might be late to work, Traffic, 38, Overslept, 31, Bad weather, 15, Forgot something, 10, Car trouble, 6
+```
+
+### Parsed Data Structure (per board)
+
+```ts
+interface SurveyBoard {
+  id: string;
+  round: number;
+  question: string;
+  answers: SurveyAnswer[];  // 1–8 entries, ordered by rank
+}
+
+interface SurveyAnswer {
+  rank: number;       // 1-based, derived from order in CSV
+  text: string;
+  points: number;
+}
+```
+
+### Round Structure
+
+- Boards are **pre-sequenced by round number** in the CSV.
+- Multiple boards can be tagged to the same round (host picks from available boards for that round, same as NTT).
+- Game save = full set of boards for a complete game (typically 4 rounds).
+- Content manager: **CSV paste only** (no inline form editor). Same UI pattern as NTT.
+
+---
+
+## 6. Lightning Round (Future / TBD)
 
 > ⚠️ Not fully designed. Revisit before Phase 5 implementation.
 
