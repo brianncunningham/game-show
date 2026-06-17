@@ -199,7 +199,40 @@ interface SurveyAnswer {
 
 ---
 
-## 6. Lightning Round (Future / TBD)
+## 6. LED Event Map
+
+Team colors: Family 1 = cyan `[0, 229, 255]`, Family 2 = orange `[255, 106, 0]`.
+No left/right side assignment — full strip, color-driven only.
+
+| Event | Effect | Notes |
+|---|---|---|
+| **Intro screen** | `marquee` gold `[245, 197, 24]` + gold2, bulb_size 4, gap 2, speed 25 | Matches SS gold aesthetic |
+| **Face-off buzz** | `flash` buzzing team color, 3 flashes | Same pattern as NTT buzz-in |
+| **Correct answer** | `flash` green `[0, 255, 60]`, 3 flashes | Same as NTT correct |
+| **Strike (X)** | `flash` red `[255, 20, 0]`, 4 flashes | Same as NTT wrong |
+| **Steal opportunity** | `marquee` stealing team color, fast speed | Chase signals "their turn" |
+| **Successful steal** | `sparkle` stealing team color | Celebration |
+| **Failed steal** | `flash` red `[255, 20, 0]`, 3 flashes then off | |
+| **Sweep** | `sparkle` winning team color, then off | Board cleared without 3 strikes |
+| **Score transfer** | LEDs off | Keep focus on screen animation |
+| **Round transition** | `rainbow` speed 15, brightness 0.9, duration 4000 | Same as NTT `round/next` |
+| **Game over / winner** | `sparkle` winning team color, density 0.2, speed 30 | Same concept as NTT, SS colors |
+| **Show board** | `flash` blue-white `[0, 80, 220]`, 2 flashes | One-shot, same as NTT |
+
+---
+
+## 7. Victory Screen
+
+- Triggered by "Finalize Game" equivalent button on `/host`.
+- Full-screen overlay matching Survey Says aesthetic (dark blue/purple background, gold accents, team colors).
+- Displays winning team name in large gold text with glow.
+- Scores for both teams shown.
+- LED: winning team color sparkle (see LED map above).
+- Design to be done closer to implementation — should match `/show` screen visual style (Barlow Condensed, neon borders, gold).
+
+---
+
+## 8. Lightning Round (Future / TBD)
 
 > ⚠️ Not fully designed. Revisit before Phase 5 implementation.
 
