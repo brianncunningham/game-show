@@ -31,9 +31,8 @@ interface Props {
   teams: GameShowTeam[];
 }
 
-const MODE_DESC: Record<BuzzerMode, string> = {
-  manual:   'Host clicks buzz winner on the host page. No hardware or phone needed.',
-  phone:    'Players open /buzz on their phone and claim a preassigned controller slot.',
+const MODE_DESC: Record<Exclude<BuzzerMode, 'phone'>, string> = {
+  manual:   'Host clicks buzz winner on the host page. No hardware needed.',
   hardware: 'Physical buzzers send inputs to the judge. Controller IDs must match assignments.',
 };
 
@@ -56,11 +55,10 @@ export const BuzzerModeCard = ({ buzzerMode, controllerAssignments, teams }: Pro
               onChange={(_e, val) => { if (val) void setBuzzerMode(val as BuzzerMode); }}
             >
               <ToggleButton value="manual">Manual</ToggleButton>
-              <ToggleButton value="phone">Phone</ToggleButton>
               <ToggleButton value="hardware">Hardware</ToggleButton>
             </ToggleButtonGroup>
             <Typography variant="caption" color="text.disabled">
-              {MODE_DESC[buzzerMode]}
+              {MODE_DESC[buzzerMode as Exclude<BuzzerMode, 'phone'>]}
             </Typography>
           </Stack>
 
