@@ -14,6 +14,7 @@ import { WebSocket } from 'ws';
 import { registerWsPath } from './shared/services/webSocketManager.js';
 import { registerMode, initModeRegistry } from './shared/services/modeRegistry.js';
 import { nameThatTuneMode } from './modes/nameThatTune/index.js';
+import { familyFeudMode } from './modes/familyFeud/index.js';
 
 const PORT = Number(process.env.PORT ?? 3001);
 const JUDGE_URL = process.env['JUDGE_URL'] ?? null;
@@ -87,6 +88,7 @@ if (!JUDGE_URL) {
 }
 
 registerMode(nameThatTuneMode);
+registerMode(familyFeudMode);
 initModeRegistry();
 
 server.listen(PORT, () => {
