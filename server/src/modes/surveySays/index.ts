@@ -1,13 +1,15 @@
 import type { Router } from 'express';
 import type { JudgeController } from '../../shared/buzzer/judgeController.js';
 import type { GameModeServer } from '../../shared/types/gameMode.js';
+import ssRoutes from './routes.js';
+import { surveySaysStore } from './store.js';
 
 export const surveySaysMode: GameModeServer = {
   id: 'survey-says',
   displayName: 'Survey Says',
 
-  mountRoutes(_router: Router, _judge: JudgeController): void {
-    /* No routes yet — stub only */
+  mountRoutes(router: Router, _judge: JudgeController): void {
+    router.use(ssRoutes);
   },
 
   onActivate(): void {
@@ -19,6 +21,7 @@ export const surveySaysMode: GameModeServer = {
   },
 
   reset(): void {
-    console.log('[SurveySays] Reset (no state to clear)');
+    surveySaysStore.reset();
+    console.log('[SurveySays] Reset');
   },
 };

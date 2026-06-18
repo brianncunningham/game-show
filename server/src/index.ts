@@ -16,6 +16,7 @@ import { registerMode, initModeRegistry } from './shared/services/modeRegistry.j
 import { initModeSocket } from './shared/services/modeSocket.js';
 import { nameThatTuneMode } from './modes/nameThatTune/index.js';
 import { surveySaysMode } from './modes/surveySays/index.js';
+import ssRoutes from './modes/surveySays/routes.js';
 
 const PORT = Number(process.env.PORT ?? 3001);
 const JUDGE_URL = process.env['JUDGE_URL'] ?? null;
@@ -29,6 +30,7 @@ app.use(express.json());
 
 app.use('/api/mode', modeRoutes);
 app.use('/api/game-show', gameShowRoutes);
+app.use('/api/survey-says', ssRoutes);
 
 if (JUDGE_URL) {
   const judgeUrl = new URL(JUDGE_URL);
