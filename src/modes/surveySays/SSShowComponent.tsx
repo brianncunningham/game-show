@@ -308,7 +308,7 @@ function AnswerSlot({ rank, text, points, revealed, animIndex }: {
             <Typography sx={{
               ...fontSx,
               flex: 1,
-              fontSize: '2.6rem',
+              fontSize: '3.2rem',
               color: '#fff',
               fontWeight: 700,
               textTransform: 'uppercase',
@@ -319,7 +319,7 @@ function AnswerSlot({ rank, text, points, revealed, animIndex }: {
             </Typography>
             <Typography sx={{
               ...fontSx,
-              fontSize: '2.6rem',
+              fontSize: '3.2rem',
               color: GOLD,
               fontWeight: 900,
               flexShrink: 0,
@@ -553,28 +553,75 @@ function StealBanner({ teamName, color }: { teamName: string; color: string }) {
       left: '50%',
       transform: 'translateX(-50%)',
       zIndex: 15,
-      width: '700px',
-      height: '120px',
       animation: 'ssFadeIn 0.3s ease-out',
       pointerEvents: 'none',
+      px: '48px',
+      py: '18px',
+      borderRadius: '8px',
+      background: `rgba(5,7,26,0.92)`,
+      border: `3px solid ${color}`,
+      boxShadow: `0 0 24px ${color}99, 0 0 60px ${color}44`,
+      whiteSpace: 'nowrap',
     }}>
-      <Box
-        component="img"
-        src="/survey-says/overlays/prompt-overlay-lower-third.png"
-        sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'fill' }}
-      />
-      <Box sx={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <Typography sx={{
+        ...fontSx,
+        fontSize: '2.4rem',
+        color: '#fff',
+        fontWeight: 900,
+        letterSpacing: '0.12em',
+        textTransform: 'uppercase',
+        textShadow: `0 0 12px ${color}`,
+      }}>
+        {teamName} — STEAL OPPORTUNITY
+      </Typography>
+    </Box>
+  );
+}
+
+function StealResultOverlay({ teamName, success, color }: { teamName: string; success: boolean; color: string }) {
+  return (
+    <Box sx={{
+      position: 'absolute',
+      inset: 0,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 20,
+      background: `radial-gradient(ellipse at 50% 50%, ${color}22 0%, rgba(5,7,26,0.75) 60%)`,
+      animation: 'ssFadeIn 0.4s ease-out',
+      pointerEvents: 'none',
+    }}>
+      <Box sx={{
+        px: '64px',
+        py: '32px',
+        borderRadius: '12px',
+        background: `rgba(5,7,26,0.94)`,
+        border: `4px solid ${color}`,
+        boxShadow: `0 0 40px ${color}aa, 0 0 100px ${color}44`,
+        textAlign: 'center',
+      }}>
         <Typography sx={{
           ...fontSx,
-          fontSize: '2rem',
-          color: '#fff',
+          fontSize: '3rem',
+          color,
           fontWeight: 900,
-          letterSpacing: '0.12em',
+          letterSpacing: '0.14em',
           textTransform: 'uppercase',
-          textShadow: `0 0 8px ${color}, 0 2px 4px #000`,
-          WebkitTextStroke: '1px rgba(0,0,0,0.5)',
+          textShadow: `0 0 20px ${color}`,
+          lineHeight: 1.1,
         }}>
-          {teamName} — STEAL OPPORTUNITY
+          {teamName}
+        </Typography>
+        <Typography sx={{
+          ...fontSx,
+          fontSize: '2.2rem',
+          color: '#fff',
+          fontWeight: 700,
+          letterSpacing: '0.18em',
+          textTransform: 'uppercase',
+          mt: 1,
+        }}>
+          {success ? 'STEALS THE POINTS!' : 'KEEPS THE POINTS!'}
         </Typography>
       </Box>
     </Box>
@@ -583,45 +630,104 @@ function StealBanner({ teamName, color }: { teamName: string; color: string }) {
 
 // ─── Game Over Overlay ────────────────────────────────────────────────────────
 
-function GameOverOverlay({ winner, teams }: { winner: SurveyTeam; teams: [SurveyTeam, SurveyTeam] }) {
+function GameOverScreen({ winner, teams }: { winner: SurveyTeam; teams: [SurveyTeam, SurveyTeam] }) {
   const color = winner.id === 'team-1' ? TEAM_COLORS[0] : TEAM_COLORS[1];
+  const loser = teams.find(t => t.id !== winner.id)!;
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    canvas.width = 1920;
+    canvas.height = 1080;
+    const pieces: Array<{ x: number; y: number; vx: number; vy: number; angle: number; va: number; size: number; color: string }> = [];
+    const colors = [GOLD, color, '#fff', '#ff9e3d', '#d8ff9b'];
+    for (let i = 0; i < 180; i++) {
+      pieces.push({ x: Math.random() * 1920, y: Math.random() * 1080 - 1080, vx: (Math.random() - 0.5) * 3, vy: 2 + Math.random() * 3, angle: Math.random() * Math.PI * 2, va: (Math.random() - 0.5) * 0.12, size: 8 + Math.random() * 14, color: colors[Math.floor(Math.random() * colors.length)] });
+    }
+    let animId: number;
+    const draw = () => {
+      ctx.clearRect(0, 0, 1920, 1080);
+      pieces.forEach(p => {
+        ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.angle); ctx.globalAlpha = 0.88; ctx.fillStyle = p.color;
+        ctx.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2);
+        ctx.restore();
+        p.x += p.vx; p.y += p.vy; p.angle += p.va;
+        if (p.y > 1100) { p.y = -20; p.x = Math.random() * 1920; }
+      });
+      animId = requestAnimationFrame(draw);
+    };
+    draw();
+    return () => cancelAnimationFrame(animId);
+  }, [color]);
+
   return (
     <Box sx={{
-      position: 'absolute',
+      position: 'fixed',
       inset: 0,
+      overflow: 'hidden',
+      background: `radial-gradient(ellipse at 50% 0%, ${color}44 0%, transparent 55%), radial-gradient(ellipse at 50% 100%, ${color}22 0%, transparent 55%), linear-gradient(180deg, ${BG} 0%, #0a0e1a 100%)`,
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
-      background: `radial-gradient(ellipse at 50% 40%, ${color}18 0%, ${BG}f0 60%)`,
-      zIndex: 30,
-      animation: 'ssFadeIn 0.5s ease-out',
+      zIndex: 100,
     }}>
-      <Typography sx={{ ...fontSx, fontSize: 'clamp(1rem, 2vw, 1.4rem)', color: '#ffffff88', letterSpacing: '0.2em', mb: 1 }}>
-        SURVEY SAYS
-      </Typography>
-      <Typography sx={{
-        ...fontSx,
-        fontSize: 'clamp(3rem, 8vw, 7rem)',
-        color,
-        fontWeight: 900,
-        textTransform: 'uppercase',
-        letterSpacing: '0.06em',
-        textShadow: `0 0 40px ${color}cc, 0 0 80px ${color}44`,
-        lineHeight: 1,
-      }}>
-        {winner.name}
-      </Typography>
-      <Typography sx={{ ...fontSx, fontSize: 'clamp(1rem, 2vw, 1.5rem)', color: GOLD, fontWeight: 700, letterSpacing: '0.15em', mt: 2 }}>
-        WINS!
-      </Typography>
-      <Box sx={{ display: 'flex', gap: 6, mt: 5 }}>
-        {teams.map((t, i) => (
-          <Box key={t.id} sx={{ textAlign: 'center' }}>
-            <Typography sx={{ ...fontSx, fontSize: '0.85rem', color: TEAM_COLORS[i], letterSpacing: '0.1em', textTransform: 'uppercase' }}>{t.name}</Typography>
-            <Typography sx={{ ...fontSx, fontSize: 'clamp(2rem, 4vw, 3rem)', color: '#fff', fontWeight: 900 }}>{t.score}</Typography>
-          </Box>
-        ))}
+      <canvas ref={canvasRef} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 0 }} />
+      <Box sx={{ position: 'relative', zIndex: 2, textAlign: 'center', px: 4 }}>
+        <Typography sx={{ ...fontSx, fontSize: '2rem', color: '#ffffff66', letterSpacing: '0.28em', textTransform: 'uppercase', mb: 1 }}>
+          Survey Says
+        </Typography>
+        <Typography sx={{
+          ...fontSx,
+          fontSize: '9rem',
+          lineHeight: 0.9,
+          color: GOLD,
+          fontWeight: 900,
+          letterSpacing: '0.06em',
+          textTransform: 'uppercase',
+          textShadow: `0 0 30px ${GOLD}cc, 0 0 70px ${GOLD}66`,
+          animation: 'champPulse 1.4s ease-in-out infinite',
+          '@keyframes champPulse': {
+            '0%': { textShadow: `0 0 20px ${GOLD}aa, 0 0 50px ${GOLD}55` },
+            '50%': { textShadow: `0 0 40px ${GOLD}ff, 0 0 90px ${GOLD}99, 0 0 160px ${color}55` },
+            '100%': { textShadow: `0 0 20px ${GOLD}aa, 0 0 50px ${GOLD}55` },
+          },
+          mb: 2,
+        }}>
+          SURVEY SAYS!
+        </Typography>
+        <Box sx={{
+          mx: 'auto',
+          px: 8,
+          py: 4,
+          borderRadius: '16px',
+          border: `4px solid ${color}`,
+          background: `radial-gradient(ellipse at 50% 0%, ${color}33, rgba(5,7,26,0.97) 60%)`,
+          boxShadow: `0 0 50px ${color}aa, 0 0 120px ${color}44`,
+          animation: 'heroPanelPulse 1.6s ease-in-out infinite',
+          '@keyframes heroPanelPulse': {
+            '0%': { boxShadow: `0 0 40px ${color}88, 0 0 100px ${color}33` },
+            '50%': { boxShadow: `0 0 70px ${color}cc, 0 0 160px ${color}66` },
+            '100%': { boxShadow: `0 0 40px ${color}88, 0 0 100px ${color}33` },
+          },
+          minWidth: '600px',
+        }}>
+          <Typography sx={{ ...fontSx, fontSize: '4rem', color, fontWeight: 900, letterSpacing: '0.1em', textTransform: 'uppercase', textShadow: `0 0 20px ${color}` }}>
+            {winner.name}
+          </Typography>
+          <Typography sx={{ ...fontSx, fontSize: '12rem', color: '#fff', fontWeight: 900, lineHeight: 0.85, textShadow: `0 0 30px #fff8, 0 0 60px ${color}88` }}>
+            {winner.score}
+          </Typography>
+          <Typography sx={{ ...fontSx, fontSize: '2rem', color: GOLD, fontWeight: 700, letterSpacing: '0.25em', textTransform: 'uppercase' }}>
+            WINS!
+          </Typography>
+        </Box>
+        <Typography sx={{ ...fontSx, fontSize: '1.6rem', color: '#ffffff44', letterSpacing: '0.1em', textTransform: 'uppercase', mt: 3 }}>
+          {loser.name} — {loser.score} pts
+        </Typography>
       </Box>
     </Box>
   );
@@ -764,6 +870,9 @@ export const SSShowComponent = () => {
   const [randomizing, setRandomizing] = useState(false);
   const prevSeqRef = useRef<number | null>(null);
   const randomizerHideRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [stealResult, setStealResult] = useState<{ teamName: string; success: boolean; color: string } | null>(null);
+  const prevPhaseRef = useRef<string | null>(null);
+  const stealResultTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
   // Stage scaling for fixed 1920x1080 layout - MUST be before any conditional returns
   const [scale, setScale] = useState(1);
@@ -809,6 +918,26 @@ export const SSShowComponent = () => {
   }, [state?.roundState.faceOffStrikeTeamId]);
 
   useEffect(() => {
+    if (!state) return;
+    const phase = state.roundState.phase;
+    const prevPhase = prevPhaseRef.current;
+    // Detect transition from steal -> post_round to show steal result
+    if (prevPhase === 'steal' && phase === 'post_round') {
+      const stealingId = state.roundState.stealingTeamId;
+      const controllingId = state.roundState.controllingTeamId;
+      const stealSuccess = stealingId !== null && stealingId === controllingId;
+      const winnerTeam = state.teams.find(t => t.id === controllingId);
+      const winnerColor = winnerTeam?.id === state.teams[0].id ? TEAM_COLORS[0] : TEAM_COLORS[1];
+      if (winnerTeam) {
+        setStealResult({ teamName: winnerTeam.name, success: stealSuccess, color: winnerColor });
+        if (stealResultTimerRef.current) clearTimeout(stealResultTimerRef.current);
+        stealResultTimerRef.current = setTimeout(() => setStealResult(null), 4000);
+      }
+    }
+    prevPhaseRef.current = phase;
+  }, [state?.roundState.phase]);
+
+  useEffect(() => {
     const seq = state?.randomizerSeq;
     if (seq === undefined) return;
     if (prevSeqRef.current !== null && seq > prevSeqRef.current) {
@@ -840,6 +969,11 @@ export const SSShowComponent = () => {
 
   if (state.showIntro) {
     return <IntroScreen teams={state.teams} />;
+  }
+
+  if (state.roundState.phase === 'game_over') {
+    const gameWinner = [...state.teams].sort((a, b) => b.score - a.score)[0];
+    return <GameOverScreen winner={gameWinner} teams={state.teams} />;
   }
 
   const { roundState, teams, boards, config } = state;
@@ -887,10 +1021,6 @@ export const SSShowComponent = () => {
   const stealTeamColor = stealingTeam
     ? (stealingTeam.id === teams[0].id ? TEAM_COLORS[0] : TEAM_COLORS[1])
     : '#fff';
-
-  const winner = roundState.phase === 'game_over'
-    ? [...teams].sort((a, b) => b.score - a.score)[0]
-    : null;
 
   const answers = currentBoard?.answers ?? [];
   const slotCount = answers.length;
@@ -948,7 +1078,7 @@ export const SSShowComponent = () => {
         }}>
 
         {/* ── Top row: Score | Question | Score ── */}
-        <Box sx={{ display: 'flex', gap: '16px', alignItems: 'stretch', height: '220px', flexShrink: 0, overflow: 'visible' }}>
+        <Box sx={{ display: 'flex', gap: '16px', alignItems: 'flex-end', height: '220px', flexShrink: 0, overflow: 'visible' }}>
         <ScorePanel team={teams[0]} active={activeTeamId === teams[0].id} colorHex={TEAM_COLORS[0]} player={activeTeamId === teams[0].id ? activePlayer : null} />
         <QuestionPanel question={questionRevealed ? (currentBoard?.question ?? '') : ''} boardSlotsVisible={boardSlotsVisible} buzzArmed={buzzArmed} />
         <ScorePanel team={teams[1]} active={activeTeamId === teams[1].id} colorHex={TEAM_COLORS[1]} player={activeTeamId === teams[1].id ? activePlayer : null} />
@@ -1013,8 +1143,8 @@ export const SSShowComponent = () => {
         {stealingTeam && roundState.phase === 'steal' && (
           <StealBanner teamName={stealingTeam.name} color={stealTeamColor} />
         )}
-        {winner && (
-          <GameOverOverlay winner={winner} teams={teams} />
+        {stealResult && (
+          <StealResultOverlay teamName={stealResult.teamName} success={stealResult.success} color={stealResult.color} />
         )}
       </Box>
     </Box>
