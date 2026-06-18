@@ -612,3 +612,105 @@ Generate assets in small batches instead of all at once. This makes it easier to
 - halftone-texture.png
 
 Note: The halftone texture may be better implemented in CSS if the generated asset is not truly seamless.
+
+---
+
+## Batch 7: Regenerated Assets (Transparency & Proportion Fixes)
+
+The following assets need to be regenerated to fix transparency issues and incorrect dimensions discovered during implementation.
+
+Generate one at a time and inspect before proceeding to the next.
+
+---
+
+### 7.1 — survey-says-emblem.png (REPLACE)
+
+**Save to:** `public/survey-says/emblem/survey-says-emblem.png`
+
+**Required dimensions:** 1200 × 600 pixels (2:1 landscape ratio)
+
+**Prompt:**
+A broadcast game show marquee emblem for "SURVEY SAYS". The emblem is a wide horizontal oval/ellipse shape with a ring of round incandescent marquee bulbs around the outer edge — the bulbs are glowing warm white/yellow. Inside the oval is a dark navy-to-black fill with a subtle purple glow. The text "SURVEY SAYS" is rendered in large, bold, gold/amber 3D letters with strong drop shadow and inner glow. The overall style is neon Vegas/TV game show.
+
+CRITICAL — TRANSPARENCY:
+- The image MUST be saved as RGBA PNG with a fully transparent background
+- ONLY the oval emblem shape, bulbs, and text should be opaque
+- All pixels outside the oval must be fully transparent (alpha = 0)
+- DO NOT use a white, gray, checkered, or any solid background
+- The glow around the oval may have soft semi-transparent edges — this is correct
+- Test: when placed over a dark blue background, only the emblem should be visible
+
+---
+
+### 7.2 — panel-fill-dark.png (REPLACE)
+
+**Save to:** `public/survey-says/backgrounds/panel-fill-dark.png`
+
+**Required dimensions:** 1200 × 600 pixels (2:1 landscape ratio, matches border PNGs)
+
+**Prompt:**
+A dark navy blue rectangular fill texture for a broadcast game show UI panel. The fill is a rich dark navy blue (#05071a) with a subtle radial glow toward the center — slightly brighter navy in the middle, darker at edges. A very faint halftone dot grid pattern is visible at low opacity (~15%). No border. No glow on the edges. Edge-to-edge solid fill with no transparency — this image will be used as a background layer underneath a transparent-center border frame.
+
+CRITICAL:
+- This image has NO transparent pixels — it is a fully opaque rectangular fill
+- Save as RGBA PNG but all alpha values must be 255 (fully opaque)
+- Dimensions must be exactly 1200 × 600 pixels
+- NO border, NO frame edge, NO rounded corners — pure flat fill that bleeds to every edge
+- No text, no numbers, no symbols of any kind
+
+---
+
+### 7.3 — answer-number-badge.png (REPLACE)
+
+**Save to:** `public/survey-says/borders/answer-number-badge.png`
+
+**Required dimensions:** 200 × 200 pixels (square)
+
+**Prompt:**
+A circular gold badge ring for a broadcast TV game show answer board. The badge is a perfect circle: a thick gold/amber metallic outer ring with a subtle double-border inner edge and a warm glow. The interior of the circle is completely transparent — you should be able to see through the center. The ring itself has a 3D metallic sheen with highlights at the top and shadow at the bottom. The style is neon Vegas TV game show gold.
+
+CRITICAL — TRANSPARENCY:
+- Save as RGBA PNG with transparent background
+- The CENTER of the circle must be fully transparent (alpha = 0)
+- Only the ring/border itself should be opaque
+- All pixels outside the outer ring must be fully transparent (alpha = 0)
+- NO number, NO text, NO digit inside the ring — center must be empty
+- Dimensions must be exactly 200 × 200 pixels (square)
+
+---
+
+### 7.4 — answer-slot-border.png (REPLACE — unrevealed state)
+
+**Save to:** `public/survey-says/borders/answer-slot-border.png`
+
+**Required dimensions:** 1400 × 140 pixels (10:1 wide landscape ratio)
+
+**Prompt:**
+A wide horizontal rectangular border frame for a broadcast TV game show answer slot — unrevealed/empty state. The frame is very wide and short (approximately 10:1 aspect ratio). The border is a double-line gold/amber metallic frame with a subtle warm glow. The interior of the frame is completely transparent. The corners are slightly rounded. The overall appearance is dim/inactive — the gold border has moderate brightness, no intense glow, suggesting the answer has not yet been revealed.
+
+CRITICAL — TRANSPARENCY:
+- Save as RGBA PNG with transparent background
+- The INTERIOR of the rectangle must be fully transparent (alpha = 0)
+- Only the border frame itself should be opaque/semi-opaque
+- All pixels outside the outer border must be fully transparent (alpha = 0)
+- NO text, NO numbers, NO fill inside — transparent center only
+- Dimensions must be exactly 1400 × 140 pixels
+
+---
+
+### 7.5 — answer-slot-border-revealed.png (REPLACE — revealed state)
+
+**Save to:** `public/survey-says/borders/answer-slot-border-revealed.png`
+
+**Required dimensions:** 1400 × 140 pixels (10:1 wide landscape ratio)
+
+**Prompt:**
+A wide horizontal rectangular border frame for a broadcast TV game show answer slot — revealed/active state. Same shape as the unrevealed version (very wide, short, 10:1 ratio, slightly rounded corners) but with a brighter, more intense gold/amber glow. The border has a strong neon gold shine with layered highlights and a warm outer glow suggesting an active/revealed answer. The interior is completely transparent.
+
+CRITICAL — TRANSPARENCY:
+- Save as RGBA PNG with transparent background
+- The INTERIOR of the rectangle must be fully transparent (alpha = 0)
+- Only the glowing border frame itself should be opaque/semi-opaque
+- All pixels outside the outer border must be fully transparent (alpha = 0)
+- NO text, NO numbers, NO dark fill inside — transparent center only
+- Dimensions must be exactly 1400 × 140 pixels

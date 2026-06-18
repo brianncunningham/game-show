@@ -29,8 +29,8 @@ function ScorePanel({ team, active, colorHex, player }: { team: SurveyTeam; acti
 
   return (
     <Box sx={{
-      width: '400px',
-      height: '280px',
+      width: '260px',
+      height: '180px',
       position: 'relative',
       flexShrink: 0,
     }}>
@@ -68,11 +68,11 @@ function ScorePanel({ team, active, colorHex, player }: { team: SurveyTeam; acti
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 1,
+        gap: 0.5,
       }}>
         <Typography sx={{
           ...fontSx,
-          fontSize: '1.2rem',
+          fontSize: '1.1rem',
           color: active ? colorHex : colorHex + 'aa',
           fontWeight: 700,
           letterSpacing: '0.14em',
@@ -83,7 +83,7 @@ function ScorePanel({ team, active, colorHex, player }: { team: SurveyTeam; acti
         </Typography>
         <Typography sx={{
           ...fontSx,
-          fontSize: '5rem',
+          fontSize: '4.5rem',
           color: active ? '#fff' : '#ffffffcc',
           fontWeight: 900,
           lineHeight: 1,
@@ -94,7 +94,7 @@ function ScorePanel({ team, active, colorHex, player }: { team: SurveyTeam; acti
         {active && player && (
           <Box sx={{
             px: 1.5,
-            py: 0.5,
+            py: 0.25,
             borderRadius: 999,
             border: `2px solid ${colorHex}`,
             background: `${colorHex}22`,
@@ -102,7 +102,7 @@ function ScorePanel({ team, active, colorHex, player }: { team: SurveyTeam; acti
           }}>
             <Typography sx={{
               ...fontSx,
-              fontSize: '1.3rem',
+              fontSize: '0.85rem',
               color: '#fff',
               fontWeight: 700,
               letterSpacing: '0.06em',
@@ -125,8 +125,9 @@ function QuestionPanel({ question, boardSlotsVisible, buzzArmed }: { question: s
   return (
     <Box sx={{
       flex: 1,
-      height: '300px',
+      height: '180px',
       position: 'relative',
+      overflow: 'visible',
     }}>
       {/* Layer 1: Dark fill (only when board visible) */}
       {boardSlotsVisible && (
@@ -158,22 +159,23 @@ function QuestionPanel({ question, boardSlotsVisible, buzzArmed }: { question: s
         />
       )}
       
-      {/* Layer 3: Emblem (when board not visible) */}
-      {!boardSlotsVisible && (
-        <Box
-          component="img"
-          src="/survey-says/emblem/survey-says-emblem.png"
-          sx={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            width: '800px',
-            height: '300px',
-            objectFit: 'contain',
-          }}
-        />
-      )}
+      {/* Layer 3: Emblem — always visible, overlaps top edge */}
+      <Box
+        component="img"
+        src="/survey-says/emblem/survey-says-emblem.png"
+        sx={{
+          position: 'absolute',
+          top: '-70px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: '500px',
+          height: '220px',
+          objectFit: 'contain',
+          zIndex: 10,
+          mixBlendMode: 'screen',
+          pointerEvents: 'none',
+        }}
+      />
       
       {/* Layer 4: Question text */}
       {boardSlotsVisible && question && (
@@ -246,7 +248,8 @@ function AnswerSlot({ rank, text, points, revealed, animIndex }: {
     <Box sx={{
       flex: 1,
       position: 'relative',
-      minHeight: 0,
+      minHeight: '90px',
+      maxHeight: '90px',
       animation: revealed ? 'ssFlipIn 0.35s ease-out' : 'ssFadeIn 0.25s ease-out',
       '@keyframes ssFlipIn': {
         from: { opacity: 0, transform: 'scaleY(0.15)' },
@@ -294,8 +297,8 @@ function AnswerSlot({ rank, text, points, revealed, animIndex }: {
         px: 2,
         gap: 2,
       }}>
-        {/* Number badge - always visible */}
-        <Box sx={{ position: 'relative', width: '60px', height: '60px', flexShrink: 0 }}>
+        {/* Number badge - overlaps left edge */}
+        <Box sx={{ position: 'relative', width: '90px', height: '90px', flexShrink: 0, ml: '-18px' }}>
           <Box
             component="img"
             src="/survey-says/borders/answer-number-badge.png"
@@ -314,7 +317,7 @@ function AnswerSlot({ rank, text, points, revealed, animIndex }: {
             alignItems: 'center',
             justifyContent: 'center',
             ...fontSx,
-            fontSize: '1.8rem',
+            fontSize: '2.4rem',
             color: GOLD,
             fontWeight: 900,
             lineHeight: 1,
@@ -329,20 +332,22 @@ function AnswerSlot({ rank, text, points, revealed, animIndex }: {
             <Typography sx={{
               ...fontSx,
               flex: 1,
-              fontSize: '1.9rem',
+              fontSize: '2rem',
               color: '#fff',
               fontWeight: 700,
               textTransform: 'uppercase',
               letterSpacing: '0.04em',
+              textAlign: 'left',
             }}>
               {text}
             </Typography>
             <Typography sx={{
               ...fontSx,
-              fontSize: '1.9rem',
+              fontSize: '2rem',
               color: GOLD,
               fontWeight: 900,
               flexShrink: 0,
+              pr: 3,
             }}>
               {points}
             </Typography>
@@ -356,10 +361,9 @@ function AnswerSlot({ rank, text, points, revealed, animIndex }: {
 function StrikesPanel({ count }: { count: number }) {
   return (
     <Box sx={{
-      width: '360px',
-      height: '180px',
+      flex: 1,
+      height: '120px',
       position: 'relative',
-      flexShrink: 0,
     }}>
       {/* Layer 1: Dark fill */}
       <Box
@@ -431,10 +435,9 @@ function MultiplierPanel({ mult }: { mult: number }) {
   if (mult <= 1) return null;
   return (
     <Box sx={{
-      width: '600px',
-      height: '180px',
+      flex: 1,
+      height: '120px',
       position: 'relative',
-      flexShrink: 0,
     }}>
       {/* Layer 1: Banner frame */}
       <Box
@@ -476,10 +479,9 @@ function MultiplierPanel({ mult }: { mult: number }) {
 function RoundTotalPanel({ round, bank }: { round: number; bank: number }) {
   return (
     <Box sx={{
-      width: '400px',
-      height: '180px',
+      flex: 1,
+      height: '120px',
       position: 'relative',
-      flexShrink: 0,
     }}>
       {/* Layer 1: Dark fill */}
       <Box
@@ -518,7 +520,7 @@ function RoundTotalPanel({ round, bank }: { round: number; bank: number }) {
       }}>
         <Typography sx={{
           ...fontSx,
-          fontSize: '0.9rem',
+          fontSize: '1.1rem',
           color: '#4fc3f7',
           letterSpacing: '0.14em',
           fontWeight: 700,
@@ -528,7 +530,7 @@ function RoundTotalPanel({ round, bank }: { round: number; bank: number }) {
         </Typography>
         <Typography sx={{
           ...fontSx,
-          fontSize: '3rem',
+          fontSize: '3.5rem',
           color: GOLD,
           fontWeight: 900,
           lineHeight: 1,
@@ -580,22 +582,25 @@ function StealBanner({ teamName, color }: { teamName: string; color: string }) {
   return (
     <Box sx={{
       position: 'absolute',
-      bottom: '18%',
+      bottom: '14%',
       left: '50%',
       transform: 'translateX(-50%)',
       zIndex: 15,
-      border: `2px solid ${color}`,
-      borderRadius: 2,
-      px: 4,
-      py: 1.5,
-      background: `radial-gradient(ellipse at 50% 50%, ${color}22, ${BG}ee)`,
-      boxShadow: `0 0 30px ${color}55`,
+      width: '700px',
+      height: '120px',
       animation: 'ssFadeIn 0.3s ease-out',
-      whiteSpace: 'nowrap',
+      pointerEvents: 'none',
     }}>
-      <Typography sx={{ ...fontSx, fontSize: 'clamp(1rem, 2vw, 1.6rem)', color, fontWeight: 900, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
-        {teamName} — STEAL OPPORTUNITY
-      </Typography>
+      <Box
+        component="img"
+        src="/survey-says/overlays/prompt-overlay-lower-third.png"
+        sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'fill' }}
+      />
+      <Box sx={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Typography sx={{ ...fontSx, fontSize: '1.8rem', color, fontWeight: 900, letterSpacing: '0.12em', textTransform: 'uppercase', textShadow: `0 0 20px ${color}` }}>
+          {teamName} — STEAL OPPORTUNITY
+        </Typography>
+      </Box>
     </Box>
   );
 }
@@ -965,7 +970,7 @@ export const SSShowComponent = () => {
         }}>
 
         {/* ── Top row: Score | Question | Score ── */}
-        <Box sx={{ display: 'flex', gap: '16px', alignItems: 'stretch', height: '300px', flexShrink: 0 }}>
+        <Box sx={{ display: 'flex', gap: '16px', alignItems: 'stretch', height: '180px', flexShrink: 0, overflow: 'visible' }}>
         <ScorePanel team={teams[0]} active={activeTeamId === teams[0].id} colorHex={TEAM_COLORS[0]} player={activeTeamId === teams[0].id ? activePlayer : null} />
         <QuestionPanel question={questionRevealed ? (currentBoard?.question ?? '') : ''} boardSlotsVisible={boardSlotsVisible} buzzArmed={buzzArmed} />
         <ScorePanel team={teams[1]} active={activeTeamId === teams[1].id} colorHex={TEAM_COLORS[1]} player={activeTeamId === teams[1].id ? activePlayer : null} />
@@ -974,7 +979,7 @@ export const SSShowComponent = () => {
         {/* ── Answer board — fills remaining space ── */}
         <Box sx={{ flex: 1, display: 'flex', gap: '16px', minHeight: 0 }}>
         {/* Left column: answers 1-4 */}
-        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
           {boardSlotsVisible && Array.from({ length: maxRows }, (_, row) => {
             const answer = leftSlots[row];
             if (!answer) return <Box key={`left-empty-${row}`} sx={{ flex: 1 }} />;
@@ -993,7 +998,7 @@ export const SSShowComponent = () => {
         </Box>
 
         {/* Right column: answers 5-8 */}
-        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
           {boardSlotsVisible && slotCount > 4 && Array.from({ length: maxRows }, (_, row) => {
             const answer = rightSlots[row];
             if (!answer) return <Box key={`right-empty-${row}`} sx={{ flex: 1 }} />;
@@ -1013,12 +1018,11 @@ export const SSShowComponent = () => {
         </Box>
 
         {/* ── Bottom row: Multiplier | spacer | Round Total | Strikes ── */}
-        <Box sx={{ display: 'flex', gap: '16px', alignItems: 'stretch', height: '180px', flexShrink: 0 }}>
+        <Box sx={{ display: 'flex', gap: '16px', alignItems: 'stretch', height: '120px', flexShrink: 0 }}>
         {mult > 1
           ? <MultiplierPanel mult={mult} />
           : <Box sx={{ flex: 1 }} />
         }
-        <Box sx={{ flex: 1 }} />
         <RoundTotalPanel round={roundState.currentRound} bank={roundState.roundBank} />
         <StrikesPanel count={roundState.strikeCount} />
         </Box>
