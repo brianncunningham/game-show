@@ -22,77 +22,101 @@ const fontSx = { fontFamily: '"Barlow Condensed", Impact, sans-serif' };
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function ScorePanel({ team, active, colorHex, player }: { team: SurveyTeam; active: boolean; colorHex: string; player?: string | null }) {
+  const teamColor = colorHex === TEAM_COLORS[0] ? 'cyan' : 'orange';
+  const borderAsset = active
+    ? `/survey-says/borders/score-panel-${teamColor}-active.png`
+    : `/survey-says/borders/score-panel-${teamColor}-inactive.png`;
+
   return (
     <Box sx={{
-      width: 'clamp(160px, 18vw, 240px)',
+      width: '400px',
+      height: '280px',
+      position: 'relative',
       flexShrink: 0,
-      border: active ? `4px solid ${colorHex}` : `2px solid ${colorHex}55`,
-      borderRadius: 2,
-      px: 2,
-      py: 1.5,
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      background: active
-        ? `${HALFTONE_DOT}, radial-gradient(ellipse at 50% 30%, ${colorHex}55 0%, #080a1a 70%)`
-        : `${HALFTONE_DOT}, #080a1acc`,
-      backgroundSize: '6px 6px, 100%',
-      transition: 'all 0.4s ease',
-      animation: active ? `ssActiveGlow_${colorHex.replace('#', '')} 1.4s ease-in-out infinite` : 'none',
-      [`@keyframes ssActiveGlow_${colorHex.replace('#', '')}`]: {
-        '0%, 100%': { boxShadow: `0 0 20px ${colorHex}dd, 0 0 45px ${colorHex}88, 0 0 80px ${colorHex}44, inset 0 0 18px ${colorHex}33` },
-        '50%': { boxShadow: `0 0 35px ${colorHex}ff, 0 0 70px ${colorHex}cc, 0 0 120px ${colorHex}66, inset 0 0 28px ${colorHex}55` },
-      },
-      boxShadow: active ? undefined : `0 0 15px ${colorHex}33, 0 0 30px ${colorHex}11`,
     }}>
-      <Typography sx={{
-        ...fontSx,
-        fontSize: 'clamp(0.85rem, 1.6vw, 1.2rem)',
-        color: active ? colorHex : colorHex + 'aa',
-        fontWeight: 700,
-        letterSpacing: '0.14em',
-        textTransform: 'uppercase',
-        textShadow: active ? `0 0 16px ${colorHex}` : 'none',
+      {/* Layer 1: Dark fill */}
+      <Box
+        component="img"
+        src="/survey-says/backgrounds/panel-fill-dark.png"
+        sx={{
+          position: 'absolute',
+          inset: 0,
+          width: '100%',
+          height: '100%',
+          objectFit: 'fill',
+        }}
+      />
+      
+      {/* Layer 2: Border frame */}
+      <Box
+        component="img"
+        src={borderAsset}
+        sx={{
+          position: 'absolute',
+          inset: 0,
+          width: '100%',
+          height: '100%',
+          objectFit: 'fill',
+        }}
+      />
+      
+      {/* Layer 3: Text content */}
+      <Box sx={{
+        position: 'absolute',
+        inset: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 1,
       }}>
-        {team.name}
-      </Typography>
-      <Typography sx={{
-        ...fontSx,
-        fontSize: 'clamp(2.8rem, 5.5vw, 5rem)',
-        color: active ? '#fff' : '#ffffffcc',
-        fontWeight: 900,
-        lineHeight: 1,
-        textShadow: active ? `0 0 30px ${colorHex}88` : 'none',
-      }}>
-        {team.score}
-      </Typography>
-      {active && player && (
-        <Box sx={{
-          mt: 0.75,
-          px: 1.25,
-          py: 0.3,
-          borderRadius: 999,
-          border: `1.5px solid ${colorHex}`,
-          background: `${colorHex}22`,
-          maxWidth: '100%',
+        <Typography sx={{
+          ...fontSx,
+          fontSize: '1.2rem',
+          color: active ? colorHex : colorHex + 'aa',
+          fontWeight: 700,
+          letterSpacing: '0.14em',
+          textTransform: 'uppercase',
+          textShadow: active ? `0 0 16px ${colorHex}` : 'none',
         }}>
-          <Typography sx={{
-            ...fontSx,
-            fontSize: 'clamp(0.8rem, 1.5vw, 1.3rem)',
-            color: '#fff',
-            fontWeight: 700,
-            letterSpacing: '0.06em',
-            textTransform: 'uppercase',
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            textShadow: `0 0 12px ${colorHex}`,
+          {team.name}
+        </Typography>
+        <Typography sx={{
+          ...fontSx,
+          fontSize: '5rem',
+          color: active ? '#fff' : '#ffffffcc',
+          fontWeight: 900,
+          lineHeight: 1,
+          textShadow: active ? `0 0 30px ${colorHex}88` : 'none',
+        }}>
+          {team.score}
+        </Typography>
+        {active && player && (
+          <Box sx={{
+            px: 1.5,
+            py: 0.5,
+            borderRadius: 999,
+            border: `2px solid ${colorHex}`,
+            background: `${colorHex}22`,
+            maxWidth: '90%',
           }}>
-            {player}
-          </Typography>
-        </Box>
-      )}
+            <Typography sx={{
+              ...fontSx,
+              fontSize: '1.3rem',
+              color: '#fff',
+              fontWeight: 700,
+              letterSpacing: '0.06em',
+              textTransform: 'uppercase',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              textShadow: `0 0 12px ${colorHex}`,
+            }}>
+              {player}
+            </Typography>
+          </Box>
+        )}
+      </Box>
     </Box>
   );
 }
@@ -101,87 +125,86 @@ function QuestionPanel({ question, boardSlotsVisible, buzzArmed }: { question: s
   return (
     <Box sx={{
       flex: 1,
-      border: `2px solid ${buzzArmed ? '#4fc3f7' : GOLD + '55'}`,
-      borderRadius: 2,
-      px: 3,
-      py: 1.5,
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: 1,
-      background: `${HALFTONE_DOT}, linear-gradient(135deg, #0a0e2a 0%, #0d1235 100%)`,
-      backgroundSize: '6px 6px, 100%',
-      boxShadow: buzzArmed ? `0 0 32px #4fc3f788` : `0 0 24px ${GOLD}22`,
-      transition: 'border-color 0.4s, box-shadow 0.4s',
+      height: '300px',
       position: 'relative',
     }}>
-      {/* SURVEY SAYS emblem badge - always visible, overlaps top */}
-      <Box sx={{
-        position: 'absolute',
-        top: -28,
-        left: '50%',
-        transform: 'translateX(-50%)',
-        zIndex: 10,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}>
+      {/* Layer 1: Dark fill */}
+      <Box
+        component="img"
+        src="/survey-says/backgrounds/panel-fill-dark.png"
+        sx={{
+          position: 'absolute',
+          inset: 0,
+          width: '100%',
+          height: '100%',
+          objectFit: 'fill',
+        }}
+      />
+      
+      {/* Layer 2: Border */}
+      <Box
+        component="img"
+        src="/survey-says/borders/question-panel-border.png"
+        sx={{
+          position: 'absolute',
+          inset: 0,
+          width: '100%',
+          height: '100%',
+          objectFit: 'fill',
+        }}
+      />
+      
+      {/* Layer 3: Emblem (when no question) */}
+      {!boardSlotsVisible && (
+        <Box
+          component="img"
+          src="/survey-says/emblem/survey-says-emblem.png"
+          sx={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: '800px',
+            height: '300px',
+            objectFit: 'contain',
+          }}
+        />
+      )}
+      
+      {/* Layer 4: Question text */}
+      {boardSlotsVisible && question && (
         <Box sx={{
-          position: 'relative',
-          width: 'clamp(180px, 24vw, 280px)',
-          height: 'clamp(50px, 7vh, 70px)',
-          borderRadius: '50%',
-          border: `3px solid ${GOLD}`,
-          background: `${HALFTONE_DOT}, radial-gradient(ellipse at 50% 50%, #1a0e30, #0d0620)`,
-          backgroundSize: '6px 6px, 100%',
-          boxShadow: `0 0 20px ${GOLD}88, 0 0 40px ${GOLD}44, inset 0 0 15px ${GOLD}22`,
+          position: 'absolute',
+          inset: 0,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          '&::before': {
-            content: '""',
-            position: 'absolute',
-            inset: -8,
-            borderRadius: '50%',
-            background: `repeating-conic-gradient(from 0deg, ${GOLD}dd 0deg 12deg, transparent 12deg 24deg)`,
-            opacity: 0.6,
-            zIndex: -1,
-          },
+          px: 4,
         }}>
           <Typography sx={{
             ...fontSx,
-            fontSize: 'clamp(0.9rem, 1.6vw, 1.4rem)',
-            color: GOLD,
-            fontWeight: 900,
-            letterSpacing: '0.15em',
+            fontSize: '1.8rem',
+            color: '#fff',
+            fontWeight: 700,
             textTransform: 'uppercase',
-            textShadow: `0 0 12px ${GOLD}cc`,
+            letterSpacing: '0.06em',
+            textAlign: 'center',
+            lineHeight: 1.2,
           }}>
-            SURVEY SAYS
+            {question}
           </Typography>
         </Box>
-      </Box>
-
-      {boardSlotsVisible && question ? (
-        <Typography sx={{
-          ...fontSx,
-          fontSize: 'clamp(1rem, 2.2vw, 1.8rem)',
-          color: '#fff',
-          fontWeight: 700,
-          textTransform: 'uppercase',
-          letterSpacing: '0.06em',
-          textAlign: 'center',
-          lineHeight: 1.2,
-          mt: 2,
-        }}>
-          {question}
-        </Typography>
-      ) : null}
+      )}
+      
+      {/* Buzz armed indicator */}
       {buzzArmed && (
         <Typography sx={{
+          position: 'absolute',
+          bottom: 16,
+          left: '50%',
+          transform: 'translateX(-50%)',
           ...fontSx,
-          fontSize: 'clamp(0.75rem, 1.4vw, 1.1rem)',
+          fontSize: '1.1rem',
           color: '#4fc3f7',
           fontWeight: 900,
           letterSpacing: '0.22em',
@@ -211,23 +234,16 @@ function AnswerSlot({ rank, text, points, revealed, animIndex }: {
 
   if (!visible) return null;
 
+  const borderAsset = revealed
+    ? '/survey-says/borders/answer-slot-border-revealed.png'
+    : '/survey-says/borders/answer-slot-border.png';
+
   return (
     <Box sx={{
       flex: 1,
-      display: 'flex',
-      alignItems: 'center',
-      border: `2px solid ${revealed ? GOLD : GOLD + '33'}`,
-      borderRadius: 2,
-      px: 'clamp(10px, 1.5vw, 20px)',
-      background: revealed
-        ? `${HALFTONE_DOT}, linear-gradient(90deg, #0d1020ee, #0a0d18ee)`
-        : `${HALFTONE_DOT}, #080b1cee`,
-      backgroundSize: '6px 6px, 100%',
-      gap: 'clamp(10px, 1.5vw, 18px)',
-      boxShadow: revealed ? `0 0 20px ${GOLD}33, inset 0 0 12px ${GOLD}11` : 'none',
-      transition: 'border-color 0.3s, background 0.3s, box-shadow 0.3s',
-      animation: revealed ? 'ssFlipIn 0.35s ease-out' : 'ssFadeIn 0.25s ease-out',
+      position: 'relative',
       minHeight: 0,
+      animation: revealed ? 'ssFlipIn 0.35s ease-out' : 'ssFadeIn 0.25s ease-out',
       '@keyframes ssFlipIn': {
         from: { opacity: 0, transform: 'scaleY(0.15)' },
         to: { opacity: 1, transform: 'scaleY(1)' },
@@ -237,33 +253,96 @@ function AnswerSlot({ rank, text, points, revealed, animIndex }: {
         to: { opacity: 1, transform: 'scale(1)' },
       },
     }}>
+      {/* Layer 1: Dark fill (only if revealed) */}
+      {revealed && (
+        <Box
+          component="img"
+          src="/survey-says/backgrounds/panel-fill-dark.png"
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'fill',
+          }}
+        />
+      )}
+      
+      {/* Layer 2: Border */}
+      <Box
+        component="img"
+        src={borderAsset}
+        sx={{
+          position: 'absolute',
+          inset: 0,
+          width: '100%',
+          height: '100%',
+          objectFit: 'fill',
+        }}
+      />
+      
+      {/* Layer 3: Content */}
       <Box sx={{
-        width: 'clamp(28px, 3.5vw, 48px)',
-        height: 'clamp(28px, 3.5vw, 48px)',
-        borderRadius: '50%',
-        border: `2px solid ${GOLD}`,
+        position: 'absolute',
+        inset: 0,
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'center',
-        flexShrink: 0,
-        background: revealed ? GOLD + '28' : 'transparent',
+        px: 2,
+        gap: 2,
       }}>
-        <Typography sx={{ ...fontSx, fontSize: 'clamp(0.9rem, 1.8vw, 1.5rem)', color: GOLD, fontWeight: 900, lineHeight: 1 }}>
-          {rank}
-        </Typography>
+        {/* Number badge */}
+        <Box sx={{ position: 'relative', width: '48px', height: '48px', flexShrink: 0 }}>
+          <Box
+            component="img"
+            src="/survey-says/borders/answer-number-badge.png"
+            sx={{
+              position: 'absolute',
+              inset: 0,
+              width: '100%',
+              height: '100%',
+            }}
+          />
+          <Typography sx={{
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            ...fontSx,
+            fontSize: '1.5rem',
+            color: GOLD,
+            fontWeight: 900,
+          }}>
+            {rank}
+          </Typography>
+        </Box>
+        
+        {/* Answer text and points */}
+        {revealed && (
+          <>
+            <Typography sx={{
+              ...fontSx,
+              flex: 1,
+              fontSize: '1.9rem',
+              color: '#fff',
+              fontWeight: 700,
+              textTransform: 'uppercase',
+              letterSpacing: '0.04em',
+            }}>
+              {text}
+            </Typography>
+            <Typography sx={{
+              ...fontSx,
+              fontSize: '1.9rem',
+              color: GOLD,
+              fontWeight: 900,
+              flexShrink: 0,
+            }}>
+              {points}
+            </Typography>
+          </>
+        )}
       </Box>
-      {revealed ? (
-        <>
-          <Typography sx={{ ...fontSx, flex: 1, fontSize: 'clamp(1rem, 2.2vw, 1.9rem)', color: '#fff', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', lineHeight: 1 }}>
-            {text}
-          </Typography>
-          <Typography sx={{ ...fontSx, fontSize: 'clamp(1rem, 2.2vw, 1.9rem)', color: GOLD, fontWeight: 900, flexShrink: 0, lineHeight: 1 }}>
-            {points}
-          </Typography>
-        </>
-      ) : (
-        <Box sx={{ flex: 1 }} />
-      )}
     </Box>
   );
 }
@@ -271,45 +350,72 @@ function AnswerSlot({ rank, text, points, revealed, animIndex }: {
 function StrikesPanel({ count }: { count: number }) {
   return (
     <Box sx={{
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: 'clamp(4px, 0.8vh, 10px)',
-      border: `2px solid #d946ef`,
-      borderRadius: 2,
-      px: 'clamp(12px, 2vw, 28px)',
-      background: `${HALFTONE_DOT}, #080b1ccc`,
-      backgroundSize: '6px 6px, 100%',
-      minWidth: 'clamp(100px, 14vw, 180px)',
-      boxShadow: '0 0 20px #d946ef44',
+      width: '360px',
+      height: '180px',
+      position: 'relative',
+      flexShrink: 0,
     }}>
-      <Typography sx={{ ...fontSx, fontSize: 'clamp(0.7rem, 1.1vw, 0.95rem)', color: '#ffffff55', fontWeight: 700, letterSpacing: '0.14em' }}>
-        STRIKES
-      </Typography>
-      <Box sx={{ display: 'flex', gap: 'clamp(6px, 1vw, 14px)' }}>
-        {[0, 1, 2].map(i => (
-          <Box key={i} sx={{
-            width: 'clamp(28px, 3.5vw, 46px)',
-            height: 'clamp(28px, 3.5vw, 46px)',
-            borderRadius: '50%',
-            border: `2px solid ${i < count ? '#ff2020' : '#666'}`,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: i < count ? '#ff202033' : 'transparent',
-            boxShadow: i < count ? '0 0 14px #ff202066' : 'none',
-            transition: 'all 0.25s',
-          }}>
-            <Typography sx={{
-              ...fontSx,
-              fontSize: 'clamp(0.9rem, 1.6vw, 1.4rem)',
-              color: i < count ? '#ff2020' : '#666',
-              fontWeight: 900,
-              lineHeight: 1,
-            }}>✕</Typography>
-          </Box>
-        ))}
+      {/* Layer 1: Dark fill */}
+      <Box
+        component="img"
+        src="/survey-says/backgrounds/panel-fill-dark.png"
+        sx={{
+          position: 'absolute',
+          inset: 0,
+          width: '100%',
+          height: '100%',
+          objectFit: 'fill',
+        }}
+      />
+      
+      {/* Layer 2: Border */}
+      <Box
+        component="img"
+        src="/survey-says/borders/strikes-panel-border.png"
+        sx={{
+          position: 'absolute',
+          inset: 0,
+          width: '100%',
+          height: '100%',
+          objectFit: 'fill',
+        }}
+      />
+      
+      {/* Layer 3: Content */}
+      <Box sx={{
+        position: 'absolute',
+        inset: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 1,
+      }}>
+        <Typography sx={{
+          ...fontSx,
+          fontSize: '0.95rem',
+          color: '#ffffff55',
+          fontWeight: 700,
+          letterSpacing: '0.14em',
+        }}>
+          STRIKES
+        </Typography>
+        <Box sx={{ display: 'flex', gap: 1.5 }}>
+          {[0, 1, 2].map(i => (
+            <Box
+              key={i}
+              component="img"
+              src={i < count
+                ? '/survey-says/decorations/strike-x-active.png'
+                : '/survey-says/decorations/strike-x-inactive.png'
+              }
+              sx={{
+                width: '46px',
+                height: '46px',
+              }}
+            />
+          ))}
+        </Box>
       </Box>
     </Box>
   );
@@ -319,30 +425,44 @@ function MultiplierPanel({ mult }: { mult: number }) {
   if (mult <= 1) return null;
   return (
     <Box sx={{
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      border: `3px solid ${GOLD}`,
-      borderRadius: 1,
-      px: 'clamp(12px, 2vw, 28px)',
-      background: `${HALFTONE_DOT}, linear-gradient(135deg, #1a0e30, #2a1540)`,
-      backgroundSize: '6px 6px, 100%',
-      boxShadow: `0 0 24px ${GOLD}55, inset 0 0 20px ${GOLD}11`,
-      minWidth: 'clamp(140px, 18vw, 240px)',
-      clipPath: 'polygon(8% 0%, 92% 0%, 100% 50%, 92% 100%, 8% 100%, 0% 50%)',
+      width: '600px',
+      height: '180px',
       position: 'relative',
-      '&::before': {
-        content: '""',
-        position: 'absolute',
-        inset: -6,
-        border: `2px solid ${GOLD}88`,
-        clipPath: 'polygon(8% 0%, 92% 0%, 100% 50%, 92% 100%, 8% 100%, 0% 50%)',
-        pointerEvents: 'none',
-      },
+      flexShrink: 0,
     }}>
-      <Typography sx={{ ...fontSx, fontSize: 'clamp(1rem, 1.8vw, 1.5rem)', color: GOLD, fontWeight: 900, letterSpacing: '0.1em', textAlign: 'center', textShadow: `0 0 12px ${GOLD}88` }}>
-        {MULTIPLIER_LABELS[mult] ?? `×${mult} POINTS`}
-      </Typography>
+      {/* Layer 1: Banner frame */}
+      <Box
+        component="img"
+        src="/survey-says/borders/multiplier-banner.png"
+        sx={{
+          position: 'absolute',
+          inset: 0,
+          width: '100%',
+          height: '100%',
+          objectFit: 'fill',
+        }}
+      />
+      
+      {/* Layer 2: Text */}
+      <Box sx={{
+        position: 'absolute',
+        inset: 0,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}>
+        <Typography sx={{
+          ...fontSx,
+          fontSize: '1.5rem',
+          color: GOLD,
+          fontWeight: 900,
+          letterSpacing: '0.1em',
+          textAlign: 'center',
+          textShadow: `0 0 12px ${GOLD}88`,
+        }}>
+          {MULTIPLIER_LABELS[mult] ?? `×${mult} POINTS`}
+        </Typography>
+      </Box>
     </Box>
   );
 }
@@ -350,24 +470,66 @@ function MultiplierPanel({ mult }: { mult: number }) {
 function RoundTotalPanel({ round, bank }: { round: number; bank: number }) {
   return (
     <Box sx={{
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: 'clamp(8px, 1.5vw, 16px)',
-      border: `2px solid #4fc3f7`,
-      borderRadius: 2,
-      px: 'clamp(12px, 2vw, 28px)',
-      background: `${HALFTONE_DOT}, #080b1ccc`,
-      backgroundSize: '6px 6px, 100%',
-      minWidth: 'clamp(120px, 16vw, 200px)',
-      boxShadow: '0 0 20px #4fc3f744',
+      width: '400px',
+      height: '180px',
+      position: 'relative',
+      flexShrink: 0,
     }}>
-      <Typography sx={{ ...fontSx, fontSize: 'clamp(0.65rem, 1vw, 0.9rem)', color: '#4fc3f7', letterSpacing: '0.14em', fontWeight: 700, whiteSpace: 'nowrap' }}>
-        ROUND {round} TOTAL:
-      </Typography>
-      <Typography sx={{ ...fontSx, fontSize: 'clamp(1.6rem, 3.5vw, 3rem)', color: GOLD, fontWeight: 900, lineHeight: 1 }}>
-        {bank}
-      </Typography>
+      {/* Layer 1: Dark fill */}
+      <Box
+        component="img"
+        src="/survey-says/backgrounds/panel-fill-dark.png"
+        sx={{
+          position: 'absolute',
+          inset: 0,
+          width: '100%',
+          height: '100%',
+          objectFit: 'fill',
+        }}
+      />
+      
+      {/* Layer 2: Border */}
+      <Box
+        component="img"
+        src="/survey-says/borders/round-total-border.png"
+        sx={{
+          position: 'absolute',
+          inset: 0,
+          width: '100%',
+          height: '100%',
+          objectFit: 'fill',
+        }}
+      />
+      
+      {/* Layer 3: Content */}
+      <Box sx={{
+        position: 'absolute',
+        inset: 0,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 2,
+      }}>
+        <Typography sx={{
+          ...fontSx,
+          fontSize: '0.9rem',
+          color: '#4fc3f7',
+          letterSpacing: '0.14em',
+          fontWeight: 700,
+          whiteSpace: 'nowrap',
+        }}>
+          ROUND {round} TOTAL:
+        </Typography>
+        <Typography sx={{
+          ...fontSx,
+          fontSize: '3rem',
+          color: GOLD,
+          fontWeight: 900,
+          lineHeight: 1,
+        }}>
+          {bank}
+        </Typography>
+      </Box>
     </Box>
   );
 }
@@ -737,108 +899,76 @@ export const SSShowComponent = () => {
   const rightSlots = answers.filter(a => a.rank >= 5);
   const maxRows = Math.max(leftSlots.length, rightSlots.length);
 
+  // Stage scaling for fixed 1920x1080 layout
+  const [scale, setScale] = useState(1);
+  
+  useEffect(() => {
+    const updateScale = () => {
+      const scaleX = window.innerWidth / 1920;
+      const scaleY = window.innerHeight / 1080;
+      setScale(Math.min(scaleX, scaleY));
+    };
+    
+    updateScale();
+    window.addEventListener('resize', updateScale);
+    return () => window.removeEventListener('resize', updateScale);
+  }, []);
+
   return (
     <Box sx={{
-      height: '100vh',
       width: '100vw',
-      bgcolor: BG,
-      backgroundImage: [
-        'radial-gradient(ellipse at 15% 50%, #4a0a5a55 0%, transparent 45%)',
-        'radial-gradient(ellipse at 85% 50%, #0a2a4a55 0%, transparent 45%)',
-        'radial-gradient(ellipse at 50% 0%, #1a1a4a44 0%, transparent 60%)',
-      ].join(', '),
-      display: 'flex',
-      flexDirection: 'column',
-      p: 'clamp(10px, 1.8vw, 24px)',
-      gap: 'clamp(8px, 1.2vw, 16px)',
-      position: 'relative',
+      height: '100vh',
+      bgcolor: '#000',
       overflow: 'hidden',
-      boxSizing: 'border-box',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
     }}>
-      {/* Halftone dot texture overlay */}
+      {/* Fixed 1920x1080 game stage, scaled to fit viewport */}
       <Box sx={{
-        position: 'absolute',
-        inset: 0,
-        background: HALFTONE_DOT,
-        backgroundSize: '6px 6px',
-        opacity: 0.4,
-        pointerEvents: 'none',
-        zIndex: 0,
-      }} />
-
-      {/* Left bulb strip */}
-      <Box sx={{
-        position: 'absolute',
-        left: 'clamp(4px, 0.8vw, 12px)',
-        top: '10%',
-        bottom: '10%',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'space-evenly',
-        gap: 'clamp(8px, 1.5vh, 16px)',
-        zIndex: 0,
-      }}>
-        {Array.from({ length: 8 }).map((_, i) => (
-          <Box key={i} sx={{
-            width: 'clamp(10px, 1.2vw, 16px)',
-            height: 'clamp(10px, 1.2vw, 16px)',
-            borderRadius: '50%',
-            background: 'radial-gradient(circle, #ff2d2d, #aa0000)',
-            boxShadow: '0 0 12px #ff2d2daa, 0 0 24px #ff2d2d55',
-            animation: `bulbPulse ${1.2 + (i * 0.1)}s ease-in-out infinite`,
-            '@keyframes bulbPulse': {
-              '0%, 100%': { opacity: 0.7 },
-              '50%': { opacity: 1 },
-            },
-          }} />)
-        )}
-      </Box>
-
-      {/* Right bulb strip */}
-      <Box sx={{
-        position: 'absolute',
-        right: 'clamp(4px, 0.8vw, 12px)',
-        top: '10%',
-        bottom: '10%',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'space-evenly',
-        gap: 'clamp(8px, 1.5vh, 16px)',
-        zIndex: 0,
-      }}>
-        {Array.from({ length: 8 }).map((_, i) => (
-          <Box key={i} sx={{
-            width: 'clamp(10px, 1.2vw, 16px)',
-            height: 'clamp(10px, 1.2vw, 16px)',
-            borderRadius: '50%',
-            background: 'radial-gradient(circle, #2d9bff, #0055aa)',
-            boxShadow: '0 0 12px #2d9bffaa, 0 0 24px #2d9bff55',
-            animation: `bulbPulse ${1.2 + (i * 0.1)}s ease-in-out infinite`,
-          }} />)
-        )}
-      </Box>
-
-      {/* Content wrapper with higher z-index */}
-      <Box sx={{
+        width: '1920px',
+        height: '1080px',
+        transform: `scale(${scale})`,
+        transformOrigin: 'center center',
         position: 'relative',
-        zIndex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 'clamp(8px, 1.2vw, 16px)',
-        height: '100%',
       }}>
+        {/* Studio background */}
+        <Box
+          component="img"
+          src="/survey-says/backgrounds/studio-background.png"
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            zIndex: 0,
+          }}
+        />
+
+        {/* Content wrapper */}
+        <Box sx={{
+          position: 'relative',
+          zIndex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '16px',
+          height: '100%',
+          p: '24px',
+          boxSizing: 'border-box',
+        }}>
 
         {/* ── Top row: Score | Question | Score ── */}
-        <Box sx={{ display: 'flex', gap: 'clamp(8px, 1.2vw, 16px)', alignItems: 'stretch', height: 'clamp(90px, 14vh, 130px)', flexShrink: 0 }}>
+        <Box sx={{ display: 'flex', gap: '16px', alignItems: 'stretch', height: '300px', flexShrink: 0 }}>
         <ScorePanel team={teams[0]} active={activeTeamId === teams[0].id} colorHex={TEAM_COLORS[0]} player={activeTeamId === teams[0].id ? activePlayer : null} />
         <QuestionPanel question={questionRevealed ? (currentBoard?.question ?? '') : ''} boardSlotsVisible={boardSlotsVisible} buzzArmed={buzzArmed} />
         <ScorePanel team={teams[1]} active={activeTeamId === teams[1].id} colorHex={TEAM_COLORS[1]} player={activeTeamId === teams[1].id ? activePlayer : null} />
         </Box>
 
         {/* ── Answer board — fills remaining space ── */}
-        <Box sx={{ flex: 1, display: 'flex', gap: 'clamp(8px, 1.2vw, 16px)', minHeight: 0 }}>
+        <Box sx={{ flex: 1, display: 'flex', gap: '16px', minHeight: 0 }}>
         {/* Left column: answers 1-4 */}
-        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 'clamp(6px, 1vw, 12px)' }}>
+        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {boardSlotsVisible && Array.from({ length: maxRows }, (_, row) => {
             const answer = leftSlots[row];
             if (!answer) return <Box key={`left-empty-${row}`} sx={{ flex: 1 }} />;
@@ -857,7 +987,7 @@ export const SSShowComponent = () => {
         </Box>
 
         {/* Right column: answers 5-8 */}
-        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 'clamp(6px, 1vw, 12px)' }}>
+        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {boardSlotsVisible && slotCount > 4 && Array.from({ length: maxRows }, (_, row) => {
             const answer = rightSlots[row];
             if (!answer) return <Box key={`right-empty-${row}`} sx={{ flex: 1 }} />;
@@ -877,7 +1007,7 @@ export const SSShowComponent = () => {
         </Box>
 
         {/* ── Bottom row: Multiplier | spacer | Round Total | Strikes ── */}
-        <Box sx={{ display: 'flex', gap: 'clamp(8px, 1.2vw, 16px)', alignItems: 'stretch', height: 'clamp(60px, 10vh, 90px)', flexShrink: 0 }}>
+        <Box sx={{ display: 'flex', gap: '16px', alignItems: 'stretch', height: '180px', flexShrink: 0 }}>
         {mult > 1
           ? <MultiplierPanel mult={mult} />
           : <Box sx={{ flex: 1 }} />
@@ -886,18 +1016,19 @@ export const SSShowComponent = () => {
         <RoundTotalPanel round={roundState.currentRound} bank={roundState.roundBank} />
         <StrikesPanel count={roundState.strikeCount} />
         </Box>
-      </Box>
+        </Box>
 
-      {/* ── Overlays ── */}
-      {faceOffStrikeVisible && strikingTeam && (
-        <FaceOffStrikeOverlay teamName={strikingTeam.name} color={strikingTeamColor} />
-      )}
-      {stealingTeam && roundState.phase === 'steal' && (
-        <StealBanner teamName={stealingTeam.name} color={stealTeamColor} />
-      )}
-      {winner && (
-        <GameOverOverlay winner={winner} teams={teams} />
-      )}
+        {/* ── Overlays ── */}
+        {faceOffStrikeVisible && strikingTeam && (
+          <FaceOffStrikeOverlay teamName={strikingTeam.name} color={strikingTeamColor} />
+        )}
+        {stealingTeam && roundState.phase === 'steal' && (
+          <StealBanner teamName={stealingTeam.name} color={stealTeamColor} />
+        )}
+        {winner && (
+          <GameOverOverlay winner={winner} teams={teams} />
+        )}
+      </Box>
     </Box>
   );
 };
