@@ -39,12 +39,10 @@ export type GamePhase =
   | 'game_over';
 
 export type FaceOffState =
-  | 'showing_board'      // empty numbered slots animating in, no question yet
-  | 'question_revealed'  // question visible, buzzers not yet armed
-  | 'waiting_buzz'       // buzzers armed, waiting
-  | 'player_a_answered'  // A buzzed, awaiting host judgment
-  | 'player_b_answering' // B gets their attempt
-  | 'resolved';          // winner determined, show Play/Pass
+  | 'showing_board'   // empty numbered slots animating in, no question yet
+  | 'waiting_buzz'    // question visible + buzzers armed, waiting for buzz
+  | 'answering'       // a team is answering (faceOffTurnTeamId); host judges answer/strike
+  | 'resolved';       // winner determined, show Play/Pass
 
 export interface RevealedAnswer {
   rank: number;
@@ -57,7 +55,10 @@ export interface SurveySaysRoundState {
   currentBoardId: string | null;
   faceOffState: FaceOffState;
   faceOffWinnerTeamId: string | null; // team that won face-off
-  faceOffStrikeTeamId: string | null; // team that got a face-off strike
+  faceOffStrikeTeamId: string | null; // team that just got a face-off strike (transient, for X overlay)
+  faceOffTurnTeamId: string | null;   // team currently answering during face-off
+  faceOffStandingTeamId: string | null; // team holding a standing (non-#1) answer
+  faceOffStandingRank: number | null;   // rank of the standing answer
   controllingTeamId: string | null;   // team playing main game
   stealingTeamId: string | null;
   strikeCount: number;                // main play strikes (0–3)

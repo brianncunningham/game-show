@@ -98,13 +98,9 @@ router.post('/board/load/:boardId', (req, res) => {
 
 // ─── Face-off ────────────────────────────────────────────────────────────────
 
+// Reveal the question AND arm the buzzers in one step. No arming LED (by design).
 router.post('/faceoff/reveal-question', (_req, res) => {
   res.json(surveySaysStore.revealQuestion());
-});
-
-router.post('/faceoff/arm-buzzers', (_req, res) => {
-  piLed({ effect: 'pulse', color: [0, 80, 220], bpm: 60, min_brightness: 0.1, max_brightness: 0.9 });
-  res.json(surveySaysStore.armBuzzers());
 });
 
 router.post('/faceoff/buzz/:teamId', (req, res) => {
@@ -113,17 +109,18 @@ router.post('/faceoff/buzz/:teamId', (req, res) => {
   res.json(surveySaysStore.recordBuzz(req.params.teamId));
 });
 
-router.post('/faceoff/strike/:teamId', (req, res) => {
+// The currently-answering team gave a correct answer (rank). Resolution is automatic.
+router.post('/faceoff/answer/:rank', (req, res) => {
+  const rank = parseInt(req.params.rank, 10);
+  if (isNaN(rank)) { res.status(400).json({ error: 'rank must be a number' }); return; }
+  piLed({ effect: 'flash', color: [0, 255, 60], flashes: 3, on_ms: 150, off_ms: 80 });
+  res.json(surveySaysStore.faceOffAnswer(rank));
+});
+
+// The currently-answering team was wrong. Turn passes / resolves automatically.
+router.post('/faceoff/strike', (_req, res) => {
   piLed({ effect: 'flash', color: [255, 20, 0], flashes: 4, on_ms: 120, off_ms: 80 });
-  res.json(surveySaysStore.recordFaceOffStrike(req.params.teamId));
-});
-
-router.post('/faceoff/resolve/:winnerTeamId', (req, res) => {
-  res.json(surveySaysStore.resolveFaceOff(req.params.winnerTeamId));
-});
-
-router.post('/faceoff/reset-buzzers', (_req, res) => {
-  res.json(surveySaysStore.resetBuzzersOnly());
+  res.json(surveySaysStore.faceOffStrike());
 });
 
 // ─── Play or Pass ─────────────────────────────────────────────────────────────
@@ -185,6 +182,10 @@ router.post('/round/next', (_req, res) => {
   res.json(surveySaysStore.advanceRound());
 });
 
+router.post('/game/new', (_req, res) => {
+  res.json(surveySaysStore.newGame());
+});
+
 router.post('/game/over', (_req, res) => {
   const state = surveySaysStore.getState();
   const winner = [...state.teams].sort((a, b) => b.score - a.score)[0];
@@ -211,7 +212,8 @@ router.post('/saves/:id/load', (req, res) => {
   if (!save) { res.status(404).json({ error: 'Save not found' }); return; }
   const state = surveySaysStore.setBoards(save.boards);
   if (save.config) surveySaysStore.updateConfig({ config: { ...state.config, ...save.config } });
-  res.json(surveySaysStore.getState());
+  // Loading a game always starts fresh: scores 0, round 1, idle.
+  res.json(surveySaysStore.newGame());
 });
 
 router.patch('/saves/:id/config', (req, res) => {

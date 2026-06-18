@@ -24,7 +24,7 @@ function ScorePanel({ team, active, colorHex }: { team: SurveyTeam; active: bool
     <Box sx={{
       width: 'clamp(160px, 18vw, 240px)',
       flexShrink: 0,
-      border: `2px solid ${active ? colorHex : colorHex + '66'}`,
+      border: active ? `4px solid ${colorHex}` : `2px solid ${colorHex}55`,
       borderRadius: 2,
       px: 2,
       py: 1.5,
@@ -33,12 +33,15 @@ function ScorePanel({ team, active, colorHex }: { team: SurveyTeam; active: bool
       alignItems: 'center',
       justifyContent: 'center',
       background: active
-        ? `radial-gradient(ellipse at 50% 30%, ${colorHex}30 0%, #080a1a 65%)`
+        ? `radial-gradient(ellipse at 50% 30%, ${colorHex}55 0%, #080a1a 70%)`
         : `#080a1acc`,
-      boxShadow: active
-        ? `0 0 40px ${colorHex}88, 0 0 80px ${colorHex}33, inset 0 0 20px ${colorHex}22`
-        : `0 0 10px ${colorHex}22`,
       transition: 'all 0.4s ease',
+      animation: active ? `ssActiveGlow_${colorHex.replace('#', '')} 1.4s ease-in-out infinite` : 'none',
+      [`@keyframes ssActiveGlow_${colorHex.replace('#', '')}`]: {
+        '0%, 100%': { boxShadow: `0 0 28px ${colorHex}99, 0 0 60px ${colorHex}44, inset 0 0 18px ${colorHex}33` },
+        '50%': { boxShadow: `0 0 55px ${colorHex}ff, 0 0 110px ${colorHex}66, inset 0 0 28px ${colorHex}55` },
+      },
+      boxShadow: active ? undefined : `0 0 10px ${colorHex}22`,
     }}>
       <Typography sx={{
         ...fontSx,
@@ -577,7 +580,9 @@ export const SSShowComponent = () => {
     ? roundState.stealingTeamId
     : roundState.phase === 'main_play' || roundState.phase === 'post_round'
     ? roundState.controllingTeamId
-    : roundState.buzzWinnerTeamId;
+    : roundState.phase === 'face_off' && roundState.faceOffState === 'answering'
+    ? roundState.faceOffTurnTeamId
+    : null;
 
   const strikingTeam = faceOffStrikeVisible
     ? teams.find(t => t.id === roundState.faceOffStrikeTeamId)

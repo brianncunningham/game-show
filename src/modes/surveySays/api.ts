@@ -43,12 +43,10 @@ export const showIntro = () => post('/intro/show');
 export const loadBoard = (boardId: string) => post(`/board/load/${boardId}`);
 
 // ── Face-off ──────────────────────────────────────────────────────────────────
-export const revealQuestion = () => post('/faceoff/reveal-question');
-export const armBuzzers = () => post('/faceoff/arm-buzzers');
+export const revealQuestion = () => post('/faceoff/reveal-question'); // also arms buzzers
 export const recordBuzz = (teamId: string) => post(`/faceoff/buzz/${teamId}`);
-export const recordFaceOffStrike = (teamId: string) => post(`/faceoff/strike/${teamId}`);
-export const resolveFaceOff = (winnerTeamId: string) => post(`/faceoff/resolve/${winnerTeamId}`);
-export const resetBuzzersOnly = () => post('/faceoff/reset-buzzers');
+export const faceOffAnswer = (rank: number) => post(`/faceoff/answer/${rank}`);
+export const faceOffStrike = () => post('/faceoff/strike');
 
 // ── Play or Pass ──────────────────────────────────────────────────────────────
 export const setPlayOrPass = (choice: 'play' | 'pass') => post(`/playorpass/${choice}`);
@@ -65,6 +63,7 @@ export const stealFail = () => post('/steal/fail');
 
 // ── Round transitions ─────────────────────────────────────────────────────────
 export const nextRound = () => post('/round/next');
+export const newGame = () => post('/game/new');
 export const endGame = () => post('/game/over');
 
 // ── Saves ─────────────────────────────────────────────────────────────────────

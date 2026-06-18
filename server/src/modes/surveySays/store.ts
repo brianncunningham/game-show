@@ -28,9 +28,12 @@ const initialRoundState = (): SurveySaysRoundState => ({
   phase: 'idle',
   currentRound: 1,
   currentBoardId: null,
-  faceOffState: 'waiting_buzz',
+  faceOffState: 'showing_board',
   faceOffWinnerTeamId: null,
   faceOffStrikeTeamId: null,
+  faceOffTurnTeamId: null,
+  faceOffStandingTeamId: null,
+  faceOffStandingRank: null,
   controllingTeamId: null,
   stealingTeamId: null,
   strikeCount: 0,
@@ -108,6 +111,9 @@ class SurveySaysStore {
       faceOffState: 'showing_board',
       faceOffWinnerTeamId: null,
       faceOffStrikeTeamId: null,
+      faceOffTurnTeamId: null,
+      faceOffStandingTeamId: null,
+      faceOffStandingRank: null,
       controllingTeamId: null,
       stealingTeamId: null,
       strikeCount: 0,
@@ -118,43 +124,109 @@ class SurveySaysStore {
     });
   }
 
+  // Reveal the question AND arm the buzzers in one step (no separate arm action).
   revealQuestion(): SurveySaysState {
-    return this.patchRound({ faceOffState: 'question_revealed' });
+    return this.patchRound({ faceOffState: 'waiting_buzz' });
   }
 
-  armBuzzers(): SurveySaysState {
-    return this.patchRound({ faceOffState: 'waiting_buzz' });
+  // New game: keep boards/config/team names, reset scores + round to start.
+  newGame(): SurveySaysState {
+    this.state = {
+      ...this.state,
+      teams: this.state.teams.map(t => ({ ...t, score: 0 })) as [SurveyTeam, SurveyTeam],
+      roundState: initialRoundState(),
+      showIntro: true,
+    };
+    return this.state;
   }
 
   // ── Face-off ────────────────────────────────────────────────────────────────
 
+  // First buzz decides who answers first. After this, turns alternate automatically.
   recordBuzz(teamId: string): SurveySaysState {
+    if (this.state.roundState.faceOffState !== 'waiting_buzz') return this.state;
     return this.patchRound({
       buzzWinnerTeamId: teamId,
-      faceOffState: 'player_a_answered',
+      faceOffTurnTeamId: teamId,
+      faceOffStrikeTeamId: null,
+      faceOffState: 'answering',
     });
   }
 
-  recordFaceOffStrike(teamId: string): SurveySaysState {
+  private otherTeamId(teamId: string | null): string {
+    const other = this.state.teams.find(t => t.id !== teamId);
+    return other?.id ?? this.state.teams[0].id;
+  }
+
+  // Reveal an answer onto the board + add its points to the bank (no sweep/award).
+  private addRevealed(rank: number): { bank: number; revealed: SurveySaysRoundState['revealedAnswers'] } {
+    const board = this.state.boards.find(b => b.id === this.state.roundState.currentBoardId);
+    const answer = board?.answers.find(a => a.rank === rank);
+    const bank = this.state.roundState.roundBank + (answer?.points ?? 0);
+    const revealed = [
+      ...this.state.roundState.revealedAnswers,
+      { rank, revealedDuringPlay: true },
+    ];
+    return { bank, revealed };
+  }
+
+  // Host taps the answer the currently-answering team gave during face-off.
+  // Resolution is fully gameplay-driven (never a host "who wins" choice).
+  faceOffAnswer(rank: number): SurveySaysState {
+    const rs = this.state.roundState;
+    if (rs.faceOffState !== 'answering' || !rs.faceOffTurnTeamId) return this.state;
+    const team = rs.faceOffTurnTeamId;
+    const { bank, revealed } = this.addRevealed(rank);
+
+    // #1 answer always wins the face-off immediately.
+    if (rank === 1) {
+      this.patchRound({ roundBank: bank, revealedAnswers: revealed, faceOffStrikeTeamId: null });
+      return this.resolveFaceOff(team);
+    }
+
+    // First valid (non-#1) answer: the other team gets one chance to beat it.
+    if (!rs.faceOffStandingTeamId) {
+      return this.patchRound({
+        roundBank: bank,
+        revealedAnswers: revealed,
+        faceOffStandingTeamId: team,
+        faceOffStandingRank: rank,
+        faceOffTurnTeamId: this.otherTeamId(team),
+        faceOffStrikeTeamId: null,
+      });
+    }
+
+    // Challenger answered: lower rank number = better. Best answer wins control.
+    this.patchRound({ roundBank: bank, revealedAnswers: revealed, faceOffStrikeTeamId: null });
+    const standingRank = rs.faceOffStandingRank ?? Number.MAX_SAFE_INTEGER;
+    const winner = rank < standingRank ? team : rs.faceOffStandingTeamId;
+    return this.resolveFaceOff(winner);
+  }
+
+  // Host marks the currently-answering team wrong.
+  faceOffStrike(): SurveySaysState {
+    const rs = this.state.roundState;
+    if (rs.faceOffState !== 'answering' || !rs.faceOffTurnTeamId) return this.state;
+    const team = rs.faceOffTurnTeamId;
+
+    // If the other team already has a standing answer, this team failed to beat it → they win.
+    if (rs.faceOffStandingTeamId) {
+      this.patchRound({ faceOffStrikeTeamId: team });
+      return this.resolveFaceOff(rs.faceOffStandingTeamId);
+    }
+
+    // No standing answer yet → pass the turn to the other team (alternate until someone answers).
     return this.patchRound({
-      faceOffStrikeTeamId: teamId,
-      faceOffState: 'player_b_answering',
+      faceOffStrikeTeamId: team,
+      faceOffTurnTeamId: this.otherTeamId(team),
     });
   }
 
-  resolveFaceOff(winnerTeamId: string): SurveySaysState {
+  private resolveFaceOff(winnerTeamId: string): SurveySaysState {
     return this.patchRound({
       faceOffWinnerTeamId: winnerTeamId,
       faceOffState: 'resolved',
       phase: 'play_or_pass',
-    });
-  }
-
-  resetBuzzersOnly(): SurveySaysState {
-    return this.patchRound({
-      faceOffState: 'showing_board',
-      faceOffStrikeTeamId: null,
-      buzzWinnerTeamId: null,
     });
   }
 
@@ -199,7 +271,9 @@ class SurveySaysStore {
   addStrike(): SurveySaysState {
     const newStrikes = this.state.roundState.strikeCount + 1;
     if (newStrikes >= 3) {
-      return this.patchRound({ strikeCount: newStrikes, phase: 'steal' });
+      // Auto-hand the steal to the other (non-controlling) team — no host prompt.
+      const stealingTeamId = this.otherTeamId(this.state.roundState.controllingTeamId);
+      return this.patchRound({ strikeCount: newStrikes, phase: 'steal', stealingTeamId });
     }
     return this.patchRound({ strikeCount: newStrikes });
   }
@@ -214,16 +288,14 @@ class SurveySaysStore {
     const { controllingTeamId, stealingTeamId, roundBank } = this.state.roundState;
     const winnerTeamId = success ? stealingTeamId! : controllingTeamId!;
 
-    let finalBank = roundBank;
+    const finalBank = roundBank;
     let newRevealed = [...this.state.roundState.revealedAnswers];
 
+    // On a successful steal we reveal the stolen answer for show, but its points are
+    // NOT added to the bank — the stealing team wins the points accumulated up to the
+    // 3rd strike only.
     if (success && stealAnswerRank !== undefined) {
       newRevealed = [...newRevealed, { rank: stealAnswerRank, revealedDuringPlay: true }];
-      if (this.state.config.addStolenAnswerPoints) {
-        const board = this.state.boards.find(b => b.id === this.state.roundState.currentBoardId);
-        const answer = board?.answers.find(a => a.rank === stealAnswerRank);
-        finalBank += answer?.points ?? 0;
-      }
     }
 
     return this.awardBank(winnerTeamId, finalBank, newRevealed, false);

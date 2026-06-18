@@ -34,10 +34,8 @@ export type GamePhase =
 
 export type FaceOffState =
   | 'showing_board'
-  | 'question_revealed'
   | 'waiting_buzz'
-  | 'player_a_answered'
-  | 'player_b_answering'
+  | 'answering'
   | 'resolved';
 
 export interface RevealedAnswer {
@@ -52,6 +50,9 @@ export interface SurveySaysRoundState {
   faceOffState: FaceOffState;
   faceOffWinnerTeamId: string | null;
   faceOffStrikeTeamId: string | null;
+  faceOffTurnTeamId: string | null;
+  faceOffStandingTeamId: string | null;
+  faceOffStandingRank: number | null;
   controllingTeamId: string | null;
   stealingTeamId: string | null;
   strikeCount: number;

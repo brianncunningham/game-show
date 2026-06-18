@@ -10,12 +10,11 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import type { SurveySaysState, SurveyAnswer } from './types';
 import {
   getState,
-  revealQuestion, armBuzzers,
-  recordBuzz, recordFaceOffStrike, resolveFaceOff, resetBuzzersOnly,
+  revealQuestion, recordBuzz, faceOffAnswer, faceOffStrike,
   setPlayOrPass,
   revealAnswer, revealAnswerPostRound, addStrike,
-  setStealingTeam, stealSuccess, stealFail,
-  nextRound, endGame,
+  stealSuccess, stealFail,
+  nextRound, newGame, endGame,
   loadBoard,
   hideIntro, showIntro,
   listSaves, loadSave,
@@ -85,7 +84,7 @@ export const SSHostComponent = () => {
   const { roundState, teams, boards, config } = state;
   const { phase, currentRound, currentBoardId, faceOffState, strikeCount,
           roundBank, revealedAnswers, controllingTeamId, stealingTeamId,
-          faceOffWinnerTeamId, buzzWinnerTeamId } = roundState;
+          faceOffWinnerTeamId, faceOffTurnTeamId } = roundState;
 
   const currentBoard = boards.find(b => b.id === currentBoardId);
   const mult = config.multiplierSchedule[currentRound - 1]
@@ -96,11 +95,8 @@ export const SSHostComponent = () => {
     ? currentBoard.answers.filter(a => !revealedAnswers.some(r => r.rank === a.rank))
     : [];
 
-  // Derive the currently answering team during face-off
-  // playerA = first buzz winner; playerB = the other team
-  const buzzWinnerTeam = teams.find(t => t.id === buzzWinnerTeamId);
-  const otherTeam = teams.find(t => t.id !== buzzWinnerTeamId);
-  const faceOffAnsweringTeam = faceOffState === 'player_b_answering' ? otherTeam : buzzWinnerTeam;
+  // The team currently answering during face-off (turn alternates automatically).
+  const faceOffAnsweringTeam = teams.find(t => t.id === faceOffTurnTeamId);
   const faceOffAnsweringColor = faceOffAnsweringTeam
     ? (faceOffAnsweringTeam.id === teams[0].id ? TEAM_COLORS[0] : TEAM_COLORS[1])
     : undefined;
@@ -183,8 +179,7 @@ export const SSHostComponent = () => {
               <Grid container spacing={1.5} sx={{ mt: 0.5 }}>
                 <Grid item xs={6} sm={4}>
                   <Button fullWidth variant="contained" sx={bigBtnSx}
-                    disabled={!isIdle && !isGameOver}
-                    onClick={act(() => nextRound())}>
+                    onClick={act(() => newGame())}>
                     New Game
                   </Button>
                 </Grid>
@@ -269,23 +264,21 @@ export const SSHostComponent = () => {
                 <Typography sx={{ ...sectionLabelSx, mb: 0 }}>
                   Face-Off —&nbsp;
                   {faceOffState === 'showing_board' && 'Board showing — reveal question when ready'}
-                  {faceOffState === 'question_revealed' && 'Question visible — arm buzzers when ready'}
                   {faceOffState === 'waiting_buzz' && '🔵 Buzzers armed — waiting for buzz'}
-                  {faceOffState === 'player_a_answered' && `${buzzWinnerTeam?.name ?? 'Player A'} answered`}
-                  {faceOffState === 'player_b_answering' && `${otherTeam?.name ?? 'Player B'} answering`}
+                  {faceOffState === 'answering' && `${faceOffAnsweringTeam?.name ?? ''} answering`}
                   {faceOffState === 'resolved' && 'Resolved'}
                 </Typography>
-                {faceOffAnsweringColor && (
+                {faceOffState === 'answering' && faceOffAnsweringColor && (
                   <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: faceOffAnsweringColor, flexShrink: 0 }} />
                 )}
               </Stack>
 
-              {/* ── Sub-step A: board is showing, host announces answer count ── */}
+              {/* ── Sub-step A: board showing — reveal question (auto-arms buzzers) ── */}
               {faceOffState === 'showing_board' && (
                 <>
                   <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-                    Board slots are visible on the show screen.
-                    Announce the number of answers, then reveal the question.
+                    Board slots are visible on the show screen. Announce the number of
+                    answers, then reveal the question — buzzers arm automatically.
                   </Typography>
                   <Button fullWidth variant="contained" color="info" sx={bigBtnSx}
                     onClick={act(() => revealQuestion())}>
@@ -294,64 +287,20 @@ export const SSHostComponent = () => {
                 </>
               )}
 
-              {/* ── Sub-step B: question shown, arm buzzers ── */}
-              {faceOffState === 'question_revealed' && (
+              {/* ── Sub-step B: armed, waiting for buzz (hardware or manual fallback) ── */}
+              {faceOffState === 'waiting_buzz' && (
                 <>
                   <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-                    Question is on screen. Arm the buzzers when both players are ready.
+                    Buzzers are armed. First team to buzz answers first. Use a button below
+                    only if hardware buzz-in is unavailable.
                   </Typography>
-                  <Button fullWidth variant="contained" color="warning" sx={bigBtnSx}
-                    onClick={act(() => armBuzzers())}>
-                    🔵 Arm Buzzers
-                  </Button>
-                </>
-              )}
-
-              {/* ── Sub-step C: buzzers armed, manual buzz buttons ── */}
-              {faceOffState === 'waiting_buzz' && (
-                <Grid container spacing={1.5} sx={{ mb: 1.5 }}>
-                  {teams.map((t, i) => (
-                    <Grid item xs={6} key={t.id}>
-                      <Button fullWidth variant="outlined"
-                        sx={{ ...bigBtnSx, borderColor: TEAM_COLORS[i], color: TEAM_COLORS[i] }}
-                        onClick={act(() => recordBuzz(t.id))}>
-                        {t.name} Buzzed
-                      </Button>
-                    </Grid>
-                  ))}
-                </Grid>
-              )}
-
-              {/* ── Sub-step D: after buzz — judge the answer ── */}
-              {(faceOffState === 'player_a_answered' || faceOffState === 'player_b_answering') && currentBoard && (
-                <>
-                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.75 }}>
-                    Correct answer ({faceOffAnsweringTeam?.name}):
-                  </Typography>
-                  <Stack spacing={0.75} sx={{ mb: 1.5 }}>
-                    {currentBoard.answers.map(a => (
-                      <Button key={a.rank} fullWidth variant="outlined" size="small"
-                        sx={{ justifyContent: 'space-between', textTransform: 'none' }}
-                        onClick={act(() => revealAnswer(a.rank))}>
-                        <span>{a.rank}. {a.text}</span>
-                        <Typography component="span" sx={{ color: '#f5c518', fontWeight: 700 }}>{a.points}</Typography>
-                      </Button>
-                    ))}
-                  </Stack>
-                  <Divider sx={{ my: 1 }} />
-                  <Button fullWidth color="error" variant="outlined" sx={bigBtnSx}
-                    onClick={act(() => recordFaceOffStrike(faceOffAnsweringTeam?.id ?? ''))}>
-                    ✕ Strike — {faceOffAnsweringTeam?.name}
-                  </Button>
-                  <Divider sx={{ my: 1 }} />
-                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.75 }}>Award face-off to:</Typography>
                   <Grid container spacing={1.5}>
                     {teams.map((t, i) => (
                       <Grid item xs={6} key={t.id}>
-                        <Button fullWidth variant="contained"
-                          sx={{ ...bigBtnSx, background: TEAM_COLORS[i], color: '#000', '&:hover': { background: TEAM_COLORS[i] + 'cc' } }}
-                          onClick={act(() => resolveFaceOff(t.id))}>
-                          {t.name} Wins
+                        <Button fullWidth variant="outlined"
+                          sx={{ ...bigBtnSx, borderColor: TEAM_COLORS[i], color: TEAM_COLORS[i] }}
+                          onClick={act(() => recordBuzz(t.id))}>
+                          {t.name} Buzzed
                         </Button>
                       </Grid>
                     ))}
@@ -359,12 +308,41 @@ export const SSHostComponent = () => {
                 </>
               )}
 
-              {/* Always available: next pair resets back to showing_board */}
-              <Divider sx={{ my: 1.5 }} />
-              <Button fullWidth variant="outlined" color="inherit" sx={bigBtnSx}
-                onClick={act(() => resetBuzzersOnly())}>
-                Next Pair (Same Board)
-              </Button>
+              {/* ── Sub-step C: a team is answering — only answer-or-strike, gameplay decides winner ── */}
+              {faceOffState === 'answering' && currentBoard && (
+                <>
+                  <Box sx={{ mb: 1.5, p: 1.25, borderRadius: 1.5,
+                    border: `2px solid ${faceOffAnsweringColor}`,
+                    background: `${faceOffAnsweringColor}1a` }}>
+                    <Typography sx={{ fontWeight: 800, fontSize: '1.05rem', color: faceOffAnsweringColor, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                      🔔 {faceOffAnsweringTeam?.name} buzzed in
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Tap the answer they gave, or strike if wrong. The winner is decided automatically.
+                    </Typography>
+                  </Box>
+
+                  <Stack spacing={0.75} sx={{ mb: 1.5 }}>
+                    {currentBoard.answers.map(a => {
+                      const isRevealed = revealedAnswers.some(r => r.rank === a.rank);
+                      return (
+                        <Button key={a.rank} fullWidth variant="outlined" size="small"
+                          disabled={isRevealed}
+                          sx={{ justifyContent: 'space-between', textTransform: 'none', opacity: isRevealed ? 0.4 : 1 }}
+                          onClick={act(() => faceOffAnswer(a.rank))}>
+                          <span>{a.rank}. {a.text}</span>
+                          <Typography component="span" sx={{ color: '#f5c518', fontWeight: 700 }}>{a.points}</Typography>
+                        </Button>
+                      );
+                    })}
+                  </Stack>
+
+                  <Button fullWidth color="error" variant="contained" sx={bigBtnSx}
+                    onClick={act(() => faceOffStrike())}>
+                    ✕ Strike — {faceOffAnsweringTeam?.name} (wrong)
+                  </Button>
+                </>
+              )}
             </CardContent>
           </Card>
         )}
@@ -474,35 +452,32 @@ export const SSHostComponent = () => {
                 )}
               </Stack>
 
-              {/* Auto-assign steal to the non-controlling team — but allow override */}
-              {!stealingTeamId && stealEligibleTeam && (
-                <Button fullWidth variant="outlined" sx={{ ...bigBtnSx, mb: 1.5, borderColor: stealTeamColor, color: stealTeamColor }}
-                  onClick={act(() => setStealingTeam(stealEligibleTeam.id))}>
-                  {stealEligibleTeam.name} Steals
-                </Button>
-              )}
+              <Box sx={{ mb: 1.5, p: 1.25, borderRadius: 1.5,
+                border: `2px solid ${stealTeamColor}`, background: `${stealTeamColor}1a` }}>
+                <Typography sx={{ fontWeight: 800, fontSize: '1.05rem', color: stealTeamColor, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  🗡️ {stealEligibleTeam?.name} steals for {roundBank}{mult > 1 ? ` ×${mult}` : ''}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  One guess. Tap their answer to win the bank, or strike to give it back.
+                </Typography>
+              </Box>
 
-              {stealingTeamId && unrevealedAnswers.length > 0 && (
-                <>
-                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.75 }}>
-                    Guess an answer:
-                  </Typography>
-                  <Stack spacing={0.75} sx={{ mb: 1.5 }}>
-                    {unrevealedAnswers.map(a => (
-                      <Button key={a.rank} fullWidth variant="outlined" size="small" color="warning"
-                        sx={{ justifyContent: 'space-between', textTransform: 'none' }}
-                        onClick={act(() => stealSuccess(a.rank))}>
-                        <span>{a.rank}. {a.text}</span>
-                        <Typography component="span" sx={{ color: '#f5c518', fontWeight: 700 }}>{a.points}</Typography>
-                      </Button>
-                    ))}
-                  </Stack>
-                </>
+              {unrevealedAnswers.length > 0 && (
+                <Stack spacing={0.75} sx={{ mb: 1.5 }}>
+                  {unrevealedAnswers.map(a => (
+                    <Button key={a.rank} fullWidth variant="outlined" size="small" color="warning"
+                      sx={{ justifyContent: 'space-between', textTransform: 'none' }}
+                      onClick={act(() => stealSuccess(a.rank))}>
+                      <span>{a.rank}. {a.text}</span>
+                      <Typography component="span" sx={{ color: '#f5c518', fontWeight: 700 }}>{a.points}</Typography>
+                    </Button>
+                  ))}
+                </Stack>
               )}
 
               <Button fullWidth color="error" variant="contained" sx={bigBtnSx}
                 onClick={act(() => stealFail())}>
-                ✕ Steal Failed (Wrong Answer / Strike)
+                ✕ Strike — Steal Failed
               </Button>
             </CardContent>
           </Card>
@@ -571,7 +546,7 @@ export const SSHostComponent = () => {
                   </Grid>
                 ))}
               </Grid>
-              <Button fullWidth variant="contained" sx={{ mt: 2, ...bigBtnSx }} onClick={act(() => nextRound())}>
+              <Button fullWidth variant="contained" sx={{ mt: 2, ...bigBtnSx }} onClick={act(() => newGame())}>
                 New Game
               </Button>
             </CardContent>
