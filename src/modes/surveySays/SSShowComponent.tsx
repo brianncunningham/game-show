@@ -1,6 +1,6 @@
 import { Box, Typography } from '@mui/material';
 
-export const FeudShowComponent = () => {
+export const SSShowComponent = () => {
   return (
     <Box sx={{
       display: 'flex',
@@ -22,7 +22,7 @@ export const FeudShowComponent = () => {
           textShadow: '0 0 40px #c8102ecc, 0 0 80px #c8102e66',
         }}
       >
-        Family Feud
+        Survey Says
       </Typography>
       <Box sx={{
         width: { xs: 200, md: 400 },
@@ -41,4 +41,4 @@ export const FeudShowComponent = () => {
   );
 };
 
-export default FeudShowComponent;
+export default SSShowComponent;

@@ -4,7 +4,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { CssBaseline, ThemeProvider, createTheme } from '@mui/material';
 import { registerClientMode } from './shared/modeRegistry';
 import { nttClientMode } from './modes/nameThatTune/clientMode';
-import { feudClientMode } from './modes/familyFeud/clientMode';
+import { surveySaysClientMode } from './modes/surveySays/clientMode';
 import './App.css';
 import GameAdminPage from './pages/GameAdminPage';
 import HostPage from './pages/HostPage';
@@ -12,7 +12,7 @@ import ShowPage from './pages/ShowPage';
 import BuzzerDiagnosticsPage from './pages/BuzzerDiagnosticsPage';
 
 registerClientMode(nttClientMode);
-registerClientMode(feudClientMode);
+registerClientMode(surveySaysClientMode);
 
 const theme = createTheme({
   palette: {
