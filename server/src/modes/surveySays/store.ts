@@ -283,8 +283,15 @@ class SurveySaysStore {
       return this.resolveFaceOff(team);
     }
 
-    // First valid (non-#1) answer: the other team gets one chance to beat it.
+    // First valid (non-#1) answer wins if opponent already struck (faceOffStrikesThisIndex > 0).
+    // Otherwise, opponent gets one chance to beat it.
     if (!rs.faceOffStandingTeamId) {
+      // If opponent already struck, this team wins immediately
+      if (rs.faceOffStrikesThisIndex > 0) {
+        this.patchRound({ roundBank: bank, revealedAnswers: revealed, faceOffStrikeTeamId: null });
+        return this.resolveFaceOff(team);
+      }
+      // Otherwise, set standing answer and give opponent a chance
       return this.patchRound({
         roundBank: bank,
         revealedAnswers: revealed,

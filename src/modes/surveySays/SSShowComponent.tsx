@@ -128,33 +128,37 @@ function QuestionPanel({ question, boardSlotsVisible, buzzArmed }: { question: s
       height: '300px',
       position: 'relative',
     }}>
-      {/* Layer 1: Dark fill */}
-      <Box
-        component="img"
-        src="/survey-says/backgrounds/panel-fill-dark.png"
-        sx={{
-          position: 'absolute',
-          inset: 0,
-          width: '100%',
-          height: '100%',
-          objectFit: 'fill',
-        }}
-      />
+      {/* Layer 1: Dark fill (only when board visible) */}
+      {boardSlotsVisible && (
+        <Box
+          component="img"
+          src="/survey-says/backgrounds/panel-fill-dark.png"
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'fill',
+          }}
+        />
+      )}
       
-      {/* Layer 2: Border */}
-      <Box
-        component="img"
-        src="/survey-says/borders/question-panel-border.png"
-        sx={{
-          position: 'absolute',
-          inset: 0,
-          width: '100%',
-          height: '100%',
-          objectFit: 'fill',
-        }}
-      />
+      {/* Layer 2: Border (only when board visible) */}
+      {boardSlotsVisible && (
+        <Box
+          component="img"
+          src="/survey-says/borders/question-panel-border.png"
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'fill',
+          }}
+        />
+      )}
       
-      {/* Layer 3: Emblem (when no question) */}
+      {/* Layer 3: Emblem (when board not visible) */}
       {!boardSlotsVisible && (
         <Box
           component="img"
@@ -290,8 +294,8 @@ function AnswerSlot({ rank, text, points, revealed, animIndex }: {
         px: 2,
         gap: 2,
       }}>
-        {/* Number badge */}
-        <Box sx={{ position: 'relative', width: '48px', height: '48px', flexShrink: 0 }}>
+        {/* Number badge - always visible */}
+        <Box sx={{ position: 'relative', width: '60px', height: '60px', flexShrink: 0 }}>
           <Box
             component="img"
             src="/survey-says/borders/answer-number-badge.png"
@@ -300,6 +304,7 @@ function AnswerSlot({ rank, text, points, revealed, animIndex }: {
               inset: 0,
               width: '100%',
               height: '100%',
+              objectFit: 'contain',
             }}
           />
           <Typography sx={{
@@ -309,9 +314,10 @@ function AnswerSlot({ rank, text, points, revealed, animIndex }: {
             alignItems: 'center',
             justifyContent: 'center',
             ...fontSx,
-            fontSize: '1.5rem',
+            fontSize: '1.8rem',
             color: GOLD,
             fontWeight: 900,
+            lineHeight: 1,
           }}>
             {rank}
           </Typography>
