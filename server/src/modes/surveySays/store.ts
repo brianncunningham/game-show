@@ -20,9 +20,21 @@ const DEFAULT_CONFIG: SurveySaysConfig = {
 };
 
 const DEFAULT_TEAMS: [SurveyTeam, SurveyTeam] = [
-  { id: 'team-1', name: 'Family 1', score: 0 },
-  { id: 'team-2', name: 'Family 2', score: 0 },
+  { id: 'team-1', name: 'Family 1', score: 0, players: [] },
+  { id: 'team-2', name: 'Family 2', score: 0, players: [] },
 ];
+
+const MAX_POOL = 10;        // 2 families × 5 players
+const MAX_PER_TEAM = 5;
+
+const shuffle = <T,>(items: T[]): T[] => {
+  const next = [...items];
+  for (let i = next.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [next[i], next[j]] = [next[j], next[i]];
+  }
+  return next;
+};
 
 const initialRoundState = (): SurveySaysRoundState => ({
   phase: 'idle',
@@ -49,15 +61,35 @@ const createInitialState = (): SurveySaysState => ({
   boards: [],
   roundState: initialRoundState(),
   showIntro: true,
+  playerPool: [],
+  randomizerSeq: 0,
 });
 
 // ─── Store ────────────────────────────────────────────────────────────────────
 
 class SurveySaysStore {
   private state: SurveySaysState = createInitialState();
+  private history: SurveySaysState[] = [];
 
   getState(): SurveySaysState {
     return this.state;
+  }
+
+  // Snapshot current state so the host can Undo the next action. Call at the
+  // start of every user-facing mutation.
+  private begin(): void {
+    this.history.push(structuredClone(this.state));
+    if (this.history.length > 50) this.history.shift();
+  }
+
+  undo(): SurveySaysState {
+    const prev = this.history.pop();
+    if (prev) this.state = prev;
+    return this.state;
+  }
+
+  canUndo(): boolean {
+    return this.history.length > 0;
   }
 
   reset(): SurveySaysState {
@@ -67,8 +99,62 @@ class SurveySaysStore {
 
   // ── Config ──────────────────────────────────────────────────────────────────
 
-  updateConfig(patch: Partial<Pick<SurveySaysState, 'config' | 'teams' | 'boards'>>): SurveySaysState {
+  updateConfig(patch: Partial<Pick<SurveySaysState, 'config' | 'teams' | 'boards' | 'playerPool'>>): SurveySaysState {
     this.state = { ...this.state, ...patch };
+    return this.state;
+  }
+
+  // ── Players & teams ───────────────────────────────────────────────────────
+
+  setPlayerPool(pool: string[]): SurveySaysState {
+    const cleaned = [...new Set(pool.map(p => p.trim()).filter(Boolean))].slice(0, MAX_POOL);
+    this.begin();
+    // Drop any assigned players no longer in the pool.
+    const teams = this.state.teams.map(t => ({
+      ...t,
+      players: t.players.filter(p => cleaned.includes(p)),
+    })) as [SurveyTeam, SurveyTeam];
+    this.state = { ...this.state, playerPool: cleaned, teams };
+    return this.state;
+  }
+
+  setTeams(teams: SurveyTeam[]): SurveySaysState {
+    this.begin();
+    const next = this.state.teams.map((t, i) => {
+      const incoming = teams.find(x => x.id === t.id) ?? teams[i];
+      if (!incoming) return t;
+      return {
+        ...t,
+        name: incoming.name ?? t.name,
+        players: (incoming.players ?? t.players).slice(0, MAX_PER_TEAM),
+      };
+    }) as [SurveyTeam, SurveyTeam];
+    this.state = { ...this.state, teams: next };
+    return this.state;
+  }
+
+  // Shuffle the pool (max 10) into the two families (max 5 each) and trigger
+  // the /show randomizer animation.
+  randomAssignPlayers(): SurveySaysState {
+    this.begin();
+    const pool = shuffle(this.state.playerPool.filter(Boolean)).slice(0, MAX_POOL);
+    const teams = [
+      { ...this.state.teams[0], players: [] as string[] },
+      { ...this.state.teams[1], players: [] as string[] },
+    ] as [SurveyTeam, SurveyTeam];
+    pool.forEach((player, i) => {
+      const target = i % 2;
+      if (teams[target].players.length >= MAX_PER_TEAM) {
+        teams[(target + 1) % 2].players.push(player);
+      } else {
+        teams[target].players.push(player);
+      }
+    });
+    this.state = {
+      ...this.state,
+      teams,
+      randomizerSeq: this.state.randomizerSeq + 1,
+    };
     return this.state;
   }
 
@@ -105,6 +191,7 @@ class SurveySaysStore {
   }
 
   loadBoard(boardId: string): SurveySaysState {
+    this.begin();
     return this.patchRound({
       phase: 'face_off',
       currentBoardId: boardId,
@@ -126,11 +213,13 @@ class SurveySaysStore {
 
   // Reveal the question AND arm the buzzers in one step (no separate arm action).
   revealQuestion(): SurveySaysState {
+    this.begin();
     return this.patchRound({ faceOffState: 'waiting_buzz' });
   }
 
   // New game: keep boards/config/team names, reset scores + round to start.
   newGame(): SurveySaysState {
+    this.begin();
     this.state = {
       ...this.state,
       teams: this.state.teams.map(t => ({ ...t, score: 0 })) as [SurveyTeam, SurveyTeam],
@@ -145,6 +234,7 @@ class SurveySaysStore {
   // First buzz decides who answers first. After this, turns alternate automatically.
   recordBuzz(teamId: string): SurveySaysState {
     if (this.state.roundState.faceOffState !== 'waiting_buzz') return this.state;
+    this.begin();
     return this.patchRound({
       buzzWinnerTeamId: teamId,
       faceOffTurnTeamId: teamId,
@@ -175,6 +265,7 @@ class SurveySaysStore {
   faceOffAnswer(rank: number): SurveySaysState {
     const rs = this.state.roundState;
     if (rs.faceOffState !== 'answering' || !rs.faceOffTurnTeamId) return this.state;
+    this.begin();
     const team = rs.faceOffTurnTeamId;
     const { bank, revealed } = this.addRevealed(rank);
 
@@ -207,6 +298,7 @@ class SurveySaysStore {
   faceOffStrike(): SurveySaysState {
     const rs = this.state.roundState;
     if (rs.faceOffState !== 'answering' || !rs.faceOffTurnTeamId) return this.state;
+    this.begin();
     const team = rs.faceOffTurnTeamId;
 
     // If the other team already has a standing answer, this team failed to beat it → they win.
@@ -233,6 +325,7 @@ class SurveySaysStore {
   // ── Play or Pass ─────────────────────────────────────────────────────────────
 
   setPlayOrPass(choice: 'play' | 'pass'): SurveySaysState {
+    this.begin();
     const { faceOffWinnerTeamId } = this.state.roundState;
     const otherTeam = this.state.teams.find(t => t.id !== faceOffWinnerTeamId);
     const controllingTeamId = choice === 'play'
@@ -244,6 +337,7 @@ class SurveySaysStore {
   // ── Main Play ────────────────────────────────────────────────────────────────
 
   revealAnswer(rank: number): SurveySaysState {
+    this.begin();
     const board = this.state.boards.find(b => b.id === this.state.roundState.currentBoardId);
     const answer = board?.answers.find(a => a.rank === rank);
     const newBank = this.state.roundState.roundBank + (answer?.points ?? 0);
@@ -269,6 +363,7 @@ class SurveySaysStore {
   }
 
   addStrike(): SurveySaysState {
+    this.begin();
     const newStrikes = this.state.roundState.strikeCount + 1;
     if (newStrikes >= 3) {
       // Auto-hand the steal to the other (non-controlling) team — no host prompt.
@@ -285,6 +380,7 @@ class SurveySaysStore {
   }
 
   resolveSteal(success: boolean, stealAnswerRank?: number): SurveySaysState {
+    this.begin();
     const { controllingTeamId, stealingTeamId, roundBank } = this.state.roundState;
     const winnerTeamId = success ? stealingTeamId! : controllingTeamId!;
 
@@ -304,6 +400,7 @@ class SurveySaysStore {
   // ── Post-round reveal ────────────────────────────────────────────────────────
 
   revealAnswerPostRound(rank: number): SurveySaysState {
+    this.begin();
     const newRevealed = [
       ...this.state.roundState.revealedAnswers,
       { rank, revealedDuringPlay: false },
@@ -350,6 +447,7 @@ class SurveySaysStore {
   }
 
   advanceRound(): SurveySaysState {
+    this.begin();
     const nextRound = this.state.roundState.currentRound + 1;
     return this.patchRound({
       ...initialRoundState(),

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Box, Typography } from '@mui/material';
 import type { SurveySaysState, SurveyTeam } from './types';
 import { getState } from './api';
+import { SSTeamRandomizer } from './SSTeamRandomizer';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -521,6 +522,9 @@ export const SSShowComponent = () => {
   const [faceOffStrikeVisible, setFaceOffStrikeVisible] = useState(false);
   const prevStrikeTeamRef = useRef<string | null>(null);
   const faceOffTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [randomizing, setRandomizing] = useState(false);
+  const prevSeqRef = useRef<number | null>(null);
+  const randomizerHideRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -550,11 +554,33 @@ export const SSShowComponent = () => {
     }
   }, [state?.roundState.faceOffStrikeTeamId]);
 
+  useEffect(() => {
+    const seq = state?.randomizerSeq;
+    if (seq === undefined) return;
+    if (prevSeqRef.current !== null && seq > prevSeqRef.current) {
+      setRandomizing(true);
+    }
+    prevSeqRef.current = seq;
+  }, [state?.randomizerSeq]);
+
   if (!state) {
     return (
       <Box sx={{ height: '100vh', bgcolor: BG, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <Typography sx={{ ...fontSx, color: '#ffffff33', fontSize: '1.2rem', letterSpacing: '0.2em' }}>LOADING…</Typography>
       </Box>
+    );
+  }
+
+  if (randomizing) {
+    return (
+      <SSTeamRandomizer
+        teams={state.teams}
+        playerPool={state.playerPool}
+        onDone={() => {
+          if (randomizerHideRef.current) clearTimeout(randomizerHideRef.current);
+          randomizerHideRef.current = setTimeout(() => setRandomizing(false), 3500);
+        }}
+      />
     );
   }
 

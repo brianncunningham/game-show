@@ -66,6 +66,7 @@ export interface SurveyTeam {
   id: string;
   name: string;
   score: number;
+  players: string[];
 }
 
 export interface SurveySaysState {
@@ -74,4 +75,6 @@ export interface SurveySaysState {
   boards: SurveyBoard[];
   roundState: SurveySaysRoundState;
   showIntro: boolean;
+  playerPool: string[];
+  randomizerSeq: number;
 }

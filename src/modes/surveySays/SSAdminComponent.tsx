@@ -1,19 +1,26 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
   Alert, Box, Button, Card, CardContent, Chip, Divider,
-  IconButton, Stack, Tab, Tabs, TextField, Tooltip, Typography,
+  IconButton, MenuItem, Select, Stack, Tab, Tabs, TextField, Tooltip, Typography,
 } from '@mui/material';
+import ClearIcon from '@mui/icons-material/Clear';
 import DeleteIcon from '@mui/icons-material/Delete';
 import DownloadDoneIcon from '@mui/icons-material/DownloadDone';
+import PeopleIcon from '@mui/icons-material/People';
+import CasinoIcon from '@mui/icons-material/Casino';
 import SettingsBackupRestoreIcon from '@mui/icons-material/SettingsBackupRestore';
 import SaveIcon from '@mui/icons-material/Save';
 import type { SurveySaysState, SurveyBoard, SurveySaysConfig } from './types';
 import {
   getState, updateConfig, setTeamName, setBoards,
+  setPlayerPool, assignPlayers, randomAssignPlayers,
   listSaves, createSave, loadSave as apiLoadSave, deleteSave, patchSaveConfig,
 } from './api';
 import type { SSSaveMeta } from './api';
 import { parseSurveyCSV } from './csvParser';
+import { SSPlayerRosterModal } from './SSPlayerRosterModal';
+
+const MAX_PER_TEAM = 5;
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -246,6 +253,132 @@ function Settings({ state, onRefresh }: { state: SurveySaysState; onRefresh: () 
   );
 }
 
+// ─── Teams & Players ──────────────────────────────────────────────────────────
+
+function TeamsSetup({ state, onRefresh }: { state: SurveySaysState; onRefresh: () => Promise<void> }) {
+  const { teams, playerPool } = state;
+  const [rosterOpen, setRosterOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  const run = async (fn: () => Promise<unknown>) => {
+    setBusy(true);
+    try { await fn(); await onRefresh(); } finally { setBusy(false); }
+  };
+
+  const assignedElsewhere = (teamId: string) =>
+    new Set(teams.filter(t => t.id !== teamId).flatMap(t => t.players));
+  const unassignedFor = (teamId: string) => {
+    const taken = new Set(teams.flatMap(t => t.players));
+    return playerPool.filter(p => !taken.has(p) && !assignedElsewhere(teamId).has(p));
+  };
+
+  const teamsPayload = () => teams.map(t => ({ id: t.id, name: t.name, players: t.players }));
+
+  const addPlayer = (teamId: string, name: string) => {
+    const next = teamsPayload().map(t =>
+      t.id === teamId ? { ...t, players: [...t.players, name].slice(0, MAX_PER_TEAM) } : t
+    );
+    void run(() => assignPlayers(next));
+  };
+  const removePlayer = (teamId: string, name: string) => {
+    const next = teamsPayload().map(t =>
+      t.id === teamId ? { ...t, players: t.players.filter(p => p !== name) } : t
+    );
+    void run(() => assignPlayers(next));
+  };
+  const clearTeam = (teamId: string) => {
+    const next = teamsPayload().map(t => (t.id === teamId ? { ...t, players: [] } : t));
+    void run(() => assignPlayers(next));
+  };
+
+  return (
+    <Stack spacing={2}>
+      <Card>
+        <CardContent>
+          <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1.5 }} flexWrap="wrap" gap={1}>
+            <Typography sx={sectionLabelSx} style={{ marginBottom: 0 }}>Player Pool ({playerPool.length}/10)</Typography>
+            <Stack direction="row" spacing={1}>
+              <Button size="small" variant="outlined" startIcon={<PeopleIcon />} onClick={() => setRosterOpen(true)}>
+                Manage players
+              </Button>
+              <Button size="small" variant="contained" color="secondary" startIcon={<CasinoIcon />}
+                disabled={busy || playerPool.length === 0}
+                onClick={() => void run(() => randomAssignPlayers())}>
+                Random assign
+              </Button>
+            </Stack>
+          </Stack>
+          {playerPool.length === 0 ? (
+            <Typography variant="body2" color="text.secondary">
+              No players in the pool. Add up to 10 via “Manage players”.
+            </Typography>
+          ) : (
+            <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap>
+              {playerPool.map(p => <Chip key={p} label={p} size="small" />)}
+            </Stack>
+          )}
+        </CardContent>
+      </Card>
+
+      {teams.map((team, i) => {
+        const options = unassignedFor(team.id);
+        const full = team.players.length >= MAX_PER_TEAM;
+        return (
+          <Card key={team.id}>
+            <CardContent>
+              <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1.5 }}>
+                <Box sx={{ width: 12, height: 12, borderRadius: '50%', bgcolor: TEAM_COLORS[i] }} />
+                <TextField
+                  size="small" defaultValue={team.name}
+                  onBlur={e => { if (e.target.value.trim()) void run(() => setTeamName(team.id, e.target.value.trim())); }}
+                  onKeyDown={e => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
+                  sx={{ flex: 1 }}
+                />
+                <Chip size="small" label={`${team.players.length}/${MAX_PER_TEAM}`}
+                  sx={{ color: TEAM_COLORS[i], border: `1px solid ${TEAM_COLORS[i]}55` }} variant="outlined" />
+              </Stack>
+
+              <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap sx={{ mb: 1 }}>
+                {team.players.length === 0 && (
+                  <Typography variant="body2" color="text.secondary">No players assigned.</Typography>
+                )}
+                {team.players.map((p, pi) => (
+                  <Chip key={p} label={`${pi + 1}. ${p}`} size="small"
+                    onDelete={() => removePlayer(team.id, p)}
+                    sx={{ borderColor: `${TEAM_COLORS[i]}66` }} variant="outlined" />
+                ))}
+              </Stack>
+
+              <Stack direction="row" spacing={1} alignItems="center">
+                <Select
+                  size="small" displayEmpty value="" disabled={busy || full || options.length === 0}
+                  onChange={e => { if (e.target.value) addPlayer(team.id, e.target.value as string); }}
+                  sx={{ minWidth: 170, fontSize: '0.85rem' }}
+                  renderValue={() => <em>{full ? 'Family full (5)' : 'Add player…'}</em>}
+                >
+                  {options.map(p => <MenuItem key={p} value={p}>{p}</MenuItem>)}
+                </Select>
+                {team.players.length > 0 && (
+                  <Tooltip title="Clear family">
+                    <IconButton size="small" onClick={() => clearTeam(team.id)}><ClearIcon fontSize="small" /></IconButton>
+                  </Tooltip>
+                )}
+              </Stack>
+            </CardContent>
+          </Card>
+        );
+      })}
+
+      <SSPlayerRosterModal
+        open={rosterOpen}
+        currentPool={playerPool}
+        onClose={() => setRosterOpen(false)}
+        onApply={pool => void run(() => setPlayerPool(pool))}
+      />
+    </Stack>
+  );
+}
+
 // ─── Save Manager ─────────────────────────────────────────────────────────────
 
 function SaveManager() {
@@ -382,13 +515,15 @@ export const SSAdminComponent = () => {
 
       <Tabs value={tab} onChange={(_, v: number) => setTab(v)} sx={{ mb: 2 }}>
         <Tab label="Content" />
+        <Tab label="Teams" />
         <Tab label="Settings" />
         <Tab label="Saves" />
       </Tabs>
 
       {tab === 0 && <ContentManager state={state} onRefresh={refresh} />}
-      {tab === 1 && <Settings state={state} onRefresh={refresh} />}
-      {tab === 2 && <SaveManager />}
+      {tab === 1 && <TeamsSetup state={state} onRefresh={refresh} />}
+      {tab === 2 && <Settings state={state} onRefresh={refresh} />}
+      {tab === 3 && <SaveManager />}
     </Box>
   );
 };

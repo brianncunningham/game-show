@@ -1,4 +1,4 @@
-import type { SurveySaysState, SurveySaysConfig, SurveyBoard } from './types';
+import type { SurveySaysState, SurveySaysConfig, SurveyBoard, SurveyTeam } from './types';
 
 const API_BASE = '/api/survey-says';
 
@@ -65,6 +65,34 @@ export const stealFail = () => post('/steal/fail');
 export const nextRound = () => post('/round/next');
 export const newGame = () => post('/game/new');
 export const endGame = () => post('/game/over');
+export const undo = () => post('/undo');
+
+// ── Players & teams ─────────────────────────────────────────────────────────
+export const setPlayerPool = (pool: string[]) => post('/players/pool', { pool });
+export const assignPlayers = (teams: Pick<SurveyTeam, 'id' | 'name' | 'players'>[]) => post('/players/assign', { teams });
+export const randomAssignPlayers = () => post('/players/random-assign');
+
+export const listKnownPlayers = async (): Promise<string[]> => {
+  const res = await fetch(`${API_BASE}/known-players`, { credentials: 'include' });
+  if (!res.ok) throw new Error('SS: failed to list known players');
+  return res.json();
+};
+export const addKnownPlayers = async (names: string[]): Promise<string[]> => {
+  const res = await fetch(`${API_BASE}/known-players`, {
+    method: 'POST', credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ names }),
+  });
+  if (!res.ok) throw new Error('SS: failed to add known players');
+  return res.json();
+};
+export const deleteKnownPlayer = async (name: string): Promise<string[]> => {
+  const res = await fetch(`${API_BASE}/known-players/${encodeURIComponent(name)}`, {
+    method: 'DELETE', credentials: 'include',
+  });
+  if (!res.ok) throw new Error('SS: failed to delete known player');
+  return res.json();
+};
 
 // ── Saves ─────────────────────────────────────────────────────────────────────
 export interface SSSaveMeta {

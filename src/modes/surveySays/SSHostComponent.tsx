@@ -7,6 +7,7 @@ import {
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import UndoIcon from '@mui/icons-material/Undo';
 import type { SurveySaysState, SurveyAnswer } from './types';
 import {
   getState,
@@ -14,8 +15,8 @@ import {
   setPlayOrPass,
   revealAnswer, revealAnswerPostRound, addStrike,
   stealSuccess, stealFail,
-  nextRound, newGame, endGame,
-  loadBoard,
+  nextRound, newGame, endGame, undo,
+  loadBoard, randomAssignPlayers,
   hideIntro, showIntro,
   listSaves, loadSave,
 } from './api';
@@ -131,6 +132,10 @@ export const SSHostComponent = () => {
           color={isMainPlay ? 'warning' : isSteal ? 'error' : isFaceOff ? 'info' : isPostRound ? 'default' : 'default'} />
         {mult > 1 && <Chip label={`×${mult}`} size="small" sx={{ background: '#f5c51822', color: '#f5c518', border: '1px solid #f5c51844' }} />}
         <Box sx={{ flex: 1 }} />
+        <Button size="small" variant="outlined" color="inherit" startIcon={<UndoIcon fontSize="small" />}
+          onClick={act(() => undo())} sx={{ minWidth: 0 }}>
+          Undo
+        </Button>
         {teams.map((t, i) => (
           <Typography key={t.id} sx={{ fontWeight: 700, fontSize: '0.9rem', color: TEAM_COLORS[i] }}>
             {t.name}: {t.score}
@@ -194,6 +199,13 @@ export const SSHostComponent = () => {
                   <Button fullWidth color="error" variant="outlined" sx={bigBtnSx}
                     onClick={act(() => endGame())}>
                     End Game
+                  </Button>
+                </Grid>
+                <Grid item xs={12} sm={8}>
+                  <Button fullWidth variant="contained" color="secondary" sx={bigBtnSx}
+                    disabled={state.playerPool.length === 0}
+                    onClick={act(() => randomAssignPlayers())}>
+                    🎲 Randomize Families {state.playerPool.length === 0 ? '(add players in /gameadmin)' : ''}
                   </Button>
                 </Grid>
               </Grid>

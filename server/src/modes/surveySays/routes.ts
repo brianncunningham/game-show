@@ -2,8 +2,9 @@ import { Router } from 'express';
 import { request as httpRequest } from 'http';
 import { surveySaysStore } from './store.js';
 import { createSSSave, deleteSSSave, listSSSaves, loadSSSave, patchSSSaveConfig } from './saveService.js';
+import { addKnownPlayers, deleteKnownPlayer, listKnownPlayers } from '../../shared/services/knownPlayersService.js';
 import { sendToPico } from '../../shared/buzzer/inputs/hardwareInput.js';
-import type { SurveySaysConfig } from './types.js';
+import type { SurveySaysConfig, SurveyTeam } from './types.js';
 
 const router = Router();
 
@@ -184,6 +185,44 @@ router.post('/round/next', (_req, res) => {
 
 router.post('/game/new', (_req, res) => {
   res.json(surveySaysStore.newGame());
+});
+
+router.post('/undo', (_req, res) => {
+  res.json(surveySaysStore.undo());
+});
+
+// ─── Players & teams ──────────────────────────────────────────────────────────
+
+router.post('/players/pool', (req, res) => {
+  const { pool } = req.body as { pool?: unknown };
+  if (!Array.isArray(pool)) { res.status(400).json({ error: 'pool array required' }); return; }
+  res.json(surveySaysStore.setPlayerPool(pool as string[]));
+});
+
+router.post('/players/assign', (req, res) => {
+  const { teams } = req.body as { teams?: unknown };
+  if (!Array.isArray(teams)) { res.status(400).json({ error: 'teams array required' }); return; }
+  res.json(surveySaysStore.setTeams(teams as SurveyTeam[]));
+});
+
+router.post('/players/random-assign', (_req, res) => {
+  const [c1, c2] = [teamColor('team-1'), teamColor('team-2')];
+  piLed({ effect: 'spin', colors: [c1, c2], settle_colors: [c1, c2], duration_ms: 3000 });
+  res.json(surveySaysStore.randomAssignPlayers());
+});
+
+router.get('/known-players', (_req, res) => {
+  res.json(listKnownPlayers());
+});
+
+router.post('/known-players', (req, res) => {
+  const { names } = req.body as { names?: string[] };
+  if (!Array.isArray(names)) { res.status(400).json({ error: 'names array required' }); return; }
+  res.json(addKnownPlayers(names));
+});
+
+router.delete('/known-players/:name', (req, res) => {
+  res.json(deleteKnownPlayer(decodeURIComponent(req.params.name)));
 });
 
 router.post('/game/over', (_req, res) => {

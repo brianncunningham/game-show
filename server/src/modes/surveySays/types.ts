@@ -74,6 +74,7 @@ export interface SurveyTeam {
   id: string;
   name: string;
   score: number;
+  players: string[];
 }
 
 // ─── Top-level State ─────────────────────────────────────────────────────────
@@ -84,4 +85,6 @@ export interface SurveySaysState {
   boards: SurveyBoard[];              // all boards for this game
   roundState: SurveySaysRoundState;
   showIntro: boolean;
+  playerPool: string[];              // names available to assign to families (max 10)
+  randomizerSeq: number;             // bumps to trigger the /show team randomizer
 }
