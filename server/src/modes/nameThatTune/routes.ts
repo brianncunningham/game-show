@@ -299,8 +299,10 @@ router.patch('/state', (req, res) => {
   res.json(gameShowStore.patch(req.body));
 });
 
+const MODE_ID = 'name-that-tune';
+
 router.get('/saves', (_req, res) => {
-  res.json(listSaves());
+  res.json(listSaves(MODE_ID));
 });
 
 router.post('/saves', (req, res) => {
@@ -316,11 +318,11 @@ router.post('/saves', (req, res) => {
     teamCount: state.teamCount,
     buzzerMode: state.buzzerMode,
   };
-  res.json(createSave(name.trim(), state.questions, config));
+  res.json(createSave(MODE_ID, name.trim(), state.questions, config));
 });
 
 router.post('/saves/:id/load', (req, res) => {
-  const save = loadSave(req.params.id);
+  const save = loadSave(MODE_ID, req.params.id);
   if (!save) {
     res.status(404).json({ error: 'Save not found' });
     return;
@@ -336,13 +338,13 @@ router.post('/saves/:id/load', (req, res) => {
 });
 
 router.patch('/saves/:id/config', (req, res) => {
-  const save = loadSave(req.params.id);
+  const save = loadSave(MODE_ID, req.params.id);
   if (!save) {
     res.status(404).json({ error: 'Save not found' });
     return;
   }
   const state = gameShowStore.getState();
-  const patched = patchSaveConfig(save.id, {
+  const patched = patchSaveConfig(MODE_ID, save.id, {
     rules: state.rules,
     clockConfig: state.clockConfig,
     teamCount: state.teamCount,
@@ -356,7 +358,7 @@ router.patch('/saves/:id/config', (req, res) => {
 });
 
 router.delete('/saves/:id', (req, res) => {
-  const ok = deleteSave(req.params.id);
+  const ok = deleteSave(MODE_ID, req.params.id);
   if (!ok) {
     res.status(404).json({ error: 'Save not found' });
     return;
