@@ -13,6 +13,7 @@ import {
   nextRound, endGame,
   adjustScore,
   loadBoard,
+  hideIntro, showIntro,
 } from './api';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -85,6 +86,23 @@ export const SSHostComponent = () => {
       </Stack>
 
       <Stack spacing={2}>
+
+        {/* ── Intro ── */}
+        <Card>
+          <CardContent>
+            <Typography sx={sectionLabelSx}>Show Screen</Typography>
+            <Stack direction="row" spacing={1}>
+              <Button fullWidth variant={state.showIntro ? 'contained' : 'outlined'} color="secondary"
+                onClick={act(() => showIntro())}>
+                Intro Screen
+              </Button>
+              <Button fullWidth variant={!state.showIntro ? 'contained' : 'outlined'} color="primary"
+                onClick={act(() => hideIntro())}>
+                Game Board
+              </Button>
+            </Stack>
+          </CardContent>
+        </Card>
 
         {/* ── Board selection (idle / between rounds) ── */}
         {(phase === 'idle' || boardsForRound.length > 0) && (

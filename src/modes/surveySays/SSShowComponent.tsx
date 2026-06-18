@@ -344,6 +344,133 @@ function GameOverOverlay({ winner, teams }: { winner: SurveyTeam; teams: [Survey
   );
 }
 
+// ─── Intro Screen ────────────────────────────────────────────────────────────
+
+function IntroScreen({ teams }: { teams: [SurveyTeam, SurveyTeam] }) {
+  return (
+    <Box sx={{
+      height: '100vh',
+      width: '100vw',
+      bgcolor: BG,
+      backgroundImage: 'radial-gradient(ellipse at 30% 40%, #1a0a3a 0%, transparent 55%), radial-gradient(ellipse at 70% 60%, #0a1a3a 0%, transparent 55%)',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      position: 'relative',
+      overflow: 'hidden',
+      gap: 3,
+    }}>
+      {/* Gold accent bar top */}
+      <Box sx={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        height: 4,
+        background: `linear-gradient(90deg, transparent, ${GOLD}, transparent)`,
+        boxShadow: `0 0 20px ${GOLD}88`,
+      }} />
+
+      {/* Title */}
+      <Box sx={{ textAlign: 'center', animation: 'ssFadeIn 0.8s ease-out' }}>
+        <Typography sx={{
+          ...fontSx,
+          fontSize: 'clamp(1rem, 2vw, 1.5rem)',
+          color: '#ffffff55',
+          letterSpacing: '0.3em',
+          textTransform: 'uppercase',
+          mb: 1,
+        }}>
+          WELCOME TO
+        </Typography>
+        <Typography sx={{
+          ...fontSx,
+          fontSize: 'clamp(4rem, 10vw, 9rem)',
+          fontWeight: 900,
+          letterSpacing: '0.04em',
+          textTransform: 'uppercase',
+          lineHeight: 0.9,
+          background: `linear-gradient(180deg, #fff 0%, ${GOLD} 55%, #c89000 100%)`,
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          textShadow: 'none',
+          filter: `drop-shadow(0 0 30px ${GOLD}88)`,
+        }}>
+          SURVEY
+        </Typography>
+        <Typography sx={{
+          ...fontSx,
+          fontSize: 'clamp(4rem, 10vw, 9rem)',
+          fontWeight: 900,
+          letterSpacing: '0.04em',
+          textTransform: 'uppercase',
+          lineHeight: 0.9,
+          background: `linear-gradient(180deg, #fff 0%, ${GOLD} 55%, #c89000 100%)`,
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          filter: `drop-shadow(0 0 30px ${GOLD}88)`,
+        }}>
+          SAYS
+        </Typography>
+      </Box>
+
+      {/* Gold divider */}
+      <Box sx={{
+        width: 'clamp(200px, 40vw, 500px)',
+        height: 3,
+        borderRadius: 2,
+        background: `linear-gradient(90deg, transparent, ${GOLD}, transparent)`,
+        boxShadow: `0 0 16px ${GOLD}66`,
+        my: 1,
+      }} />
+
+      {/* Teams */}
+      <Box sx={{
+        display: 'flex',
+        gap: 'clamp(40px, 10vw, 120px)',
+        animation: 'ssFadeIn 1s ease-out 0.3s both',
+      }}>
+        {teams.map((t, i) => (
+          <Box key={t.id} sx={{ textAlign: 'center' }}>
+            <Box sx={{
+              width: 'clamp(60px, 10vw, 100px)',
+              height: 4,
+              borderRadius: 2,
+              background: TEAM_COLORS[i],
+              boxShadow: `0 0 16px ${TEAM_COLORS[i]}88`,
+              mx: 'auto',
+              mb: 1,
+            }} />
+            <Typography sx={{
+              ...fontSx,
+              fontSize: 'clamp(1.2rem, 2.5vw, 2rem)',
+              color: TEAM_COLORS[i],
+              fontWeight: 800,
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
+              textShadow: `0 0 20px ${TEAM_COLORS[i]}88`,
+            }}>
+              {t.name}
+            </Typography>
+          </Box>
+        ))}
+      </Box>
+
+      {/* Gold accent bar bottom */}
+      <Box sx={{
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        height: 4,
+        background: `linear-gradient(90deg, transparent, ${GOLD}, transparent)`,
+        boxShadow: `0 0 20px ${GOLD}88`,
+      }} />
+    </Box>
+  );
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export const SSShowComponent = () => {
@@ -386,6 +513,10 @@ export const SSShowComponent = () => {
         <Typography sx={{ ...fontSx, color: '#ffffff33', fontSize: '1.2rem', letterSpacing: '0.2em' }}>LOADING…</Typography>
       </Box>
     );
+  }
+
+  if (state.showIntro) {
+    return <IntroScreen teams={state.teams} />;
   }
 
   const { roundState, teams, boards, config } = state;
