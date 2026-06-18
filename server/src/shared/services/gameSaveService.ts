@@ -63,6 +63,14 @@ export const loadSave = (id: string): GameSave | null => {
   }
 };
 
+export const patchSaveConfig = (id: string, config: GameSaveConfig): GameSave | null => {
+  const save = loadSave(id);
+  if (!save) return null;
+  const patched: GameSave = { ...save, config };
+  writeFileSync(savePath(id), JSON.stringify(patched, null, 2));
+  return patched;
+};
+
 export const deleteSave = (id: string): boolean => {
   const path = savePath(id);
   if (!existsSync(path)) return false;

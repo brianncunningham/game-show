@@ -15,7 +15,8 @@ import {
 import DeleteIcon from '@mui/icons-material/Delete';
 import FolderOpenIcon from '@mui/icons-material/FolderOpen';
 import SaveIcon from '@mui/icons-material/Save';
-import { createSave, deleteSave, listSaves, loadSave } from './api';
+import SettingsBackupRestoreIcon from '@mui/icons-material/SettingsBackupRestore';
+import { createSave, deleteSave, listSaves, loadSave, patchSaveConfig } from './api';
 import type { GameSaveMeta } from './api';
 
 interface SaveManagerProps {
@@ -28,6 +29,7 @@ export const SaveManager = ({ onLoaded }: SaveManagerProps) => {
   const [saving, setSaving] = useState(false);
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [patchingId, setPatchingId] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     const list = await listSaves();
@@ -58,6 +60,16 @@ export const SaveManager = ({ onLoaded }: SaveManagerProps) => {
     }
   };
 
+  const handlePatchConfig = async (id: string) => {
+    setPatchingId(id);
+    try {
+      await patchSaveConfig(id);
+      await refresh();
+    } finally {
+      setPatchingId(null);
+    }
+  };
+
   const handleDelete = async (id: string) => {
     setDeletingId(id);
     try {
@@ -74,7 +86,7 @@ export const SaveManager = ({ onLoaded }: SaveManagerProps) => {
         <Stack spacing={2}>
           <Typography variant="h6">Game saves</Typography>
           <Typography variant="body2" color="text.secondary">
-            Saves capture all questions and song metadata for the current game. Loading a save replaces current questions only — teams and scores are unaffected.
+            Saves capture questions and game config (rules, clock, team count, buzzer mode). Loading a save restores all of these.
           </Typography>
 
           <Stack direction="row" spacing={1} alignItems="center">
@@ -125,6 +137,18 @@ export const SaveManager = ({ onLoaded }: SaveManagerProps) => {
                   color="primary" variant="outlined"
                   sx={{ cursor: 'pointer' }}
                 />
+                <Tooltip title="Update this save's config from current settings">
+                  <span>
+                    <IconButton
+                      size="small"
+                      color="info"
+                      disabled={patchingId === save.id}
+                      onClick={() => void handlePatchConfig(save.id)}
+                    >
+                      <SettingsBackupRestoreIcon fontSize="small" />
+                    </IconButton>
+                  </span>
+                </Tooltip>
                 <Tooltip title="Delete save">
                   <IconButton
                     size="small"

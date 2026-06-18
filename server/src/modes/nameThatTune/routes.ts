@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { request as httpRequest } from 'http';
 import { gameShowStore } from './store.js';
-import { createSave, deleteSave, listSaves, loadSave } from '../../shared/services/gameSaveService.js';
+import { createSave, deleteSave, listSaves, loadSave, patchSaveConfig } from '../../shared/services/gameSaveService.js';
 import type { GameSaveConfig } from '../../shared/services/gameSaveService.js';
 import { addKnownPlayers, deleteKnownPlayer, listKnownPlayers } from '../../shared/services/knownPlayersService.js';
 import { sendToPico } from '../../shared/buzzer/inputs/hardwareInput.js';
@@ -333,6 +333,26 @@ router.post('/saves/:id/load', (req, res) => {
     patch.buzzerMode = save.config.buzzerMode;
   }
   res.json(gameShowStore.updateConfig(patch));
+});
+
+router.patch('/saves/:id/config', (req, res) => {
+  const save = loadSave(req.params.id);
+  if (!save) {
+    res.status(404).json({ error: 'Save not found' });
+    return;
+  }
+  const state = gameShowStore.getState();
+  const patched = patchSaveConfig(save.id, {
+    rules: state.rules,
+    clockConfig: state.clockConfig,
+    teamCount: state.teamCount,
+    buzzerMode: state.buzzerMode,
+  });
+  if (!patched) {
+    res.status(500).json({ error: 'Failed to patch save' });
+    return;
+  }
+  res.json(patched);
 });
 
 router.delete('/saves/:id', (req, res) => {

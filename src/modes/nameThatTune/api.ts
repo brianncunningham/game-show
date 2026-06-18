@@ -159,6 +159,14 @@ export const deleteSave = async (id: string): Promise<void> => {
   if (!response.ok) throw new Error('Failed to delete save');
 };
 
+export const patchSaveConfig = async (id: string): Promise<void> => {
+  const response = await fetch(`${API_BASE}/saves/${id}/config`, {
+    method: 'PATCH',
+    credentials: 'include',
+  });
+  if (!response.ok) throw new Error('Failed to patch save config');
+};
+
 export const listKnownPlayers = async (): Promise<string[]> => {
   const response = await fetch(`${API_BASE}/known-players`, { credentials: 'include' });
   if (!response.ok) throw new Error('Failed to list known players');
