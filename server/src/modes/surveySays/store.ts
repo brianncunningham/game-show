@@ -46,6 +46,9 @@ const initialRoundState = (): SurveySaysRoundState => ({
   faceOffTurnTeamId: null,
   faceOffStandingTeamId: null,
   faceOffStandingRank: null,
+  faceOffPlayerIndex: 0,
+  faceOffStrikesThisIndex: 0,
+  mainPlayPlayerIndex: 0,
   controllingTeamId: null,
   stealingTeamId: null,
   strikeCount: 0,
@@ -201,6 +204,10 @@ class SurveySaysStore {
       faceOffTurnTeamId: null,
       faceOffStandingTeamId: null,
       faceOffStandingRank: null,
+      // Round N starts the rotation at player index N-1 (each team mods by its own size).
+      faceOffPlayerIndex: this.state.roundState.currentRound - 1,
+      faceOffStrikesThisIndex: 0,
+      mainPlayPlayerIndex: 0,
       controllingTeamId: null,
       stealingTeamId: null,
       strikeCount: 0,
@@ -239,6 +246,7 @@ class SurveySaysStore {
       buzzWinnerTeamId: teamId,
       faceOffTurnTeamId: teamId,
       faceOffStrikeTeamId: null,
+      faceOffStrikesThisIndex: 0,
       faceOffState: 'answering',
     });
   }
@@ -307,10 +315,22 @@ class SurveySaysStore {
       return this.resolveFaceOff(rs.faceOffStandingTeamId);
     }
 
-    // No standing answer yet → pass the turn to the other team (alternate until someone answers).
+    // No standing answer yet → keep alternating. Once BOTH families have struck at
+    // the current player index, advance the rotation to the next player on each side
+    // and hand the turn back to the family that buzzed in first.
+    const struck = rs.faceOffStrikesThisIndex + 1;
+    if (struck >= 2) {
+      return this.patchRound({
+        faceOffStrikeTeamId: team,
+        faceOffTurnTeamId: rs.buzzWinnerTeamId ?? this.otherTeamId(team),
+        faceOffPlayerIndex: rs.faceOffPlayerIndex + 1,
+        faceOffStrikesThisIndex: 0,
+      });
+    }
     return this.patchRound({
       faceOffStrikeTeamId: team,
       faceOffTurnTeamId: this.otherTeamId(team),
+      faceOffStrikesThisIndex: struck,
     });
   }
 
@@ -326,12 +346,18 @@ class SurveySaysStore {
 
   setPlayOrPass(choice: 'play' | 'pass'): SurveySaysState {
     this.begin();
-    const { faceOffWinnerTeamId } = this.state.roundState;
+    const { faceOffWinnerTeamId, faceOffPlayerIndex } = this.state.roundState;
     const otherTeam = this.state.teams.find(t => t.id !== faceOffWinnerTeamId);
     const controllingTeamId = choice === 'play'
       ? faceOffWinnerTeamId
       : (otherTeam?.id ?? faceOffWinnerTeamId);
-    return this.patchRound({ phase: 'main_play', controllingTeamId });
+    // Main play continues the rotation: the next guesser is the player AFTER the
+    // last face-off guesser on the controlling team.
+    return this.patchRound({
+      phase: 'main_play',
+      controllingTeamId,
+      mainPlayPlayerIndex: faceOffPlayerIndex + 1,
+    });
   }
 
   // ── Main Play ────────────────────────────────────────────────────────────────
@@ -359,18 +385,24 @@ class SurveySaysStore {
       );
     }
 
-    return this.patchRound({ roundBank: newBank, revealedAnswers: newRevealed });
+    // Each guess advances to the next player on the controlling team.
+    return this.patchRound({
+      roundBank: newBank,
+      revealedAnswers: newRevealed,
+      mainPlayPlayerIndex: this.state.roundState.mainPlayPlayerIndex + 1,
+    });
   }
 
   addStrike(): SurveySaysState {
     this.begin();
     const newStrikes = this.state.roundState.strikeCount + 1;
+    const nextGuesser = this.state.roundState.mainPlayPlayerIndex + 1;
     if (newStrikes >= 3) {
       // Auto-hand the steal to the other (non-controlling) team — no host prompt.
       const stealingTeamId = this.otherTeamId(this.state.roundState.controllingTeamId);
       return this.patchRound({ strikeCount: newStrikes, phase: 'steal', stealingTeamId });
     }
-    return this.patchRound({ strikeCount: newStrikes });
+    return this.patchRound({ strikeCount: newStrikes, mainPlayPlayerIndex: nextGuesser });
   }
 
   // ── Steal ────────────────────────────────────────────────────────────────────

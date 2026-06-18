@@ -53,6 +53,9 @@ export interface SurveySaysRoundState {
   faceOffTurnTeamId: string | null;
   faceOffStandingTeamId: string | null;
   faceOffStandingRank: number | null;
+  faceOffPlayerIndex: number;
+  faceOffStrikesThisIndex: number;
+  mainPlayPlayerIndex: number;
   controllingTeamId: string | null;
   stealingTeamId: string | null;
   strikeCount: number;

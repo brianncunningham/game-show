@@ -20,7 +20,7 @@ const fontSx = { fontFamily: '"Barlow Condensed", Impact, sans-serif' };
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-function ScorePanel({ team, active, colorHex }: { team: SurveyTeam; active: boolean; colorHex: string }) {
+function ScorePanel({ team, active, colorHex, player }: { team: SurveyTeam; active: boolean; colorHex: string; player?: string | null }) {
   return (
     <Box sx={{
       width: 'clamp(160px, 18vw, 240px)',
@@ -65,6 +65,32 @@ function ScorePanel({ team, active, colorHex }: { team: SurveyTeam; active: bool
       }}>
         {team.score}
       </Typography>
+      {active && player && (
+        <Box sx={{
+          mt: 0.75,
+          px: 1.25,
+          py: 0.3,
+          borderRadius: 999,
+          border: `1.5px solid ${colorHex}`,
+          background: `${colorHex}22`,
+          maxWidth: '100%',
+        }}>
+          <Typography sx={{
+            ...fontSx,
+            fontSize: 'clamp(0.8rem, 1.5vw, 1.3rem)',
+            color: '#fff',
+            fontWeight: 700,
+            letterSpacing: '0.06em',
+            textTransform: 'uppercase',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            textShadow: `0 0 12px ${colorHex}`,
+          }}>
+            {player}
+          </Typography>
+        </Box>
+      )}
     </Box>
   );
 }
@@ -610,6 +636,16 @@ export const SSShowComponent = () => {
     ? roundState.faceOffTurnTeamId
     : null;
 
+  // Current player name up (rotation wraps by each family's own size). No player during steal.
+  const playerAt = (t: SurveyTeam | undefined, idx: number): string | null =>
+    t && t.players.length ? t.players[((idx % t.players.length) + t.players.length) % t.players.length] : null;
+  const activePlayer =
+    roundState.phase === 'face_off' && roundState.faceOffState === 'answering'
+      ? playerAt(teams.find(t => t.id === roundState.faceOffTurnTeamId), roundState.faceOffPlayerIndex)
+      : roundState.phase === 'main_play' || roundState.phase === 'post_round'
+      ? playerAt(teams.find(t => t.id === roundState.controllingTeamId), roundState.mainPlayPlayerIndex)
+      : null;
+
   const strikingTeam = faceOffStrikeVisible
     ? teams.find(t => t.id === roundState.faceOffStrikeTeamId)
     : null;
@@ -658,9 +694,9 @@ export const SSShowComponent = () => {
 
       {/* ── Top row: Score | Question | Score ── */}
       <Box sx={{ display: 'flex', gap: 'clamp(8px, 1.2vw, 16px)', alignItems: 'stretch', height: 'clamp(90px, 14vh, 130px)', flexShrink: 0 }}>
-        <ScorePanel team={teams[0]} active={activeTeamId === teams[0].id} colorHex={TEAM_COLORS[0]} />
+        <ScorePanel team={teams[0]} active={activeTeamId === teams[0].id} colorHex={TEAM_COLORS[0]} player={activeTeamId === teams[0].id ? activePlayer : null} />
         <QuestionPanel question={questionRevealed ? (currentBoard?.question ?? '') : ''} boardSlotsVisible={boardSlotsVisible} buzzArmed={buzzArmed} />
-        <ScorePanel team={teams[1]} active={activeTeamId === teams[1].id} colorHex={TEAM_COLORS[1]} />
+        <ScorePanel team={teams[1]} active={activeTeamId === teams[1].id} colorHex={TEAM_COLORS[1]} player={activeTeamId === teams[1].id ? activePlayer : null} />
       </Box>
 
       {/* ── Answer board — fills remaining space ── */}

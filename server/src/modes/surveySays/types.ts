@@ -59,6 +59,9 @@ export interface SurveySaysRoundState {
   faceOffTurnTeamId: string | null;   // team currently answering during face-off
   faceOffStandingTeamId: string | null; // team holding a standing (non-#1) answer
   faceOffStandingRank: number | null;   // rank of the standing answer
+  faceOffPlayerIndex: number;         // shared player rotation index (per-team mod size)
+  faceOffStrikesThisIndex: number;    // strikes recorded at the current player index (0–2)
+  mainPlayPlayerIndex: number;        // controlling team's current guesser index
   controllingTeamId: string | null;   // team playing main game
   stealingTeamId: string | null;
   strikeCount: number;                // main play strikes (0–3)

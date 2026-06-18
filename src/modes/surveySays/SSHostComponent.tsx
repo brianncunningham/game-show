@@ -102,6 +102,11 @@ export const SSHostComponent = () => {
     ? (faceOffAnsweringTeam.id === teams[0].id ? TEAM_COLORS[0] : TEAM_COLORS[1])
     : undefined;
 
+  // Current player up (rotation wraps by each family's own size).
+  const playerAt = (t: typeof teams[number] | undefined, idx: number): string | null =>
+    t && t.players.length ? t.players[((idx % t.players.length) + t.players.length) % t.players.length] : null;
+  const faceOffPlayer = playerAt(faceOffAnsweringTeam, roundState.faceOffPlayerIndex);
+
   // The non-controlling team gets the steal
   const stealEligibleTeam = teams.find(t => t.id !== controllingTeamId);
   const stealTeamColor = stealEligibleTeam
@@ -121,6 +126,7 @@ export const SSHostComponent = () => {
   const controllingColor = controllingTeam
     ? (controllingTeam.id === teams[0].id ? TEAM_COLORS[0] : TEAM_COLORS[1])
     : undefined;
+  const mainPlayPlayer = playerAt(controllingTeam, roundState.mainPlayPlayerIndex);
 
   return (
     <Box sx={{ p: { xs: 1.5, md: 2 }, maxWidth: 860, mx: 'auto' }}>
@@ -327,10 +333,10 @@ export const SSHostComponent = () => {
                     border: `2px solid ${faceOffAnsweringColor}`,
                     background: `${faceOffAnsweringColor}1a` }}>
                     <Typography sx={{ fontWeight: 800, fontSize: '1.05rem', color: faceOffAnsweringColor, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                      🔔 {faceOffAnsweringTeam?.name} buzzed in
+                      🔔 {faceOffPlayer ? `${faceOffPlayer} — ` : ''}{faceOffAnsweringTeam?.name}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
-                      Tap the answer they gave, or strike if wrong. The winner is decided automatically.
+                      {faceOffPlayer ? `${faceOffPlayer} is up. ` : ''}Tap the answer they gave, or strike if wrong. The winner is decided automatically.
                     </Typography>
                   </Box>
 
@@ -398,7 +404,7 @@ export const SSHostComponent = () => {
                 <Chip label="4" size="small" color="warning" />
                 <Typography sx={{ ...sectionLabelSx, mb: 0 }}>Main Play</Typography>
                 {controllingTeam && (
-                  <Chip label={`${controllingTeam.name} playing`} size="small"
+                  <Chip label={mainPlayPlayer ? `${mainPlayPlayer} — ${controllingTeam.name}` : `${controllingTeam.name} playing`} size="small"
                     sx={{ ml: 'auto', color: controllingColor, border: `1px solid ${controllingColor}` }} variant="outlined" />
                 )}
                 <Typography variant="caption" color="text.secondary" sx={{ ml: 1 }}>
