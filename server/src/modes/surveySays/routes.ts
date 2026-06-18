@@ -82,6 +82,12 @@ router.post('/intro/show', (_req, res) => {
 
 // ─── Board management ────────────────────────────────────────────────────────
 
+router.post('/boards', (req, res) => {
+  const { boards } = req.body as { boards?: unknown[] };
+  if (!Array.isArray(boards)) { res.status(400).json({ error: 'boards array required' }); return; }
+  res.json(surveySaysStore.setBoards(boards as import('./types.js').SurveyBoard[]));
+});
+
 router.post('/board/load/:boardId', (req, res) => {
   const { boardId } = req.params;
   const board = surveySaysStore.getState().boards.find(b => b.id === boardId);
