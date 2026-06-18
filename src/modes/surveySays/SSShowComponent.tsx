@@ -125,7 +125,7 @@ function QuestionPanel({ question, boardSlotsVisible, buzzArmed }: { question: s
   return (
     <Box sx={{
       flex: 1,
-      height: '220px',
+      height: '110px',
       position: 'relative',
       overflow: 'visible',
     }}>
@@ -165,7 +165,7 @@ function QuestionPanel({ question, boardSlotsVisible, buzzArmed }: { question: s
         src="/survey-says/emblem/survey-says-emblem.png"
         sx={{
           position: 'absolute',
-          top: '-90px',
+          top: '-150px',
           left: '50%',
           transform: 'translateX(-50%)',
           width: '500px',
@@ -504,6 +504,58 @@ function RoundTotalPanel({ round, bank }: { round: number; bank: number }) {
         }}>
           {bank}
         </Typography>
+      </Box>
+    </Box>
+  );
+}
+
+// ─── Face-off Announce Overlay ────────────────────────────────────────────────
+
+function FaceOffAnnounceOverlay({ teamA, playerA, colorA, teamB, playerB, colorB }: {
+  teamA: string; playerA: string | null; colorA: string;
+  teamB: string; playerB: string | null; colorB: string;
+}) {
+  return (
+    <Box sx={{
+      position: 'absolute',
+      inset: 0,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 18,
+      pointerEvents: 'none',
+      background: 'rgba(5,7,26,0.6)',
+      animation: 'ssFadeIn 0.4s ease-out',
+    }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: '60px' }}>
+        {/* Team A */}
+        <Box sx={{ textAlign: 'center' }}>
+          <Typography sx={{ ...fontSx, fontSize: '1.4rem', color: colorA, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', textShadow: `0 0 16px ${colorA}` }}>
+            {teamA}
+          </Typography>
+          {playerA && (
+            <Typography sx={{ ...fontSx, fontSize: '3.6rem', color: '#fff', fontWeight: 900, letterSpacing: '0.06em', textTransform: 'uppercase', lineHeight: 1.1, textShadow: `0 0 24px ${colorA}88` }}>
+              {playerA}
+            </Typography>
+          )}
+        </Box>
+
+        {/* VS */}
+        <Typography sx={{ ...fontSx, fontSize: '3rem', color: GOLD, fontWeight: 900, letterSpacing: '0.1em', textShadow: `0 0 20px ${GOLD}` }}>
+          VS
+        </Typography>
+
+        {/* Team B */}
+        <Box sx={{ textAlign: 'center' }}>
+          <Typography sx={{ ...fontSx, fontSize: '1.4rem', color: colorB, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', textShadow: `0 0 16px ${colorB}` }}>
+            {teamB}
+          </Typography>
+          {playerB && (
+            <Typography sx={{ ...fontSx, fontSize: '3.6rem', color: '#fff', fontWeight: 900, letterSpacing: '0.06em', textTransform: 'uppercase', lineHeight: 1.1, textShadow: `0 0 24px ${colorB}88` }}>
+              {playerB}
+            </Typography>
+          )}
+        </Box>
       </Box>
     </Box>
   );
@@ -1137,6 +1189,16 @@ export const SSShowComponent = () => {
         </Box>
 
         {/* ── Overlays ── */}
+        {roundState.phase === 'face_off' && roundState.faceOffState === 'showing_board' && (() => {
+          const playerAt = (t: SurveyTeam, idx: number) => t.players.length ? t.players[((idx % t.players.length) + t.players.length) % t.players.length] : null;
+          const idx = roundState.faceOffPlayerIndex;
+          return (
+            <FaceOffAnnounceOverlay
+              teamA={teams[0].name} playerA={playerAt(teams[0], idx)} colorA={TEAM_COLORS[0]}
+              teamB={teams[1].name} playerB={playerAt(teams[1], idx)} colorB={TEAM_COLORS[1]}
+            />
+          );
+        })()}
         {faceOffStrikeVisible && strikingTeam && (
           <FaceOffStrikeOverlay teamName={strikingTeam.name} color={strikingTeamColor} />
         )}
