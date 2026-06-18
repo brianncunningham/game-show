@@ -14,7 +14,7 @@ import type { SurveySaysState, SurveyBoard, SurveySaysConfig } from './types';
 import {
   getState, updateConfig, setTeamName, setBoards,
   setPlayerPool, assignPlayers, randomAssignPlayers,
-  listSaves, createSave, loadSave as apiLoadSave, deleteSave, patchSaveConfig,
+  listSaves, createSave, loadSave as apiLoadSave, deleteSave, patchSaveConfig, updateSaveBoards,
 } from './api';
 import type { SSSaveMeta } from './api';
 import { parseSurveyCSV } from './csvParser';
@@ -402,6 +402,7 @@ function SaveManager() {
   const [loading, setLoading] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [patchingId, setPatchingId] = useState<string | null>(null);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     try { setSaves(await listSaves()); } catch { /* ignore */ }
@@ -428,6 +429,11 @@ function SaveManager() {
   const handlePatchConfig = async (id: string) => {
     setPatchingId(id);
     try { await patchSaveConfig(id); await refresh(); } finally { setPatchingId(null); }
+  };
+
+  const handleUpdate = async (id: string) => {
+    setUpdatingId(id);
+    try { await updateSaveBoards(id); await refresh(); } finally { setUpdatingId(null); }
   };
 
   return (
@@ -468,6 +474,12 @@ function SaveManager() {
                     <Button size="small" variant="outlined" disabled={loading}
                       onClick={() => void handleLoad(s.id)}>
                       Load
+                    </Button>
+                  </Tooltip>
+                  <Tooltip title="Overwrite this save with current boards">
+                    <Button size="small" variant="outlined" color="warning" disabled={updatingId === s.id}
+                      onClick={() => void handleUpdate(s.id)}>
+                      Update
                     </Button>
                   </Tooltip>
                   <Tooltip title="Update this save's config from current settings">

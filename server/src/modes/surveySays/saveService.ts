@@ -65,6 +65,14 @@ export const patchSSSaveConfig = (id: string, config: Partial<SurveySaysConfig>)
   return patched;
 };
 
+export const updateSSSave = (id: string, boards: SurveyBoard[], config?: Partial<SurveySaysConfig>): SSSave | null => {
+  const save = loadSSSave(id);
+  if (!save) return null;
+  const updated: SSSave = { ...save, boards, savedAt: new Date().toISOString(), ...(config ? { config } : {}) };
+  writeFileSync(savePath(id), JSON.stringify(updated, null, 2));
+  return updated;
+};
+
 export const deleteSSSave = (id: string): boolean => {
   const path = savePath(id);
   if (!existsSync(path)) return false;

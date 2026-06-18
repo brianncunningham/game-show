@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { request as httpRequest } from 'http';
 import { surveySaysStore } from './store.js';
-import { createSSSave, deleteSSSave, listSSSaves, loadSSSave, patchSSSaveConfig } from './saveService.js';
+import { createSSSave, deleteSSSave, listSSSaves, loadSSSave, patchSSSaveConfig, updateSSSave } from './saveService.js';
 import { addKnownPlayers, deleteKnownPlayer, listKnownPlayers } from '../../shared/services/knownPlayersService.js';
 import { sendToPico } from '../../shared/buzzer/inputs/hardwareInput.js';
 import type { SurveySaysConfig, SurveyTeam } from './types.js';
@@ -261,6 +261,13 @@ router.patch('/saves/:id/config', (req, res) => {
   const patched = patchSSSaveConfig(save.id, surveySaysStore.getState().config);
   if (!patched) { res.status(500).json({ error: 'Failed to patch save' }); return; }
   res.json(patched);
+});
+
+router.patch('/saves/:id/boards', (req, res) => {
+  const state = surveySaysStore.getState();
+  const updated = updateSSSave(req.params.id, state.boards, state.config);
+  if (!updated) { res.status(404).json({ error: 'Save not found' }); return; }
+  res.json(updated);
 });
 
 router.delete('/saves/:id', (req, res) => {

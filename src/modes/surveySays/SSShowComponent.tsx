@@ -165,11 +165,11 @@ function QuestionPanel({ question, boardSlotsVisible, buzzArmed }: { question: s
         src="/survey-says/emblem/survey-says-emblem.png"
         sx={{
           position: 'absolute',
-          top: '-70px',
+          top: '-90px',
           left: '50%',
           transform: 'translateX(-50%)',
           width: '500px',
-          height: '220px',
+          height: '240px',
           objectFit: 'contain',
           zIndex: 10,
           mixBlendMode: 'screen',
@@ -202,28 +202,6 @@ function QuestionPanel({ question, boardSlotsVisible, buzzArmed }: { question: s
         </Box>
       )}
       
-      {/* Buzz armed indicator */}
-      {buzzArmed && (
-        <Typography sx={{
-          position: 'absolute',
-          bottom: 16,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          ...fontSx,
-          fontSize: '1.1rem',
-          color: '#4fc3f7',
-          fontWeight: 900,
-          letterSpacing: '0.22em',
-          textTransform: 'uppercase',
-          animation: 'ssBuzzPulse 0.9s ease-in-out infinite',
-          '@keyframes ssBuzzPulse': {
-            '0%, 100%': { opacity: 1 },
-            '50%': { opacity: 0.3 },
-          },
-        }}>
-          ● BUZZ IN
-        </Typography>
-      )}
     </Box>
   );
 }
@@ -330,7 +308,7 @@ function AnswerSlot({ rank, text, points, revealed, animIndex }: {
             <Typography sx={{
               ...fontSx,
               flex: 1,
-              fontSize: '2rem',
+              fontSize: '2.6rem',
               color: '#fff',
               fontWeight: 700,
               textTransform: 'uppercase',
@@ -341,7 +319,7 @@ function AnswerSlot({ rank, text, points, revealed, animIndex }: {
             </Typography>
             <Typography sx={{
               ...fontSx,
-              fontSize: '2rem',
+              fontSize: '2.6rem',
               color: GOLD,
               fontWeight: 900,
               flexShrink: 0,
@@ -409,8 +387,8 @@ function StrikesPanel({ count }: { count: number }) {
                 : '/survey-says/decorations/strike-x-inactive.png'
               }
               sx={{
-                width: '80px',
-                height: '80px',
+                width: '96px',
+                height: '96px',
               }}
             />
           ))}
@@ -509,7 +487,7 @@ function RoundTotalPanel({ round, bank }: { round: number; bank: number }) {
       }}>
         <Typography sx={{
           ...fontSx,
-          fontSize: '1.8rem',
+          fontSize: '2.2rem',
           color: '#4fc3f7',
           letterSpacing: '0.14em',
           fontWeight: 700,
@@ -586,7 +564,16 @@ function StealBanner({ teamName, color }: { teamName: string; color: string }) {
         sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'fill' }}
       />
       <Box sx={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <Typography sx={{ ...fontSx, fontSize: '1.8rem', color, fontWeight: 900, letterSpacing: '0.12em', textTransform: 'uppercase', textShadow: `0 0 20px ${color}` }}>
+        <Typography sx={{
+          ...fontSx,
+          fontSize: '2rem',
+          color: '#fff',
+          fontWeight: 900,
+          letterSpacing: '0.12em',
+          textTransform: 'uppercase',
+          textShadow: `0 0 8px ${color}, 0 2px 4px #000`,
+          WebkitTextStroke: '1px rgba(0,0,0,0.5)',
+        }}>
           {teamName} — STEAL OPPORTUNITY
         </Typography>
       </Box>

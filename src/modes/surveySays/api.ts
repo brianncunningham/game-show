@@ -129,6 +129,14 @@ export const patchSaveConfig = async (id: string): Promise<void> => {
   if (!res.ok) throw new Error('SS: failed to patch save config');
 };
 
+export const updateSaveBoards = async (id: string): Promise<void> => {
+  const res = await fetch(`${API_BASE}/saves/${id}/boards`, {
+    method: 'PATCH',
+    credentials: 'include',
+  });
+  if (!res.ok) throw new Error('SS: failed to update save boards');
+};
+
 export const deleteSave = async (id: string): Promise<void> => {
   const res = await fetch(`${API_BASE}/saves/${id}`, {
     method: 'DELETE',
