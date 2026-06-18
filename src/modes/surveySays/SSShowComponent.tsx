@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Box, Typography } from '@mui/material';
-import type { SurveySaysState, SurveyBoard, SurveyTeam } from './types';
+import type { SurveySaysState, SurveyTeam } from './types';
 import { getState } from './api';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -22,49 +22,64 @@ const fontSx = { fontFamily: '"Barlow Condensed", Impact, sans-serif' };
 function ScorePanel({ team, active, colorHex }: { team: SurveyTeam; active: boolean; colorHex: string }) {
   return (
     <Box sx={{
-      flex: 1,
-      border: `2px solid ${colorHex}`,
+      width: 'clamp(160px, 18vw, 240px)',
+      flexShrink: 0,
+      border: `2px solid ${active ? colorHex : colorHex + '66'}`,
       borderRadius: 2,
       px: 2,
       py: 1.5,
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
+      justifyContent: 'center',
       background: active
-        ? `radial-gradient(ellipse at 50% 0%, ${colorHex}28 0%, ${BG}cc 70%)`
-        : `${BG}cc`,
+        ? `radial-gradient(ellipse at 50% 30%, ${colorHex}30 0%, #080a1a 65%)`
+        : `#080a1acc`,
       boxShadow: active
-        ? `0 0 32px ${colorHex}66, 0 0 8px ${colorHex}44 inset`
-        : `0 0 8px ${colorHex}22`,
-      transition: 'box-shadow 0.4s, background 0.4s',
+        ? `0 0 40px ${colorHex}88, 0 0 80px ${colorHex}33, inset 0 0 20px ${colorHex}22`
+        : `0 0 10px ${colorHex}22`,
+      transition: 'all 0.4s ease',
     }}>
-      <Typography sx={{ ...fontSx, fontSize: 'clamp(0.8rem, 1.4vw, 1.1rem)', color: colorHex, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+      <Typography sx={{
+        ...fontSx,
+        fontSize: 'clamp(0.85rem, 1.6vw, 1.2rem)',
+        color: active ? colorHex : colorHex + 'aa',
+        fontWeight: 700,
+        letterSpacing: '0.14em',
+        textTransform: 'uppercase',
+        textShadow: active ? `0 0 16px ${colorHex}` : 'none',
+      }}>
         {team.name}
       </Typography>
-      <Typography sx={{ ...fontSx, fontSize: 'clamp(2rem, 4vw, 3.5rem)', color: '#fff', fontWeight: 900, lineHeight: 1.1 }}>
+      <Typography sx={{
+        ...fontSx,
+        fontSize: 'clamp(2.8rem, 5.5vw, 5rem)',
+        color: active ? '#fff' : '#ffffffcc',
+        fontWeight: 900,
+        lineHeight: 1,
+        textShadow: active ? `0 0 30px ${colorHex}88` : 'none',
+      }}>
         {team.score}
       </Typography>
     </Box>
   );
 }
 
-function QuestionPanel({ question, boardRevealed }: { question: string; boardRevealed: boolean }) {
+function QuestionPanel({ question, boardSlotsVisible }: { question: string; boardSlotsVisible: boolean }) {
   return (
     <Box sx={{
-      flex: 2,
-      mx: 1.5,
+      flex: 1,
       border: `2px solid ${GOLD}55`,
       borderRadius: 2,
-      px: 2,
+      px: 3,
       py: 1.5,
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
       background: `linear-gradient(135deg, #0a0e2a 0%, #0d1235 100%)`,
-      boxShadow: `0 0 20px ${GOLD}22`,
-      minHeight: 80,
+      boxShadow: `0 0 24px ${GOLD}22`,
     }}>
-      {boardRevealed ? (
+      {boardSlotsVisible && question ? (
         <Typography sx={{
           ...fontSx,
           fontSize: 'clamp(1rem, 2.2vw, 1.8rem)',
@@ -103,46 +118,50 @@ function AnswerSlot({ rank, text, points, revealed, animIndex }: {
 
   return (
     <Box sx={{
+      flex: 1,
       display: 'flex',
       alignItems: 'center',
-      border: `1.5px solid ${revealed ? GOLD : GOLD + '44'}`,
-      borderRadius: 1.5,
-      px: 1.5,
-      py: 0.75,
-      background: revealed ? `linear-gradient(90deg, #0d1a08, #071208)` : '#0a0d1e',
-      gap: 1.5,
-      transition: 'border-color 0.3s, background 0.3s',
+      border: `2px solid ${revealed ? GOLD : GOLD + '33'}`,
+      borderRadius: 2,
+      px: 'clamp(10px, 1.5vw, 20px)',
+      background: revealed
+        ? `linear-gradient(90deg, #0d1f06ee, #071510ee)`
+        : '#080b1cee',
+      gap: 'clamp(10px, 1.5vw, 18px)',
+      boxShadow: revealed ? `0 0 20px ${GOLD}33, inset 0 0 12px ${GOLD}11` : 'none',
+      transition: 'border-color 0.3s, background 0.3s, box-shadow 0.3s',
       animation: revealed ? 'ssFlipIn 0.35s ease-out' : 'ssFadeIn 0.25s ease-out',
+      minHeight: 0,
       '@keyframes ssFlipIn': {
-        from: { opacity: 0, transform: 'scaleY(0.2)' },
+        from: { opacity: 0, transform: 'scaleY(0.15)' },
         to: { opacity: 1, transform: 'scaleY(1)' },
       },
       '@keyframes ssFadeIn': {
-        from: { opacity: 0, transform: 'scale(0.95)' },
+        from: { opacity: 0, transform: 'scale(0.93)' },
         to: { opacity: 1, transform: 'scale(1)' },
       },
     }}>
       <Box sx={{
-        width: 28,
-        height: 28,
+        width: 'clamp(28px, 3.5vw, 48px)',
+        height: 'clamp(28px, 3.5vw, 48px)',
         borderRadius: '50%',
         border: `2px solid ${GOLD}`,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         flexShrink: 0,
-        background: revealed ? GOLD + '22' : 'transparent',
+        background: revealed ? GOLD + '28' : 'transparent',
       }}>
-        <Typography sx={{ ...fontSx, fontSize: '0.85rem', color: GOLD, fontWeight: 900, lineHeight: 1 }}>
+        <Typography sx={{ ...fontSx, fontSize: 'clamp(0.9rem, 1.8vw, 1.5rem)', color: GOLD, fontWeight: 900, lineHeight: 1 }}>
           {rank}
         </Typography>
       </Box>
       {revealed ? (
         <>
-          <Typography sx={{ ...fontSx, flex: 1, fontSize: 'clamp(0.75rem, 1.5vw, 1.1rem)', color: '#fff', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+          <Typography sx={{ ...fontSx, flex: 1, fontSize: 'clamp(1rem, 2.2vw, 1.9rem)', color: '#fff', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', lineHeight: 1 }}>
             {text}
           </Typography>
-          <Typography sx={{ ...fontSx, fontSize: 'clamp(0.85rem, 1.6vw, 1.2rem)', color: GOLD, fontWeight: 900, ml: 1 }}>
+          <Typography sx={{ ...fontSx, fontSize: 'clamp(1rem, 2.2vw, 1.9rem)', color: GOLD, fontWeight: 900, flexShrink: 0, lineHeight: 1 }}>
             {points}
           </Typography>
         </>
@@ -159,32 +178,33 @@ function StrikesPanel({ count }: { count: number }) {
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
-      gap: 0.75,
+      justifyContent: 'center',
+      gap: 'clamp(4px, 0.8vh, 10px)',
       border: `1.5px solid #ffffff22`,
       borderRadius: 2,
-      px: 2,
-      py: 1,
-      background: '#0a0d1ecc',
-      minWidth: 100,
+      px: 'clamp(12px, 2vw, 28px)',
+      background: '#080b1ccc',
+      minWidth: 'clamp(100px, 14vw, 180px)',
     }}>
-      <Typography sx={{ ...fontSx, fontSize: '0.75rem', color: '#ffffff66', fontWeight: 700, letterSpacing: '0.12em' }}>
+      <Typography sx={{ ...fontSx, fontSize: 'clamp(0.7rem, 1.1vw, 0.95rem)', color: '#ffffff55', fontWeight: 700, letterSpacing: '0.14em' }}>
         STRIKES
       </Typography>
-      <Box sx={{ display: 'flex', gap: 0.75 }}>
+      <Box sx={{ display: 'flex', gap: 'clamp(6px, 1vw, 14px)' }}>
         {[0, 1, 2].map(i => (
           <Box key={i} sx={{
-            width: 28,
-            height: 28,
+            width: 'clamp(28px, 3.5vw, 46px)',
+            height: 'clamp(28px, 3.5vw, 46px)',
             borderRadius: '50%',
             border: `2px solid ${i < count ? '#ff2020' : '#ffffff33'}`,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            background: i < count ? '#ff202022' : 'transparent',
-            transition: 'all 0.2s',
+            background: i < count ? '#ff202033' : 'transparent',
+            boxShadow: i < count ? '0 0 14px #ff202066' : 'none',
+            transition: 'all 0.25s',
           }}>
             {i < count && (
-              <Typography sx={{ fontSize: '0.9rem', color: '#ff2020', fontWeight: 900, lineHeight: 1 }}>✕</Typography>
+              <Typography sx={{ ...fontSx, fontSize: 'clamp(0.9rem, 1.6vw, 1.4rem)', color: '#ff2020', fontWeight: 900, lineHeight: 1 }}>✕</Typography>
             )}
           </Box>
         ))}
@@ -202,13 +222,12 @@ function MultiplierPanel({ mult }: { mult: number }) {
       justifyContent: 'center',
       border: `2px solid ${GOLD}`,
       borderRadius: 2,
-      px: 2,
-      py: 1,
+      px: 'clamp(12px, 2vw, 28px)',
       background: `linear-gradient(135deg, #1a0e30, #2a1540)`,
-      boxShadow: `0 0 20px ${GOLD}44`,
-      minWidth: 140,
+      boxShadow: `0 0 24px ${GOLD}55`,
+      minWidth: 'clamp(140px, 18vw, 240px)',
     }}>
-      <Typography sx={{ ...fontSx, fontSize: 'clamp(0.85rem, 1.4vw, 1.1rem)', color: GOLD, fontWeight: 900, letterSpacing: '0.1em', textAlign: 'center' }}>
+      <Typography sx={{ ...fontSx, fontSize: 'clamp(1rem, 1.8vw, 1.5rem)', color: GOLD, fontWeight: 900, letterSpacing: '0.1em', textAlign: 'center', textShadow: `0 0 12px ${GOLD}88` }}>
         {MULTIPLIER_LABELS[mult] ?? `×${mult} POINTS`}
       </Typography>
     </Box>
@@ -221,17 +240,18 @@ function RoundTotalPanel({ round, bank }: { round: number; bank: number }) {
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
+      justifyContent: 'center',
+      gap: 'clamp(2px, 0.5vh, 6px)',
       border: `1.5px solid #ffffff22`,
       borderRadius: 2,
-      px: 2,
-      py: 1,
-      background: '#0a0d1ecc',
-      minWidth: 140,
+      px: 'clamp(12px, 2vw, 28px)',
+      background: '#080b1ccc',
+      minWidth: 'clamp(120px, 16vw, 200px)',
     }}>
-      <Typography sx={{ ...fontSx, fontSize: '0.7rem', color: '#ffffff55', letterSpacing: '0.12em', fontWeight: 700 }}>
+      <Typography sx={{ ...fontSx, fontSize: 'clamp(0.65rem, 1vw, 0.9rem)', color: '#ffffff55', letterSpacing: '0.14em', fontWeight: 700 }}>
         ROUND {round} TOTAL
       </Typography>
-      <Typography sx={{ ...fontSx, fontSize: 'clamp(1.4rem, 2.5vw, 2.2rem)', color: '#fff', fontWeight: 900, lineHeight: 1.1 }}>
+      <Typography sx={{ ...fontSx, fontSize: 'clamp(1.6rem, 3.5vw, 3rem)', color: '#fff', fontWeight: 900, lineHeight: 1 }}>
         {bank}
       </Typography>
     </Box>
@@ -520,10 +540,12 @@ export const SSShowComponent = () => {
   }
 
   const { roundState, teams, boards, config } = state;
-  const currentBoard: SurveyBoard | undefined = boards.find(b => b.id === roundState.currentBoardId);
-  const boardRevealed = roundState.phase !== 'idle' && roundState.phase !== 'face_off' || (roundState.phase === 'face_off' && roundState.faceOffState !== 'waiting_buzz');
+  const currentBoard = boards.find(b => b.id === roundState.currentBoardId);
+  const boardSlotsVisible = roundState.phase !== 'idle';
   const questionRevealed = roundState.phase !== 'idle' && roundState.phase !== 'face_off';
-  const mult = config.multiplierSchedule[roundState.currentRound - 1] ?? config.multiplierSchedule[config.multiplierSchedule.length - 1] ?? 1;
+  const mult = config.multiplierSchedule[roundState.currentRound - 1]
+    ?? config.multiplierSchedule[config.multiplierSchedule.length - 1]
+    ?? 1;
 
   const activeTeamId = roundState.phase === 'steal'
     ? roundState.stealingTeamId
@@ -535,66 +557,102 @@ export const SSShowComponent = () => {
     ? teams.find(t => t.id === roundState.faceOffStrikeTeamId)
     : null;
   const strikingTeamColor = strikingTeam
-    ? (strikingTeam.id === 'team-1' ? TEAM_COLORS[0] : TEAM_COLORS[1])
+    ? (strikingTeam.id === teams[0].id ? TEAM_COLORS[0] : TEAM_COLORS[1])
     : '#ff2020';
 
   const stealingTeam = roundState.phase === 'steal' && roundState.stealingTeamId
     ? teams.find(t => t.id === roundState.stealingTeamId)
     : null;
   const stealTeamColor = stealingTeam
-    ? (stealingTeam.id === 'team-1' ? TEAM_COLORS[0] : TEAM_COLORS[1])
+    ? (stealingTeam.id === teams[0].id ? TEAM_COLORS[0] : TEAM_COLORS[1])
     : '#fff';
 
   const winner = roundState.phase === 'game_over'
     ? [...teams].sort((a, b) => b.score - a.score)[0]
     : null;
 
-  const slotCount = currentBoard?.answers.length ?? 0;
+  const answers = currentBoard?.answers ?? [];
+  const slotCount = answers.length;
+
+  // Column-first: slots 1-4 in left col, 5-8 in right col
+  // We render left col then right col interleaved into a CSS grid
+  const leftSlots = answers.filter(a => a.rank <= 4);
+  const rightSlots = answers.filter(a => a.rank >= 5);
+  const maxRows = Math.max(leftSlots.length, rightSlots.length);
 
   return (
     <Box sx={{
       height: '100vh',
       width: '100vw',
       bgcolor: BG,
-      backgroundImage: 'radial-gradient(ellipse at 20% 50%, #0d0d2a 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, #0a0a1e 0%, transparent 50%)',
+      backgroundImage: [
+        'radial-gradient(ellipse at 15% 50%, #0e0a2a55 0%, transparent 45%)',
+        'radial-gradient(ellipse at 85% 50%, #0a0e2a55 0%, transparent 45%)',
+        'radial-gradient(ellipse at 50% 0%, #12103a33 0%, transparent 60%)',
+      ].join(', '),
       display: 'flex',
       flexDirection: 'column',
-      p: 'clamp(8px, 1.5vw, 20px)',
-      gap: 'clamp(6px, 1vw, 14px)',
+      p: 'clamp(10px, 1.8vw, 24px)',
+      gap: 'clamp(8px, 1.2vw, 16px)',
       position: 'relative',
       overflow: 'hidden',
+      boxSizing: 'border-box',
     }}>
+
       {/* ── Top row: Score | Question | Score ── */}
-      <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'stretch', minHeight: '14%' }}>
+      <Box sx={{ display: 'flex', gap: 'clamp(8px, 1.2vw, 16px)', alignItems: 'stretch', height: 'clamp(90px, 14vh, 130px)', flexShrink: 0 }}>
         <ScorePanel team={teams[0]} active={activeTeamId === teams[0].id} colorHex={TEAM_COLORS[0]} />
-        <QuestionPanel question={questionRevealed ? (currentBoard?.question ?? '') : ''} boardRevealed={boardRevealed} />
+        <QuestionPanel question={questionRevealed ? (currentBoard?.question ?? '') : ''} boardSlotsVisible={boardSlotsVisible} />
         <ScorePanel team={teams[1]} active={activeTeamId === teams[1].id} colorHex={TEAM_COLORS[1]} />
       </Box>
 
-      {/* ── Answer board ── */}
-      <Box sx={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'clamp(4px, 0.8vw, 10px)', alignContent: 'start' }}>
-        {roundState.phase === 'idle' ? null : (
-          Array.from({ length: slotCount }, (_, i) => {
-            const rank = i + 1;
-            const revEntry = roundState.revealedAnswers.find(r => r.rank === rank);
-            const answer = currentBoard?.answers.find(a => a.rank === rank);
+      {/* ── Answer board — fills remaining space ── */}
+      <Box sx={{ flex: 1, display: 'flex', gap: 'clamp(8px, 1.2vw, 16px)', minHeight: 0 }}>
+        {/* Left column: answers 1-4 */}
+        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 'clamp(6px, 1vw, 12px)' }}>
+          {boardSlotsVisible && Array.from({ length: maxRows }, (_, row) => {
+            const answer = leftSlots[row];
+            if (!answer) return <Box key={`left-empty-${row}`} sx={{ flex: 1 }} />;
+            const revealed = roundState.revealedAnswers.some(r => r.rank === answer.rank);
             return (
               <AnswerSlot
-                key={rank}
-                rank={rank}
-                text={answer?.text ?? ''}
-                points={answer?.points ?? 0}
-                revealed={!!revEntry}
-                animIndex={i}
+                key={answer.rank}
+                rank={answer.rank}
+                text={answer.text}
+                points={answer.points}
+                revealed={revealed}
+                animIndex={answer.rank - 1}
               />
             );
-          })
-        )}
+          })}
+        </Box>
+
+        {/* Right column: answers 5-8 */}
+        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 'clamp(6px, 1vw, 12px)' }}>
+          {boardSlotsVisible && slotCount > 4 && Array.from({ length: maxRows }, (_, row) => {
+            const answer = rightSlots[row];
+            if (!answer) return <Box key={`right-empty-${row}`} sx={{ flex: 1 }} />;
+            const revealed = roundState.revealedAnswers.some(r => r.rank === answer.rank);
+            return (
+              <AnswerSlot
+                key={answer.rank}
+                rank={answer.rank}
+                text={answer.text}
+                points={answer.points}
+                revealed={revealed}
+                animIndex={answer.rank - 1}
+              />
+            );
+          })}
+        </Box>
       </Box>
 
-      {/* ── Bottom row: Multiplier | Round Total | Strikes ── */}
-      <Box sx={{ display: 'flex', gap: 1.5, justifyContent: 'flex-end', alignItems: 'center' }}>
-        {mult > 1 && <MultiplierPanel mult={mult} />}
+      {/* ── Bottom row: Multiplier | spacer | Round Total | Strikes ── */}
+      <Box sx={{ display: 'flex', gap: 'clamp(8px, 1.2vw, 16px)', alignItems: 'stretch', height: 'clamp(60px, 10vh, 90px)', flexShrink: 0 }}>
+        {mult > 1
+          ? <MultiplierPanel mult={mult} />
+          : <Box sx={{ flex: 1 }} />
+        }
         <Box sx={{ flex: 1 }} />
         <RoundTotalPanel round={roundState.currentRound} bank={roundState.roundBank} />
         <StrikesPanel count={roundState.strikeCount} />
