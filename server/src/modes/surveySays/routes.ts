@@ -98,6 +98,15 @@ router.post('/board/load/:boardId', (req, res) => {
 
 // ─── Face-off ────────────────────────────────────────────────────────────────
 
+router.post('/faceoff/reveal-question', (_req, res) => {
+  res.json(surveySaysStore.revealQuestion());
+});
+
+router.post('/faceoff/arm-buzzers', (_req, res) => {
+  piLed({ effect: 'pulse', color: [0, 80, 220], bpm: 60, min_brightness: 0.1, max_brightness: 0.9 });
+  res.json(surveySaysStore.armBuzzers());
+});
+
 router.post('/faceoff/buzz/:teamId', (req, res) => {
   const color = teamColor(req.params.teamId);
   piLed({ effect: 'flash', color, flashes: 3, on_ms: 120, off_ms: 80 });

@@ -65,19 +65,22 @@ function ScorePanel({ team, active, colorHex }: { team: SurveyTeam; active: bool
   );
 }
 
-function QuestionPanel({ question, boardSlotsVisible }: { question: string; boardSlotsVisible: boolean }) {
+function QuestionPanel({ question, boardSlotsVisible, buzzArmed }: { question: string; boardSlotsVisible: boolean; buzzArmed: boolean }) {
   return (
     <Box sx={{
       flex: 1,
-      border: `2px solid ${GOLD}55`,
+      border: `2px solid ${buzzArmed ? '#4fc3f7' : GOLD + '55'}`,
       borderRadius: 2,
       px: 3,
       py: 1.5,
       display: 'flex',
+      flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
+      gap: 1,
       background: `linear-gradient(135deg, #0a0e2a 0%, #0d1235 100%)`,
-      boxShadow: `0 0 24px ${GOLD}22`,
+      boxShadow: buzzArmed ? `0 0 32px #4fc3f788` : `0 0 24px ${GOLD}22`,
+      transition: 'border-color 0.4s, box-shadow 0.4s',
     }}>
       {boardSlotsVisible && question ? (
         <Typography sx={{
@@ -90,7 +93,7 @@ function QuestionPanel({ question, boardSlotsVisible }: { question: string; boar
           textAlign: 'center',
           lineHeight: 1.2,
         }}>
-          {question || ''}
+          {question}
         </Typography>
       ) : (
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
@@ -99,6 +102,23 @@ function QuestionPanel({ question, boardSlotsVisible }: { question: string; boar
           </Typography>
           <Box sx={{ width: 120, height: 3, borderRadius: 2, background: `linear-gradient(90deg, transparent, ${GOLD}, transparent)` }} />
         </Box>
+      )}
+      {buzzArmed && (
+        <Typography sx={{
+          ...fontSx,
+          fontSize: 'clamp(0.75rem, 1.4vw, 1.1rem)',
+          color: '#4fc3f7',
+          fontWeight: 900,
+          letterSpacing: '0.22em',
+          textTransform: 'uppercase',
+          animation: 'ssBuzzPulse 0.9s ease-in-out infinite',
+          '@keyframes ssBuzzPulse': {
+            '0%, 100%': { opacity: 1 },
+            '50%': { opacity: 0.3 },
+          },
+        }}>
+          ● BUZZ IN
+        </Typography>
       )}
     </Box>
   );
@@ -542,7 +562,13 @@ export const SSShowComponent = () => {
   const { roundState, teams, boards, config } = state;
   const currentBoard = boards.find(b => b.id === roundState.currentBoardId);
   const boardSlotsVisible = roundState.phase !== 'idle';
-  const questionRevealed = roundState.phase !== 'idle' && roundState.phase !== 'face_off';
+  // Question visible once host clicks "Reveal Question" (question_revealed or beyond)
+  const questionRevealed =
+    roundState.phase !== 'idle' &&
+    !(roundState.phase === 'face_off' && roundState.faceOffState === 'showing_board');
+  // Buzz armed indicator: only while waiting for hardware buzz
+  const buzzArmed =
+    roundState.phase === 'face_off' && roundState.faceOffState === 'waiting_buzz';
   const mult = config.multiplierSchedule[roundState.currentRound - 1]
     ?? config.multiplierSchedule[config.multiplierSchedule.length - 1]
     ?? 1;
@@ -602,7 +628,7 @@ export const SSShowComponent = () => {
       {/* ── Top row: Score | Question | Score ── */}
       <Box sx={{ display: 'flex', gap: 'clamp(8px, 1.2vw, 16px)', alignItems: 'stretch', height: 'clamp(90px, 14vh, 130px)', flexShrink: 0 }}>
         <ScorePanel team={teams[0]} active={activeTeamId === teams[0].id} colorHex={TEAM_COLORS[0]} />
-        <QuestionPanel question={questionRevealed ? (currentBoard?.question ?? '') : ''} boardSlotsVisible={boardSlotsVisible} />
+        <QuestionPanel question={questionRevealed ? (currentBoard?.question ?? '') : ''} boardSlotsVisible={boardSlotsVisible} buzzArmed={buzzArmed} />
         <ScorePanel team={teams[1]} active={activeTeamId === teams[1].id} colorHex={TEAM_COLORS[1]} />
       </Box>
 

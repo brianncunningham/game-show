@@ -39,10 +39,12 @@ export type GamePhase =
   | 'game_over';
 
 export type FaceOffState =
-  | 'waiting_buzz'    // buzzers armed, waiting
+  | 'showing_board'      // empty numbered slots animating in, no question yet
+  | 'question_revealed'  // question visible, buzzers not yet armed
+  | 'waiting_buzz'       // buzzers armed, waiting
   | 'player_a_answered'  // A buzzed, awaiting host judgment
   | 'player_b_answering' // B gets their attempt
-  | 'resolved';       // winner determined, show Play/Pass
+  | 'resolved';          // winner determined, show Play/Pass
 
 export interface RevealedAnswer {
   rank: number;

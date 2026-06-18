@@ -43,6 +43,8 @@ export const showIntro = () => post('/intro/show');
 export const loadBoard = (boardId: string) => post(`/board/load/${boardId}`);
 
 // ── Face-off ──────────────────────────────────────────────────────────────────
+export const revealQuestion = () => post('/faceoff/reveal-question');
+export const armBuzzers = () => post('/faceoff/arm-buzzers');
 export const recordBuzz = (teamId: string) => post(`/faceoff/buzz/${teamId}`);
 export const recordFaceOffStrike = (teamId: string) => post(`/faceoff/strike/${teamId}`);
 export const resolveFaceOff = (winnerTeamId: string) => post(`/faceoff/resolve/${winnerTeamId}`);

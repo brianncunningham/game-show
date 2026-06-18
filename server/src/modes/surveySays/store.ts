@@ -105,7 +105,7 @@ class SurveySaysStore {
     return this.patchRound({
       phase: 'face_off',
       currentBoardId: boardId,
-      faceOffState: 'waiting_buzz',
+      faceOffState: 'showing_board',
       faceOffWinnerTeamId: null,
       faceOffStrikeTeamId: null,
       controllingTeamId: null,
@@ -116,6 +116,14 @@ class SurveySaysStore {
       buzzWinnerTeamId: null,
       swept: false,
     });
+  }
+
+  revealQuestion(): SurveySaysState {
+    return this.patchRound({ faceOffState: 'question_revealed' });
+  }
+
+  armBuzzers(): SurveySaysState {
+    return this.patchRound({ faceOffState: 'waiting_buzz' });
   }
 
   // ── Face-off ────────────────────────────────────────────────────────────────
@@ -144,7 +152,7 @@ class SurveySaysStore {
 
   resetBuzzersOnly(): SurveySaysState {
     return this.patchRound({
-      faceOffState: 'waiting_buzz',
+      faceOffState: 'showing_board',
       faceOffStrikeTeamId: null,
       buzzWinnerTeamId: null,
     });

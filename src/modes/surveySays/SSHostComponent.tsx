@@ -10,6 +10,7 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import type { SurveySaysState, SurveyAnswer } from './types';
 import {
   getState,
+  revealQuestion, armBuzzers,
   recordBuzz, recordFaceOffStrike, resolveFaceOff, resetBuzzersOnly,
   setPlayOrPass,
   revealAnswer, revealAnswerPostRound, addStrike,
@@ -267,7 +268,9 @@ export const SSHostComponent = () => {
                 <Chip label="2" size="small" color="info" />
                 <Typography sx={{ ...sectionLabelSx, mb: 0 }}>
                   Face-Off —&nbsp;
-                  {faceOffState === 'waiting_buzz' && 'Waiting for buzz'}
+                  {faceOffState === 'showing_board' && 'Board showing — reveal question when ready'}
+                  {faceOffState === 'question_revealed' && 'Question visible — arm buzzers when ready'}
+                  {faceOffState === 'waiting_buzz' && '🔵 Buzzers armed — waiting for buzz'}
                   {faceOffState === 'player_a_answered' && `${buzzWinnerTeam?.name ?? 'Player A'} answered`}
                   {faceOffState === 'player_b_answering' && `${otherTeam?.name ?? 'Player B'} answering`}
                   {faceOffState === 'resolved' && 'Resolved'}
@@ -277,12 +280,40 @@ export const SSHostComponent = () => {
                 )}
               </Stack>
 
-              {/* Buzz: both teams available */}
+              {/* ── Sub-step A: board is showing, host announces answer count ── */}
+              {faceOffState === 'showing_board' && (
+                <>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+                    Board slots are visible on the show screen.
+                    Announce the number of answers, then reveal the question.
+                  </Typography>
+                  <Button fullWidth variant="contained" color="info" sx={bigBtnSx}
+                    onClick={act(() => revealQuestion())}>
+                    Reveal Question →
+                  </Button>
+                </>
+              )}
+
+              {/* ── Sub-step B: question shown, arm buzzers ── */}
+              {faceOffState === 'question_revealed' && (
+                <>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+                    Question is on screen. Arm the buzzers when both players are ready.
+                  </Typography>
+                  <Button fullWidth variant="contained" color="warning" sx={bigBtnSx}
+                    onClick={act(() => armBuzzers())}>
+                    🔵 Arm Buzzers
+                  </Button>
+                </>
+              )}
+
+              {/* ── Sub-step C: buzzers armed, manual buzz buttons ── */}
               {faceOffState === 'waiting_buzz' && (
                 <Grid container spacing={1.5} sx={{ mb: 1.5 }}>
                   {teams.map((t, i) => (
                     <Grid item xs={6} key={t.id}>
-                      <Button fullWidth variant="outlined" sx={{ ...bigBtnSx, borderColor: TEAM_COLORS[i], color: TEAM_COLORS[i] }}
+                      <Button fullWidth variant="outlined"
+                        sx={{ ...bigBtnSx, borderColor: TEAM_COLORS[i], color: TEAM_COLORS[i] }}
                         onClick={act(() => recordBuzz(t.id))}>
                         {t.name} Buzzed
                       </Button>
@@ -291,7 +322,7 @@ export const SSHostComponent = () => {
                 </Grid>
               )}
 
-              {/* After buzz: answers + strike only for the answering team */}
+              {/* ── Sub-step D: after buzz — judge the answer ── */}
               {(faceOffState === 'player_a_answered' || faceOffState === 'player_b_answering') && currentBoard && (
                 <>
                   <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.75 }}>
@@ -308,7 +339,6 @@ export const SSHostComponent = () => {
                     ))}
                   </Stack>
                   <Divider sx={{ my: 1 }} />
-                  {/* Strike only for answering team — not a team choice */}
                   <Button fullWidth color="error" variant="outlined" sx={bigBtnSx}
                     onClick={act(() => recordFaceOffStrike(faceOffAnsweringTeam?.id ?? ''))}>
                     ✕ Strike — {faceOffAnsweringTeam?.name}
@@ -329,6 +359,7 @@ export const SSHostComponent = () => {
                 </>
               )}
 
+              {/* Always available: next pair resets back to showing_board */}
               <Divider sx={{ my: 1.5 }} />
               <Button fullWidth variant="outlined" color="inherit" sx={bigBtnSx}
                 onClick={act(() => resetBuzzersOnly())}>

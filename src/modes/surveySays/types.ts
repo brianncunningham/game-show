@@ -33,6 +33,8 @@ export type GamePhase =
   | 'game_over';
 
 export type FaceOffState =
+  | 'showing_board'
+  | 'question_revealed'
   | 'waiting_buzz'
   | 'player_a_answered'
   | 'player_b_answering'
