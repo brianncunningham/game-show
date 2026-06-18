@@ -777,6 +777,21 @@ export const SSShowComponent = () => {
   const [randomizing, setRandomizing] = useState(false);
   const prevSeqRef = useRef<number | null>(null);
   const randomizerHideRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  
+  // Stage scaling for fixed 1920x1080 layout - MUST be before any conditional returns
+  const [scale, setScale] = useState(1);
+  
+  useEffect(() => {
+    const updateScale = () => {
+      const scaleX = window.innerWidth / 1920;
+      const scaleY = window.innerHeight / 1080;
+      setScale(Math.min(scaleX, scaleY));
+    };
+    
+    updateScale();
+    window.addEventListener('resize', updateScale);
+    return () => window.removeEventListener('resize', updateScale);
+  }, []);
 
   useEffect(() => {
     let alive = true;
@@ -898,21 +913,6 @@ export const SSShowComponent = () => {
   const leftSlots = answers.filter(a => a.rank <= 4);
   const rightSlots = answers.filter(a => a.rank >= 5);
   const maxRows = Math.max(leftSlots.length, rightSlots.length);
-
-  // Stage scaling for fixed 1920x1080 layout
-  const [scale, setScale] = useState(1);
-  
-  useEffect(() => {
-    const updateScale = () => {
-      const scaleX = window.innerWidth / 1920;
-      const scaleY = window.innerHeight / 1080;
-      setScale(Math.min(scaleX, scaleY));
-    };
-    
-    updateScale();
-    window.addEventListener('resize', updateScale);
-    return () => window.removeEventListener('resize', updateScale);
-  }, []);
 
   return (
     <Box sx={{
