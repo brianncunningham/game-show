@@ -9,6 +9,7 @@ import { SSTeamRandomizer } from './SSTeamRandomizer';
 const TEAM_COLORS = ['#00e5ff', '#ff6a00'] as const;
 const GOLD = '#f5c518';
 const BG = '#05071a';
+const HALFTONE_DOT = 'radial-gradient(circle, #ffffff0a 1px, transparent 1.5px)';
 
 const MULTIPLIER_LABELS: Record<number, string> = {
   2: 'DOUBLE POINTS',
@@ -34,15 +35,16 @@ function ScorePanel({ team, active, colorHex, player }: { team: SurveyTeam; acti
       alignItems: 'center',
       justifyContent: 'center',
       background: active
-        ? `radial-gradient(ellipse at 50% 30%, ${colorHex}55 0%, #080a1a 70%)`
-        : `#080a1acc`,
+        ? `${HALFTONE_DOT}, radial-gradient(ellipse at 50% 30%, ${colorHex}55 0%, #080a1a 70%)`
+        : `${HALFTONE_DOT}, #080a1acc`,
+      backgroundSize: '6px 6px, 100%',
       transition: 'all 0.4s ease',
       animation: active ? `ssActiveGlow_${colorHex.replace('#', '')} 1.4s ease-in-out infinite` : 'none',
       [`@keyframes ssActiveGlow_${colorHex.replace('#', '')}`]: {
-        '0%, 100%': { boxShadow: `0 0 28px ${colorHex}99, 0 0 60px ${colorHex}44, inset 0 0 18px ${colorHex}33` },
-        '50%': { boxShadow: `0 0 55px ${colorHex}ff, 0 0 110px ${colorHex}66, inset 0 0 28px ${colorHex}55` },
+        '0%, 100%': { boxShadow: `0 0 20px ${colorHex}dd, 0 0 45px ${colorHex}88, 0 0 80px ${colorHex}44, inset 0 0 18px ${colorHex}33` },
+        '50%': { boxShadow: `0 0 35px ${colorHex}ff, 0 0 70px ${colorHex}cc, 0 0 120px ${colorHex}66, inset 0 0 28px ${colorHex}55` },
       },
-      boxShadow: active ? undefined : `0 0 10px ${colorHex}22`,
+      boxShadow: active ? undefined : `0 0 15px ${colorHex}33, 0 0 30px ${colorHex}11`,
     }}>
       <Typography sx={{
         ...fontSx,
@@ -108,10 +110,59 @@ function QuestionPanel({ question, boardSlotsVisible, buzzArmed }: { question: s
       alignItems: 'center',
       justifyContent: 'center',
       gap: 1,
-      background: `linear-gradient(135deg, #0a0e2a 0%, #0d1235 100%)`,
+      background: `${HALFTONE_DOT}, linear-gradient(135deg, #0a0e2a 0%, #0d1235 100%)`,
+      backgroundSize: '6px 6px, 100%',
       boxShadow: buzzArmed ? `0 0 32px #4fc3f788` : `0 0 24px ${GOLD}22`,
       transition: 'border-color 0.4s, box-shadow 0.4s',
+      position: 'relative',
     }}>
+      {/* SURVEY SAYS emblem badge - always visible, overlaps top */}
+      <Box sx={{
+        position: 'absolute',
+        top: -28,
+        left: '50%',
+        transform: 'translateX(-50%)',
+        zIndex: 10,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}>
+        <Box sx={{
+          position: 'relative',
+          width: 'clamp(180px, 24vw, 280px)',
+          height: 'clamp(50px, 7vh, 70px)',
+          borderRadius: '50%',
+          border: `3px solid ${GOLD}`,
+          background: `${HALFTONE_DOT}, radial-gradient(ellipse at 50% 50%, #1a0e30, #0d0620)`,
+          backgroundSize: '6px 6px, 100%',
+          boxShadow: `0 0 20px ${GOLD}88, 0 0 40px ${GOLD}44, inset 0 0 15px ${GOLD}22`,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            inset: -8,
+            borderRadius: '50%',
+            background: `repeating-conic-gradient(from 0deg, ${GOLD}dd 0deg 12deg, transparent 12deg 24deg)`,
+            opacity: 0.6,
+            zIndex: -1,
+          },
+        }}>
+          <Typography sx={{
+            ...fontSx,
+            fontSize: 'clamp(0.9rem, 1.6vw, 1.4rem)',
+            color: GOLD,
+            fontWeight: 900,
+            letterSpacing: '0.15em',
+            textTransform: 'uppercase',
+            textShadow: `0 0 12px ${GOLD}cc`,
+          }}>
+            SURVEY SAYS
+          </Typography>
+        </Box>
+      </Box>
+
       {boardSlotsVisible && question ? (
         <Typography sx={{
           ...fontSx,
@@ -122,17 +173,11 @@ function QuestionPanel({ question, boardSlotsVisible, buzzArmed }: { question: s
           letterSpacing: '0.06em',
           textAlign: 'center',
           lineHeight: 1.2,
+          mt: 2,
         }}>
           {question}
         </Typography>
-      ) : (
-        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
-          <Typography sx={{ ...fontSx, fontSize: 'clamp(1.2rem, 2.4vw, 2rem)', color: GOLD, fontWeight: 900, letterSpacing: '0.15em' }}>
-            SURVEY SAYS
-          </Typography>
-          <Box sx={{ width: 120, height: 3, borderRadius: 2, background: `linear-gradient(90deg, transparent, ${GOLD}, transparent)` }} />
-        </Box>
-      )}
+      ) : null}
       {buzzArmed && (
         <Typography sx={{
           ...fontSx,
@@ -175,8 +220,9 @@ function AnswerSlot({ rank, text, points, revealed, animIndex }: {
       borderRadius: 2,
       px: 'clamp(10px, 1.5vw, 20px)',
       background: revealed
-        ? `linear-gradient(90deg, #0d1f06ee, #071510ee)`
-        : '#080b1cee',
+        ? `${HALFTONE_DOT}, linear-gradient(90deg, #0d1020ee, #0a0d18ee)`
+        : `${HALFTONE_DOT}, #080b1cee`,
+      backgroundSize: '6px 6px, 100%',
       gap: 'clamp(10px, 1.5vw, 18px)',
       boxShadow: revealed ? `0 0 20px ${GOLD}33, inset 0 0 12px ${GOLD}11` : 'none',
       transition: 'border-color 0.3s, background 0.3s, box-shadow 0.3s',
@@ -230,11 +276,13 @@ function StrikesPanel({ count }: { count: number }) {
       alignItems: 'center',
       justifyContent: 'center',
       gap: 'clamp(4px, 0.8vh, 10px)',
-      border: `1.5px solid #ffffff22`,
+      border: `2px solid #d946ef`,
       borderRadius: 2,
       px: 'clamp(12px, 2vw, 28px)',
-      background: '#080b1ccc',
+      background: `${HALFTONE_DOT}, #080b1ccc`,
+      backgroundSize: '6px 6px, 100%',
       minWidth: 'clamp(100px, 14vw, 180px)',
+      boxShadow: '0 0 20px #d946ef44',
     }}>
       <Typography sx={{ ...fontSx, fontSize: 'clamp(0.7rem, 1.1vw, 0.95rem)', color: '#ffffff55', fontWeight: 700, letterSpacing: '0.14em' }}>
         STRIKES
@@ -245,7 +293,7 @@ function StrikesPanel({ count }: { count: number }) {
             width: 'clamp(28px, 3.5vw, 46px)',
             height: 'clamp(28px, 3.5vw, 46px)',
             borderRadius: '50%',
-            border: `2px solid ${i < count ? '#ff2020' : '#ffffff33'}`,
+            border: `2px solid ${i < count ? '#ff2020' : '#666'}`,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -253,9 +301,13 @@ function StrikesPanel({ count }: { count: number }) {
             boxShadow: i < count ? '0 0 14px #ff202066' : 'none',
             transition: 'all 0.25s',
           }}>
-            {i < count && (
-              <Typography sx={{ ...fontSx, fontSize: 'clamp(0.9rem, 1.6vw, 1.4rem)', color: '#ff2020', fontWeight: 900, lineHeight: 1 }}>✕</Typography>
-            )}
+            <Typography sx={{
+              ...fontSx,
+              fontSize: 'clamp(0.9rem, 1.6vw, 1.4rem)',
+              color: i < count ? '#ff2020' : '#666',
+              fontWeight: 900,
+              lineHeight: 1,
+            }}>✕</Typography>
           </Box>
         ))}
       </Box>
@@ -270,12 +322,23 @@ function MultiplierPanel({ mult }: { mult: number }) {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      border: `2px solid ${GOLD}`,
-      borderRadius: 2,
+      border: `3px solid ${GOLD}`,
+      borderRadius: 1,
       px: 'clamp(12px, 2vw, 28px)',
-      background: `linear-gradient(135deg, #1a0e30, #2a1540)`,
-      boxShadow: `0 0 24px ${GOLD}55`,
+      background: `${HALFTONE_DOT}, linear-gradient(135deg, #1a0e30, #2a1540)`,
+      backgroundSize: '6px 6px, 100%',
+      boxShadow: `0 0 24px ${GOLD}55, inset 0 0 20px ${GOLD}11`,
       minWidth: 'clamp(140px, 18vw, 240px)',
+      clipPath: 'polygon(8% 0%, 92% 0%, 100% 50%, 92% 100%, 8% 100%, 0% 50%)',
+      position: 'relative',
+      '&::before': {
+        content: '""',
+        position: 'absolute',
+        inset: -6,
+        border: `2px solid ${GOLD}88`,
+        clipPath: 'polygon(8% 0%, 92% 0%, 100% 50%, 92% 100%, 8% 100%, 0% 50%)',
+        pointerEvents: 'none',
+      },
     }}>
       <Typography sx={{ ...fontSx, fontSize: 'clamp(1rem, 1.8vw, 1.5rem)', color: GOLD, fontWeight: 900, letterSpacing: '0.1em', textAlign: 'center', textShadow: `0 0 12px ${GOLD}88` }}>
         {MULTIPLIER_LABELS[mult] ?? `×${mult} POINTS`}
@@ -288,20 +351,21 @@ function RoundTotalPanel({ round, bank }: { round: number; bank: number }) {
   return (
     <Box sx={{
       display: 'flex',
-      flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
-      gap: 'clamp(2px, 0.5vh, 6px)',
-      border: `1.5px solid #ffffff22`,
+      gap: 'clamp(8px, 1.5vw, 16px)',
+      border: `2px solid #4fc3f7`,
       borderRadius: 2,
       px: 'clamp(12px, 2vw, 28px)',
-      background: '#080b1ccc',
+      background: `${HALFTONE_DOT}, #080b1ccc`,
+      backgroundSize: '6px 6px, 100%',
       minWidth: 'clamp(120px, 16vw, 200px)',
+      boxShadow: '0 0 20px #4fc3f744',
     }}>
-      <Typography sx={{ ...fontSx, fontSize: 'clamp(0.65rem, 1vw, 0.9rem)', color: '#ffffff55', letterSpacing: '0.14em', fontWeight: 700 }}>
-        ROUND {round} TOTAL
+      <Typography sx={{ ...fontSx, fontSize: 'clamp(0.65rem, 1vw, 0.9rem)', color: '#4fc3f7', letterSpacing: '0.14em', fontWeight: 700, whiteSpace: 'nowrap' }}>
+        ROUND {round} TOTAL:
       </Typography>
-      <Typography sx={{ ...fontSx, fontSize: 'clamp(1.6rem, 3.5vw, 3rem)', color: '#fff', fontWeight: 900, lineHeight: 1 }}>
+      <Typography sx={{ ...fontSx, fontSize: 'clamp(1.6rem, 3.5vw, 3rem)', color: GOLD, fontWeight: 900, lineHeight: 1 }}>
         {bank}
       </Typography>
     </Box>
@@ -679,9 +743,9 @@ export const SSShowComponent = () => {
       width: '100vw',
       bgcolor: BG,
       backgroundImage: [
-        'radial-gradient(ellipse at 15% 50%, #0e0a2a55 0%, transparent 45%)',
-        'radial-gradient(ellipse at 85% 50%, #0a0e2a55 0%, transparent 45%)',
-        'radial-gradient(ellipse at 50% 0%, #12103a33 0%, transparent 60%)',
+        'radial-gradient(ellipse at 15% 50%, #4a0a5a55 0%, transparent 45%)',
+        'radial-gradient(ellipse at 85% 50%, #0a2a4a55 0%, transparent 45%)',
+        'radial-gradient(ellipse at 50% 0%, #1a1a4a44 0%, transparent 60%)',
       ].join(', '),
       display: 'flex',
       flexDirection: 'column',
@@ -691,16 +755,88 @@ export const SSShowComponent = () => {
       overflow: 'hidden',
       boxSizing: 'border-box',
     }}>
+      {/* Halftone dot texture overlay */}
+      <Box sx={{
+        position: 'absolute',
+        inset: 0,
+        background: HALFTONE_DOT,
+        backgroundSize: '6px 6px',
+        opacity: 0.4,
+        pointerEvents: 'none',
+        zIndex: 0,
+      }} />
 
-      {/* ── Top row: Score | Question | Score ── */}
-      <Box sx={{ display: 'flex', gap: 'clamp(8px, 1.2vw, 16px)', alignItems: 'stretch', height: 'clamp(90px, 14vh, 130px)', flexShrink: 0 }}>
+      {/* Left bulb strip */}
+      <Box sx={{
+        position: 'absolute',
+        left: 'clamp(4px, 0.8vw, 12px)',
+        top: '10%',
+        bottom: '10%',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-evenly',
+        gap: 'clamp(8px, 1.5vh, 16px)',
+        zIndex: 0,
+      }}>
+        {Array.from({ length: 8 }).map((_, i) => (
+          <Box key={i} sx={{
+            width: 'clamp(10px, 1.2vw, 16px)',
+            height: 'clamp(10px, 1.2vw, 16px)',
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, #ff2d2d, #aa0000)',
+            boxShadow: '0 0 12px #ff2d2daa, 0 0 24px #ff2d2d55',
+            animation: `bulbPulse ${1.2 + (i * 0.1)}s ease-in-out infinite`,
+            '@keyframes bulbPulse': {
+              '0%, 100%': { opacity: 0.7 },
+              '50%': { opacity: 1 },
+            },
+          }} />)
+        )}
+      </Box>
+
+      {/* Right bulb strip */}
+      <Box sx={{
+        position: 'absolute',
+        right: 'clamp(4px, 0.8vw, 12px)',
+        top: '10%',
+        bottom: '10%',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-evenly',
+        gap: 'clamp(8px, 1.5vh, 16px)',
+        zIndex: 0,
+      }}>
+        {Array.from({ length: 8 }).map((_, i) => (
+          <Box key={i} sx={{
+            width: 'clamp(10px, 1.2vw, 16px)',
+            height: 'clamp(10px, 1.2vw, 16px)',
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, #2d9bff, #0055aa)',
+            boxShadow: '0 0 12px #2d9bffaa, 0 0 24px #2d9bff55',
+            animation: `bulbPulse ${1.2 + (i * 0.1)}s ease-in-out infinite`,
+          }} />)
+        )}
+      </Box>
+
+      {/* Content wrapper with higher z-index */}
+      <Box sx={{
+        position: 'relative',
+        zIndex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 'clamp(8px, 1.2vw, 16px)',
+        height: '100%',
+      }}>
+
+        {/* ── Top row: Score | Question | Score ── */}
+        <Box sx={{ display: 'flex', gap: 'clamp(8px, 1.2vw, 16px)', alignItems: 'stretch', height: 'clamp(90px, 14vh, 130px)', flexShrink: 0 }}>
         <ScorePanel team={teams[0]} active={activeTeamId === teams[0].id} colorHex={TEAM_COLORS[0]} player={activeTeamId === teams[0].id ? activePlayer : null} />
         <QuestionPanel question={questionRevealed ? (currentBoard?.question ?? '') : ''} boardSlotsVisible={boardSlotsVisible} buzzArmed={buzzArmed} />
         <ScorePanel team={teams[1]} active={activeTeamId === teams[1].id} colorHex={TEAM_COLORS[1]} player={activeTeamId === teams[1].id ? activePlayer : null} />
-      </Box>
+        </Box>
 
-      {/* ── Answer board — fills remaining space ── */}
-      <Box sx={{ flex: 1, display: 'flex', gap: 'clamp(8px, 1.2vw, 16px)', minHeight: 0 }}>
+        {/* ── Answer board — fills remaining space ── */}
+        <Box sx={{ flex: 1, display: 'flex', gap: 'clamp(8px, 1.2vw, 16px)', minHeight: 0 }}>
         {/* Left column: answers 1-4 */}
         <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 'clamp(6px, 1vw, 12px)' }}>
           {boardSlotsVisible && Array.from({ length: maxRows }, (_, row) => {
@@ -738,10 +874,10 @@ export const SSShowComponent = () => {
             );
           })}
         </Box>
-      </Box>
+        </Box>
 
-      {/* ── Bottom row: Multiplier | spacer | Round Total | Strikes ── */}
-      <Box sx={{ display: 'flex', gap: 'clamp(8px, 1.2vw, 16px)', alignItems: 'stretch', height: 'clamp(60px, 10vh, 90px)', flexShrink: 0 }}>
+        {/* ── Bottom row: Multiplier | spacer | Round Total | Strikes ── */}
+        <Box sx={{ display: 'flex', gap: 'clamp(8px, 1.2vw, 16px)', alignItems: 'stretch', height: 'clamp(60px, 10vh, 90px)', flexShrink: 0 }}>
         {mult > 1
           ? <MultiplierPanel mult={mult} />
           : <Box sx={{ flex: 1 }} />
@@ -749,6 +885,7 @@ export const SSShowComponent = () => {
         <Box sx={{ flex: 1 }} />
         <RoundTotalPanel round={roundState.currentRound} bank={roundState.roundBank} />
         <StrikesPanel count={roundState.strikeCount} />
+        </Box>
       </Box>
 
       {/* ── Overlays ── */}
