@@ -72,7 +72,7 @@ function ScorePanel({ team, active, colorHex, player }: { team: SurveyTeam; acti
       }}>
         <Typography sx={{
           ...fontSx,
-          fontSize: '1.5rem',
+          fontSize: '1.8rem',
           color: active ? colorHex : colorHex + 'aa',
           fontWeight: 700,
           letterSpacing: '0.14em',
@@ -315,7 +315,7 @@ function AnswerSlot({ rank, text, points, revealed, animIndex }: {
             alignItems: 'center',
             justifyContent: 'center',
             ...fontSx,
-            fontSize: '2.2rem',
+            fontSize: '3.8rem',
             color: GOLD,
             fontWeight: 900,
             lineHeight: 1,
@@ -399,16 +399,7 @@ function StrikesPanel({ count }: { count: number }) {
         justifyContent: 'center',
         gap: 1,
       }}>
-        <Typography sx={{
-          ...fontSx,
-          fontSize: '1.2rem',
-          color: '#ffffff55',
-          fontWeight: 700,
-          letterSpacing: '0.14em',
-        }}>
-          STRIKES
-        </Typography>
-        <Box sx={{ display: 'flex', gap: 1.5 }}>
+        <Box sx={{ display: 'flex', gap: 2 }}>
           {[0, 1, 2].map(i => (
             <Box
               key={i}
@@ -418,8 +409,8 @@ function StrikesPanel({ count }: { count: number }) {
                 : '/survey-says/decorations/strike-x-inactive.png'
               }
               sx={{
-                width: '46px',
-                height: '46px',
+                width: '80px',
+                height: '80px',
               }}
             />
           ))}
@@ -460,7 +451,7 @@ function MultiplierPanel({ mult }: { mult: number }) {
       }}>
         <Typography sx={{
           ...fontSx,
-          fontSize: '2.4rem',
+          fontSize: '3rem',
           color: GOLD,
           fontWeight: 900,
           letterSpacing: '0.1em',
@@ -518,7 +509,7 @@ function RoundTotalPanel({ round, bank }: { round: number; bank: number }) {
       }}>
         <Typography sx={{
           ...fontSx,
-          fontSize: '1.4rem',
+          fontSize: '1.8rem',
           color: '#4fc3f7',
           letterSpacing: '0.14em',
           fontWeight: 700,
@@ -528,7 +519,7 @@ function RoundTotalPanel({ round, bank }: { round: number; bank: number }) {
         </Typography>
         <Typography sx={{
           ...fontSx,
-          fontSize: '4rem',
+          fontSize: '5rem',
           color: GOLD,
           fontWeight: 900,
           lineHeight: 1,
@@ -963,7 +954,9 @@ export const SSShowComponent = () => {
           flexDirection: 'column',
           gap: '16px',
           height: '100%',
-          p: '24px',
+          pt: '80px',
+          px: '24px',
+          pb: '24px',
           boxSizing: 'border-box',
         }}>
 
@@ -976,9 +969,9 @@ export const SSShowComponent = () => {
 
         {/* ── Answer board — fills remaining space ── */}
         <Box sx={{ flex: 1, display: 'flex', gap: '16px', minHeight: 0 }}>
-        {/* Left column: answers 1-4 */}
+        {/* Left column: answers 1-4 — always 4 flex rows so height is consistent */}
         <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
-          {boardSlotsVisible && Array.from({ length: maxRows }, (_, row) => {
+          {boardSlotsVisible && Array.from({ length: 4 }, (_, row) => {
             const answer = leftSlots[row];
             if (!answer) return <Box key={`left-empty-${row}`} sx={{ flex: 1 }} />;
             const revealed = roundState.revealedAnswers.some(r => r.rank === answer.rank);
@@ -995,9 +988,9 @@ export const SSShowComponent = () => {
           })}
         </Box>
 
-        {/* Right column: answers 5-8 */}
+        {/* Right column: answers 5-8 — always 4 flex rows */}
         <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
-          {boardSlotsVisible && slotCount > 4 && Array.from({ length: maxRows }, (_, row) => {
+          {boardSlotsVisible && slotCount > 4 && Array.from({ length: 4 }, (_, row) => {
             const answer = rightSlots[row];
             if (!answer) return <Box key={`right-empty-${row}`} sx={{ flex: 1 }} />;
             const revealed = roundState.revealedAnswers.some(r => r.rank === answer.rank);
@@ -1021,7 +1014,7 @@ export const SSShowComponent = () => {
           ? <MultiplierPanel mult={mult} />
           : <Box sx={{ flex: 1 }} />
         }
-        <RoundTotalPanel round={roundState.currentRound} bank={roundState.roundBank} />
+        <RoundTotalPanel round={roundState.currentRound} bank={roundState.roundBank * mult} />
         <StrikesPanel count={roundState.strikeCount} />
         </Box>
         </Box>
