@@ -1085,8 +1085,10 @@ export const SSShowComponent = () => {
   const faceOffTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [randomizing, setRandomizing] = useState(false);
   const prevSeqRef = useRef<number | null>(null);
+  const randomizerSnapshotRef = useRef<{ showIntro: boolean; boardId: string | null } | null>(null);
   const [showingWandTest, setShowingWandTest] = useState(false);
   const prevWandSeqRef = useRef<number | null>(null);
+  const wandTestSnapshotRef = useRef<{ showIntro: boolean; boardId: string | null } | null>(null);
   const [stealResult, setStealResult] = useState<{ teamName: string; success: boolean; color: string } | null>(null);
   const prevPhaseRef = useRef<string | null>(null);
   const stealResultTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -1169,34 +1171,52 @@ export const SSShowComponent = () => {
   useEffect(() => {
     const seq = state?.randomizerSeq ?? 0;
     if (prevSeqRef.current === null) {
-      // Seed on first load — don't trigger for already-existing seq
       prevSeqRef.current = seq;
       return;
     }
-    if (seq > prevSeqRef.current) setRandomizing(true);
+    if (seq > prevSeqRef.current) {
+      // Snapshot show state at the moment randomizer is triggered
+      randomizerSnapshotRef.current = {
+        showIntro: state?.showIntro ?? false,
+        boardId: state?.roundState.currentBoardId ?? null,
+      };
+      setRandomizing(true);
+    }
     prevSeqRef.current = seq;
   }, [state?.randomizerSeq]);
 
-  // Dismiss randomizer when host navigates to another show screen
+  // Dismiss randomizer when host navigates away from snapshot state
   useEffect(() => {
-    if (!randomizing) return;
-    if (state?.roundState.phase !== 'idle') { setRandomizing(false); return; }
-    if (state?.showIntro) { setRandomizing(false); return; }
-    if (state?.roundState.currentBoardId) { setRandomizing(false); return; }
-    if (showingWandTest) { setRandomizing(false); return; }
-  }, [randomizing, state?.roundState.phase, state?.showIntro, state?.roundState.currentBoardId, showingWandTest]);
+    if (!randomizing || !randomizerSnapshotRef.current || !state) return;
+    const snap = randomizerSnapshotRef.current;
+    if (state.showIntro !== snap.showIntro) { setRandomizing(false); return; }
+    if ((state.roundState.currentBoardId ?? null) !== snap.boardId) { setRandomizing(false); return; }
+  }, [randomizing, state?.showIntro, state?.roundState.currentBoardId]);
 
   useEffect(() => {
     const seq = state?.wandTestSeq ?? 0;
     if (prevWandSeqRef.current === null) {
-      // Seed on first load — don't trigger for already-existing seq
       prevWandSeqRef.current = seq;
       return;
     }
-    if (seq > prevWandSeqRef.current) setShowingWandTest(true);
+    if (seq > prevWandSeqRef.current) {
+      wandTestSnapshotRef.current = {
+        showIntro: state?.showIntro ?? false,
+        boardId: state?.roundState.currentBoardId ?? null,
+      };
+      setShowingWandTest(true);
+    }
     if (seq === 0) setShowingWandTest(false);
     prevWandSeqRef.current = seq;
   }, [state?.wandTestSeq]);
+
+  // Dismiss wand test when host navigates away
+  useEffect(() => {
+    if (!showingWandTest || !wandTestSnapshotRef.current || !state) return;
+    const snap = wandTestSnapshotRef.current;
+    if (state.showIntro !== snap.showIntro) { setShowingWandTest(false); return; }
+    if ((state.roundState.currentBoardId ?? null) !== snap.boardId) { setShowingWandTest(false); return; }
+  }, [showingWandTest, state?.showIntro, state?.roundState.currentBoardId]);
 
   if (!state) {
     return (
