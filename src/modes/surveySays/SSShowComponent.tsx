@@ -159,25 +159,7 @@ function QuestionPanel({ question, boardSlotsVisible, buzzArmed }: { question: s
         />
       )}
       
-      {/* Layer 3: Emblem — always visible, overlaps top edge */}
-      <Box
-        component="img"
-        src="/survey-says/emblem/survey-says-emblem.png"
-        sx={{
-          position: 'absolute',
-          top: '-280px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          width: '520px',
-          height: '260px',
-          objectFit: 'contain',
-          zIndex: 10,
-          mixBlendMode: 'screen',
-          pointerEvents: 'none',
-        }}
-      />
-      
-      {/* Layer 4: Question text */}
+      {/* Layer 3: Question text */}
       {boardSlotsVisible && question && (
         <Box sx={{
           position: 'absolute',
@@ -1118,7 +1100,26 @@ export const SSShowComponent = () => {
         transform: `scale(${scale})`,
         transformOrigin: 'center center',
         position: 'relative',
+        overflow: 'visible',
       }}>
+        {/* Emblem — absolute on stage, independent of content layout */}
+        <Box
+          component="img"
+          src="/survey-says/emblem/survey-says-emblem.png"
+          sx={{
+            position: 'absolute',
+            top: '-164px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: '520px',
+            height: '260px',
+            objectFit: 'contain',
+            zIndex: 12,
+            mixBlendMode: 'screen',
+            pointerEvents: 'none',
+          }}
+        />
+
         {/* Studio background */}
         <Box
           component="img"
