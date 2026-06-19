@@ -15,8 +15,10 @@ const router = Router();
 judgeController.onEvent((event) => {
   if (event.type !== 'BUZZ_ACCEPTED') return;
   const payload = event.payload as { windowId: string | null; controllerId: string };
+  console.log(`[SS] BUZZ_ACCEPTED: windowId=${payload.windowId} controllerId=${payload.controllerId}`);
   if (payload.windowId !== 'ss-faceoff') return;
   const { controllerAssignments, teams } = surveySaysStore.getState();
+  console.log(`[SS] controllerAssignments count=${controllerAssignments.length}`, JSON.stringify(controllerAssignments));
   const assignment = controllerAssignments.find(a => a.controllerId === payload.controllerId);
   const teamId = assignment?.teamId ?? teams.find(t =>
     t.players.some((_, i) => String(i + 1) === payload.controllerId || String(5 + i + 1) === payload.controllerId)

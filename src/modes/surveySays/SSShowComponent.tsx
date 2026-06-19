@@ -1170,12 +1170,14 @@ export const SSShowComponent = () => {
 
   useEffect(() => {
     const seq = state?.randomizerSeq ?? 0;
+    console.log(`[SS-DBG] randomizerSeq effect: seq=${seq} prev=${prevSeqRef.current} randomizing=${randomizing}`);
     if (prevSeqRef.current === null) {
+      console.log(`[SS-DBG] seeding prevSeqRef to ${seq}`);
       prevSeqRef.current = seq;
       return;
     }
     if (seq > 0 && seq > prevSeqRef.current) {
-      // Snapshot show state at the moment randomizer is triggered
+      console.log(`[SS-DBG] TRIGGERING randomizer: seq=${seq} > prev=${prevSeqRef.current}`);
       randomizerSnapshotRef.current = {
         showIntro: state?.showIntro ?? false,
         boardId: state?.roundState.currentBoardId ?? null,
