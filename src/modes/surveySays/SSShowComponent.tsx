@@ -1085,7 +1085,6 @@ export const SSShowComponent = () => {
   const faceOffTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [randomizing, setRandomizing] = useState(false);
   const prevSeqRef = useRef<number | null>(null);
-  const randomizerHideRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [showingWandTest, setShowingWandTest] = useState(false);
   const prevWandSeqRef = useRef<number | null>(null);
   const [stealResult, setStealResult] = useState<{ teamName: string; success: boolean; color: string } | null>(null);
@@ -1169,23 +1168,32 @@ export const SSShowComponent = () => {
 
   useEffect(() => {
     const seq = state?.randomizerSeq ?? 0;
-    const prev = prevSeqRef.current ?? 0;
-    if (seq > prev) setRandomizing(true);
+    if (prevSeqRef.current === null) {
+      // Seed on first load — don't trigger for already-existing seq
+      prevSeqRef.current = seq;
+      return;
+    }
+    if (seq > prevSeqRef.current) setRandomizing(true);
     prevSeqRef.current = seq;
   }, [state?.randomizerSeq]);
 
-  // Dismiss randomizer when host navigates away (showIntro toggled, board loaded, wand test started)
+  // Dismiss randomizer when host navigates to another show screen
   useEffect(() => {
     if (!randomizing) return;
     if (state?.roundState.phase !== 'idle') { setRandomizing(false); return; }
     if (state?.showIntro) { setRandomizing(false); return; }
+    if (state?.roundState.currentBoardId) { setRandomizing(false); return; }
     if (showingWandTest) { setRandomizing(false); return; }
-  }, [randomizing, state?.roundState.phase, state?.showIntro, showingWandTest]);
+  }, [randomizing, state?.roundState.phase, state?.showIntro, state?.roundState.currentBoardId, showingWandTest]);
 
   useEffect(() => {
     const seq = state?.wandTestSeq ?? 0;
-    const prev = prevWandSeqRef.current ?? 0;
-    if (seq > prev) setShowingWandTest(true);
+    if (prevWandSeqRef.current === null) {
+      // Seed on first load — don't trigger for already-existing seq
+      prevWandSeqRef.current = seq;
+      return;
+    }
+    if (seq > prevWandSeqRef.current) setShowingWandTest(true);
     if (seq === 0) setShowingWandTest(false);
     prevWandSeqRef.current = seq;
   }, [state?.wandTestSeq]);
@@ -1204,9 +1212,7 @@ export const SSShowComponent = () => {
         teams={state.teams}
         playerPool={state.playerPool}
         controllerAssignments={state.controllerAssignments ?? []}
-        onDone={() => {
-          randomizerHideRef.current = setTimeout(() => setRandomizing(false), 8000);
-        }}
+        onDone={() => { /* stays until host navigates away */ }}
       />
     );
   }
