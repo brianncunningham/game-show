@@ -781,6 +781,158 @@ function GameOverScreen({ winner, teams }: { winner: SurveyTeam; teams: [SurveyT
   );
 }
 
+// ─── Wand Test Overlay ───────────────────────────────────────────────────────
+
+const WAND_FLASH_MS = 1200;
+
+const getBuzzerWsUrl = () => {
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const host = window.location.port === '4174'
+    ? `${window.location.hostname}:3001`
+    : window.location.host;
+  return `${protocol}//${host}/ws/buzzer`;
+};
+
+function SSWandTestOverlay({ teams }: { teams: [SurveyTeam, SurveyTeam] }) {
+  const [activeWands, setActiveWands] = useState<Set<string>>(new Set());
+  const timersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+
+  useEffect(() => {
+    const ws = new WebSocket(getBuzzerWsUrl());
+    ws.onmessage = (ev) => {
+      try {
+        const msg = JSON.parse(ev.data as string) as { type: string; payload: Record<string, unknown> };
+        if (msg.type === 'BUZZ_RECEIVED') {
+          const cid = String(msg.payload.controllerId ?? '');
+          if (!cid) return;
+          const audio = new Audio('/buzz.mp3');
+          void audio.play().catch(() => {});
+          setActiveWands(prev => { const s = new Set(prev); s.add(cid); return s; });
+          const existing = timersRef.current.get(cid);
+          if (existing) clearTimeout(existing);
+          const t = setTimeout(() => {
+            setActiveWands(prev => { const s = new Set(prev); s.delete(cid); return s; });
+            timersRef.current.delete(cid);
+          }, WAND_FLASH_MS);
+          timersRef.current.set(cid, t);
+        }
+      } catch { /* ignore */ }
+    };
+    return () => {
+      ws.close();
+      timersRef.current.forEach(t => clearTimeout(t));
+      timersRef.current.clear();
+    };
+  }, []);
+
+  // Build label: prefer player name from pool if assigned, else just wand #
+  const allPlayers = [...teams[0].players, ...teams[1].players];
+
+  return (
+    <Box sx={{
+      height: '100vh',
+      width: '100vw',
+      bgcolor: BG,
+      backgroundImage: 'radial-gradient(ellipse at 50% 20%, #1a0a3a 0%, transparent 55%)',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 4,
+    }}>
+      <Typography sx={{
+        ...fontSx,
+        fontSize: 'clamp(2rem, 5vw, 3.5rem)',
+        fontWeight: 900,
+        color: GOLD,
+        letterSpacing: '0.2em',
+        textTransform: 'uppercase',
+        textShadow: `0 0 20px ${GOLD}88`,
+      }}>
+        Wand Test
+      </Typography>
+
+      <Box sx={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(5, 1fr)',
+        gap: '24px',
+        width: 'clamp(400px, 60vw, 900px)',
+      }}>
+        {Array.from({ length: 10 }, (_, i) => {
+          const cid = String(i + 1);
+          const isActive = activeWands.has(cid);
+          const playerName = allPlayers[i] ?? null;
+          return (
+            <Box key={cid} sx={{
+              borderRadius: 3,
+              border: '3px solid',
+              borderColor: isActive ? '#00ff88' : 'rgba(255,255,255,0.1)',
+              bgcolor: isActive ? 'rgba(0,255,136,0.12)' : 'rgba(255,255,255,0.03)',
+              boxShadow: isActive ? '0 0 30px rgba(0,255,136,0.6), 0 0 60px rgba(0,255,136,0.2)' : 'none',
+              transition: 'all 0.08s ease',
+              p: 2,
+              textAlign: 'center',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 0.5,
+            }}>
+              <Box sx={{
+                width: 48,
+                height: 48,
+                borderRadius: '50%',
+                border: '3px solid',
+                borderColor: isActive ? '#00ff88' : 'rgba(255,255,255,0.2)',
+                bgcolor: isActive ? 'rgba(0,255,136,0.2)' : 'rgba(255,255,255,0.05)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.08s ease',
+              }}>
+                <Typography sx={{
+                  ...fontSx,
+                  fontSize: '1.4rem',
+                  fontWeight: 900,
+                  color: isActive ? '#00ff88' : 'rgba(255,255,255,0.4)',
+                  lineHeight: 1,
+                  transition: 'color 0.08s ease',
+                }}>
+                  {cid}
+                </Typography>
+              </Box>
+              {playerName && (
+                <Typography sx={{
+                  ...fontSx,
+                  fontSize: '0.9rem',
+                  fontWeight: 700,
+                  color: isActive ? '#ffffff' : 'rgba(255,255,255,0.5)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                  transition: 'color 0.08s ease',
+                }}>
+                  {playerName}
+                </Typography>
+              )}
+              <Typography sx={{
+                fontSize: '0.65rem',
+                color: isActive ? '#00ff88' : 'rgba(255,255,255,0.2)',
+                letterSpacing: '0.1em',
+                transition: 'color 0.08s ease',
+              }}>
+                {isActive ? 'BUZZ!' : 'idle'}
+              </Typography>
+            </Box>
+          );
+        })}
+      </Box>
+
+      <Typography sx={{ ...fontSx, fontSize: '1rem', color: 'rgba(255,255,255,0.2)', letterSpacing: '0.15em', textTransform: 'uppercase', mt: 1 }}>
+        Press any wand to verify
+      </Typography>
+    </Box>
+  );
+}
+
 // ─── Intro Screen ────────────────────────────────────────────────────────────
 
 function IntroScreen({ teams }: { teams: [SurveyTeam, SurveyTeam] }) {
@@ -900,6 +1052,8 @@ export const SSShowComponent = () => {
   const [randomizing, setRandomizing] = useState(false);
   const prevSeqRef = useRef<number | null>(null);
   const randomizerHideRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [showingWandTest, setShowingWandTest] = useState(false);
+  const prevWandSeqRef = useRef<number | null>(null);
   const [stealResult, setStealResult] = useState<{ teamName: string; success: boolean; color: string } | null>(null);
   const prevPhaseRef = useRef<string | null>(null);
   const stealResultTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -988,6 +1142,15 @@ export const SSShowComponent = () => {
     prevSeqRef.current = seq;
   }, [state?.randomizerSeq]);
 
+  useEffect(() => {
+    const seq = state?.wandTestSeq ?? 0;
+    if (prevWandSeqRef.current !== null && seq > prevWandSeqRef.current) {
+      setShowingWandTest(true);
+    }
+    if (seq === 0) setShowingWandTest(false);
+    prevWandSeqRef.current = seq;
+  }, [state?.wandTestSeq]);
+
   if (!state) {
     return (
       <Box sx={{ height: '100vh', bgcolor: BG, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -1011,6 +1174,10 @@ export const SSShowComponent = () => {
 
   if (state.showIntro) {
     return <IntroScreen teams={state.teams} />;
+  }
+
+  if (showingWandTest) {
+    return <SSWandTestOverlay teams={state.teams} />;
   }
 
   if (state.roundState.phase === 'game_over') {

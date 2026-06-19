@@ -81,6 +81,14 @@ router.post('/intro/show', (_req, res) => {
   res.json(surveySaysStore.setShowIntro(true));
 });
 
+router.post('/wand-test/show', (_req, res) => {
+  res.json(surveySaysStore.showWandTest());
+});
+
+router.post('/wand-test/hide', (_req, res) => {
+  res.json(surveySaysStore.hideWandTest());
+});
+
 // ─── Board management ────────────────────────────────────────────────────────
 
 router.post('/boards', (req, res) => {

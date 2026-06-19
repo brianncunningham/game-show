@@ -81,4 +81,5 @@ export interface SurveySaysState {
   showIntro: boolean;
   playerPool: string[];
   randomizerSeq: number;
+  wandTestSeq: number;
 }

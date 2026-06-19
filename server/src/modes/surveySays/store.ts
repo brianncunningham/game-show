@@ -94,6 +94,7 @@ const createInitialState = (): SurveySaysState => ({
   showIntro: true,
   playerPool: [],
   randomizerSeq: 0,
+  wandTestSeq: 0,
 });
 
 // ─── Store ────────────────────────────────────────────────────────────────────
@@ -211,6 +212,14 @@ class SurveySaysStore {
 
   setShowIntro(show: boolean): SurveySaysState {
     return this.commit({ ...this.state, showIntro: show });
+  }
+
+  showWandTest(): SurveySaysState {
+    return this.commit({ ...this.state, wandTestSeq: (this.state.wandTestSeq ?? 0) + 1 });
+  }
+
+  hideWandTest(): SurveySaysState {
+    return this.commit({ ...this.state, wandTestSeq: 0 });
   }
 
   // ── Round control ───────────────────────────────────────────────────────────

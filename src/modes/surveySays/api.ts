@@ -39,6 +39,10 @@ export const adjustScore = (teamId: string, delta: number) => post(`/teams/${tea
 export const hideIntro = () => post('/intro/hide');
 export const showIntro = () => post('/intro/show');
 
+// ── Wand test ─────────────────────────────────────────────────────────────────
+export const showWandTest = () => post('/wand-test/show');
+export const hideWandTest = () => post('/wand-test/hide');
+
 // ── Board ─────────────────────────────────────────────────────────────────────
 export const loadBoard = (boardId: string) => post(`/board/load/${boardId}`);
 

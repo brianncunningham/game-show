@@ -91,4 +91,5 @@ export interface SurveySaysState {
   showIntro: boolean;
   playerPool: string[];              // names available to assign to families (max 10)
   randomizerSeq: number;             // bumps to trigger the /show team randomizer
+  wandTestSeq: number;               // bumps to trigger the /show wand test overlay
 }

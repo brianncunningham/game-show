@@ -19,22 +19,11 @@ import {
   nextRound, newGame, endGame, undo,
   loadBoard, randomAssignPlayers,
   hideIntro, showIntro,
+  showWandTest, hideWandTest,
   listSaves, loadSave,
 } from './api';
 import type { SSSaveMeta } from './api';
 import { ledEffect } from '../../features/buzzer/buzzerApi';
-
-// ─── Wand test helpers ────────────────────────────────────────────────────────
-
-const WAND_FLASH_MS = 1200;
-
-const getBuzzerWsUrl = () => {
-  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  const host = window.location.port === '4174'
-    ? `${window.location.hostname}:3001`
-    : window.location.host;
-  return `${protocol}//${host}/ws/buzzer`;
-};
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -63,10 +52,6 @@ export const SSHostComponent = () => {
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [gameOpen, setGameOpen] = useState(false);
   const [showScreenOpen, setShowScreenOpen] = useState(true);
-  const [wandTestOpen, setWandTestOpen] = useState(false);
-  const [activeWands, setActiveWands] = useState<Set<string>>(new Set());
-  const wandTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
-  const wandWsRef = useRef<WebSocket | null>(null);
 
   const refresh = useCallback(async () => {
     try { setState(await getState()); } catch { /* ignore */ }
@@ -82,42 +67,6 @@ export const SSHostComponent = () => {
     const id = setInterval(() => { void refresh(); }, 800);
     return () => clearInterval(id);
   }, [refresh, refreshSaves]);
-
-  // Wand test WebSocket — connect when open, disconnect when closed
-  useEffect(() => {
-    if (!wandTestOpen) {
-      wandWsRef.current?.close();
-      wandWsRef.current = null;
-      return;
-    }
-    const ws = new WebSocket(getBuzzerWsUrl());
-    wandWsRef.current = ws;
-    ws.onmessage = (ev) => {
-      try {
-        const msg = JSON.parse(ev.data as string) as { type: string; payload: Record<string, unknown> };
-        if (msg.type === 'BUZZ_RECEIVED') {
-          const cid = String(msg.payload.controllerId ?? '');
-          if (!cid) return;
-          const audio = new Audio('/buzz.mp3');
-          void audio.play().catch(() => {});
-          setActiveWands(prev => { const s = new Set(prev); s.add(cid); return s; });
-          const existing = wandTimersRef.current.get(cid);
-          if (existing) clearTimeout(existing);
-          const t = setTimeout(() => {
-            setActiveWands(prev => { const s = new Set(prev); s.delete(cid); return s; });
-            wandTimersRef.current.delete(cid);
-          }, WAND_FLASH_MS);
-          wandTimersRef.current.set(cid, t);
-        }
-      } catch { /* ignore */ }
-    };
-    return () => {
-      ws.close();
-      wandWsRef.current = null;
-      wandTimersRef.current.forEach(t => clearTimeout(t));
-      wandTimersRef.current.clear();
-    };
-  }, [wandTestOpen]);
 
   const act = useCallback((fn: () => Promise<SurveySaysState>) => async () => {
     try { setState(await fn()); } catch (e) { console.error(e); }
@@ -303,64 +252,23 @@ export const SSHostComponent = () => {
                   })}>
                   📺 Game Board
                 </Button>
+                {config.buzzerMode === 'hardware' && (
+                  <Button fullWidth variant="outlined" color="info"
+                    sx={{ ...bigBtnSx, flex: 1, fontSize: { xs: '0.7rem', md: '0.8rem' } }}
+                    onClick={act(() => showWandTest())}>
+                    🪄 Wand Test
+                  </Button>
+                )}
               </Stack>
+              {config.buzzerMode === 'hardware' && (state.wandTestSeq ?? 0) > 0 && (
+                <Button size="small" variant="text" color="warning" sx={{ mt: 0.5 }}
+                  onClick={act(() => hideWandTest())}>
+                  ✕ Stop Wand Test
+                </Button>
+              )}
             </Collapse>
           </CardContent>
         </Card>
-
-        {/* ── Wand Test (hardware mode only) ── */}
-        {config.buzzerMode === 'hardware' && (
-          <Card variant="outlined">
-            <CardContent sx={{ pb: wandTestOpen ? undefined : '12px !important' }}>
-              <Stack direction="row" alignItems="center" justifyContent="space-between"
-                onClick={() => setWandTestOpen(o => !o)} sx={{ cursor: 'pointer', userSelect: 'none' }}>
-                <Typography sx={sectionLabelSx}>🪄 Wand Test</Typography>
-                <IconButton size="small">{wandTestOpen ? <ExpandLessIcon /> : <ExpandMoreIcon />}</IconButton>
-              </Stack>
-              <Collapse in={wandTestOpen}>
-                <Typography variant="caption" color="text.disabled" display="block" sx={{ mb: 1.5, mt: 0.5 }}>
-                  Press any wand to verify it's working. Wands 1–10 supported.
-                </Typography>
-                <Box sx={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(5, 1fr)',
-                  gap: 1,
-                }}>
-                  {Array.from({ length: 10 }, (_, i) => {
-                    const cid = String(i + 1);
-                    const isActive = activeWands.has(cid);
-                    return (
-                      <Box key={cid} sx={{
-                        borderRadius: 2,
-                        border: '2px solid',
-                        borderColor: isActive ? '#00ff88' : 'rgba(255,255,255,0.12)',
-                        bgcolor: isActive ? 'rgba(0,255,136,0.12)' : 'rgba(255,255,255,0.03)',
-                        boxShadow: isActive ? '0 0 16px rgba(0,255,136,0.5)' : 'none',
-                        transition: 'all 0.08s ease',
-                        p: 1,
-                        textAlign: 'center',
-                      }}>
-                        <Typography sx={{
-                          fontWeight: 900,
-                          fontSize: '1.4rem',
-                          color: isActive ? '#00ff88' : 'rgba(255,255,255,0.3)',
-                          lineHeight: 1,
-                          fontFamily: 'monospace',
-                          transition: 'color 0.08s ease',
-                        }}>
-                          {cid}
-                        </Typography>
-                        <Typography sx={{ fontSize: '0.6rem', color: isActive ? '#00ff88' : 'rgba(255,255,255,0.2)', mt: 0.25 }}>
-                          {isActive ? 'BUZZ!' : 'idle'}
-                        </Typography>
-                      </Box>
-                    );
-                  })}
-                </Box>
-              </Collapse>
-            </CardContent>
-          </Card>
-        )}
 
         <Divider />
 
