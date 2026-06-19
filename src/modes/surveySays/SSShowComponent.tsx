@@ -165,7 +165,7 @@ function QuestionPanel({ question, boardSlotsVisible, buzzArmed }: { question: s
         src="/survey-says/emblem/survey-says-emblem.png"
         sx={{
           position: 'absolute',
-          top: '-220px',
+          top: '-280px',
           left: '50%',
           transform: 'translateX(-50%)',
           width: '520px',
