@@ -39,6 +39,7 @@ export type GamePhase =
   | 'game_over';
 
 export type FaceOffState =
+  | 'announcing'      // face-off announced, players shown, board not yet visible
   | 'showing_board'   // empty numbered slots animating in, no question yet
   | 'waiting_buzz'    // question visible + buzzers armed, waiting for buzz
   | 'answering'       // a team is answering (faceOffTurnTeamId); host judges answer/strike

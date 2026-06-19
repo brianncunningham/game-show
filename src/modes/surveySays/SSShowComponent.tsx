@@ -1042,11 +1042,12 @@ export const SSShowComponent = () => {
 
   const { roundState, teams, boards, config } = state;
   const currentBoard = boards.find(b => b.id === roundState.currentBoardId);
-  const boardSlotsVisible = roundState.phase !== 'idle';
+  const boardSlotsVisible = roundState.phase !== 'idle' &&
+    !(roundState.phase === 'face_off' && roundState.faceOffState === 'announcing');
   // Question visible once host clicks "Reveal Question" (question_revealed or beyond)
   const questionRevealed =
     roundState.phase !== 'idle' &&
-    !(roundState.phase === 'face_off' && roundState.faceOffState === 'showing_board');
+    !(roundState.phase === 'face_off' && (roundState.faceOffState === 'announcing' || roundState.faceOffState === 'showing_board'));
   // Buzz armed indicator: only while waiting for hardware buzz
   const buzzArmed =
     roundState.phase === 'face_off' && roundState.faceOffState === 'waiting_buzz';
@@ -1201,7 +1202,7 @@ export const SSShowComponent = () => {
         </Box>
 
         {/* ── Overlays ── */}
-        {roundState.phase === 'face_off' && roundState.faceOffState === 'showing_board' && (() => {
+        {roundState.phase === 'face_off' && roundState.faceOffState === 'announcing' && (() => {
           const playerAt = (t: SurveyTeam, idx: number) => t.players.length ? t.players[((idx % t.players.length) + t.players.length) % t.players.length] : null;
           const idx = roundState.faceOffPlayerIndex;
           return (

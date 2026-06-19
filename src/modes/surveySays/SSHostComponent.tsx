@@ -12,6 +12,7 @@ import type { SurveySaysState, SurveyAnswer } from './types';
 import {
   getState,
   revealQuestion, recordBuzz, faceOffAnswer, faceOffStrike,
+  showBoard,
   setPlayOrPass,
   revealAnswer, revealAnswerPostRound, addStrike,
   stealSuccess, stealFail,
@@ -281,6 +282,7 @@ export const SSHostComponent = () => {
                 <Chip label="2" size="small" color="info" />
                 <Typography sx={{ ...sectionLabelSx, mb: 0 }}>
                   Face-Off —&nbsp;
+                  {faceOffState === 'announcing' && 'Announcing face-off players'}
                   {faceOffState === 'showing_board' && 'Board showing — reveal question when ready'}
                   {faceOffState === 'waiting_buzz' && '🔵 Buzzers armed — waiting for buzz'}
                   {faceOffState === 'answering' && `${faceOffAnsweringTeam?.name ?? ''} answering`}
@@ -291,7 +293,20 @@ export const SSHostComponent = () => {
                 )}
               </Stack>
 
-              {/* ── Sub-step A: board showing — reveal question (auto-arms buzzers) ── */}
+              {/* ── Sub-step A: announcing face-off ── */}
+              {faceOffState === 'announcing' && (
+                <>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+                    Show screen is displaying the face-off matchup. When ready, show the board.
+                  </Typography>
+                  <Button fullWidth variant="contained" color="info" sx={bigBtnSx}
+                    onClick={act(() => showBoard())}>
+                    Show Board →
+                  </Button>
+                </>
+              )}
+
+              {/* ── Sub-step B: board showing — reveal question (auto-arms buzzers) ── */}
               {faceOffState === 'showing_board' && (
                 <>
                   <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>

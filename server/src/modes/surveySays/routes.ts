@@ -99,6 +99,10 @@ router.post('/board/load/:boardId', (req, res) => {
 
 // ─── Face-off ────────────────────────────────────────────────────────────────
 
+router.post('/faceoff/show-board', (_req, res) => {
+  res.json(surveySaysStore.showBoard());
+});
+
 // Reveal the question AND arm the buzzers in one step. No arming LED (by design).
 router.post('/faceoff/reveal-question', (_req, res) => {
   res.json(surveySaysStore.revealQuestion());

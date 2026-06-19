@@ -43,6 +43,7 @@ export const showIntro = () => post('/intro/show');
 export const loadBoard = (boardId: string) => post(`/board/load/${boardId}`);
 
 // ── Face-off ──────────────────────────────────────────────────────────────────
+export const showBoard = () => post('/faceoff/show-board');
 export const revealQuestion = () => post('/faceoff/reveal-question'); // also arms buzzers
 export const recordBuzz = (teamId: string) => post(`/faceoff/buzz/${teamId}`);
 export const faceOffAnswer = (rank: number) => post(`/faceoff/answer/${rank}`);

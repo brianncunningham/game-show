@@ -198,7 +198,7 @@ class SurveySaysStore {
     return this.patchRound({
       phase: 'face_off',
       currentBoardId: boardId,
-      faceOffState: 'showing_board',
+      faceOffState: 'announcing',
       faceOffWinnerTeamId: null,
       faceOffStrikeTeamId: null,
       faceOffTurnTeamId: null,
@@ -216,6 +216,11 @@ class SurveySaysStore {
       buzzWinnerTeamId: null,
       swept: false,
     });
+  }
+
+  showBoard(): SurveySaysState {
+    this.begin();
+    return this.patchRound({ faceOffState: 'showing_board' });
   }
 
   // Reveal the question AND arm the buzzers in one step (no separate arm action).
