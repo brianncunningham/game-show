@@ -1174,7 +1174,7 @@ export const SSShowComponent = () => {
       prevSeqRef.current = seq;
       return;
     }
-    if (seq > prevSeqRef.current) {
+    if (seq > 0 && seq > prevSeqRef.current) {
       // Snapshot show state at the moment randomizer is triggered
       randomizerSnapshotRef.current = {
         showIntro: state?.showIntro ?? false,

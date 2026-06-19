@@ -9,6 +9,28 @@ import type { SurveySaysConfig, SurveyTeam } from './types.js';
 
 const router = Router();
 
+// ─── Auto-record face-off buzz from hardware ─────────────────────────────────
+// When a wand buzzes in during the ss-faceoff window, BUZZ_ACCEPTED fires.
+// Map the controllerId → teamId and call recordBuzz automatically.
+judgeController.onEvent((event) => {
+  if (event.type !== 'BUZZ_ACCEPTED') return;
+  const payload = event.payload as { windowId: string | null; controllerId: string };
+  if (payload.windowId !== 'ss-faceoff') return;
+  const { controllerAssignments, teams } = surveySaysStore.getState();
+  const assignment = controllerAssignments.find(a => a.controllerId === payload.controllerId);
+  const teamId = assignment?.teamId ?? teams.find(t =>
+    t.players.some((_, i) => String(i + 1) === payload.controllerId || String(5 + i + 1) === payload.controllerId)
+  )?.id;
+  if (!teamId) {
+    console.warn(`[SS] BUZZ_ACCEPTED on ss-faceoff: no team found for controller ${payload.controllerId}`);
+    return;
+  }
+  console.log(`[SS] Auto-recording faceoff buzz: controller ${payload.controllerId} → team ${teamId}`);
+  const color = teamColor(teamId);
+  piLed({ effect: 'flash', color, flashes: 3, on_ms: 120, off_ms: 80 });
+  surveySaysStore.recordBuzz(teamId);
+});
+
 // ─── Buzzer helpers ───────────────────────────────────────────────────────────
 
 /**
