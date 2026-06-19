@@ -716,9 +716,18 @@ function GameOverScreen({ winner, teams }: { winner: SurveyTeam; teams: [SurveyT
     }}>
       <canvas ref={canvasRef} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 0 }} />
       <Box sx={{ position: 'relative', zIndex: 2, textAlign: 'center', px: 4 }}>
-        <Typography sx={{ ...fontSx, fontSize: '2rem', color: '#ffffff66', letterSpacing: '0.28em', textTransform: 'uppercase', mb: 1 }}>
-          Survey Says
-        </Typography>
+        <Box
+          component="img"
+          src="/survey-says/emblem/survey-says-emblem.png"
+          sx={{
+            width: '420px',
+            height: 'auto',
+            objectFit: 'contain',
+            mixBlendMode: 'screen',
+            mb: 2,
+            filter: `drop-shadow(0 0 30px ${GOLD}66)`,
+          }}
+        />
         <Typography sx={{
           ...fontSx,
           fontSize: '9rem',
@@ -808,39 +817,21 @@ function IntroScreen({ teams }: { teams: [SurveyTeam, SurveyTeam] }) {
           color: '#ffffff55',
           letterSpacing: '0.3em',
           textTransform: 'uppercase',
-          mb: 1,
+          mb: 3,
         }}>
           WELCOME TO
         </Typography>
-        <Typography sx={{
-          ...fontSx,
-          fontSize: 'clamp(4rem, 10vw, 9rem)',
-          fontWeight: 900,
-          letterSpacing: '0.04em',
-          textTransform: 'uppercase',
-          lineHeight: 0.9,
-          background: `linear-gradient(180deg, #fff 0%, ${GOLD} 55%, #c89000 100%)`,
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          textShadow: 'none',
-          filter: `drop-shadow(0 0 30px ${GOLD}88)`,
-        }}>
-          SURVEY
-        </Typography>
-        <Typography sx={{
-          ...fontSx,
-          fontSize: 'clamp(4rem, 10vw, 9rem)',
-          fontWeight: 900,
-          letterSpacing: '0.04em',
-          textTransform: 'uppercase',
-          lineHeight: 0.9,
-          background: `linear-gradient(180deg, #fff 0%, ${GOLD} 55%, #c89000 100%)`,
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          filter: `drop-shadow(0 0 30px ${GOLD}88)`,
-        }}>
-          SAYS
-        </Typography>
+        <Box
+          component="img"
+          src="/survey-says/emblem/survey-says-emblem.png"
+          sx={{
+            width: 'clamp(300px, 40vw, 700px)',
+            height: 'auto',
+            objectFit: 'contain',
+            mixBlendMode: 'screen',
+            filter: `drop-shadow(0 0 40px ${GOLD}88)`,
+          }}
+        />
       </Box>
 
       {/* Gold divider */}
