@@ -12,19 +12,22 @@ const router = Router();
 // ─── Buzzer helpers ───────────────────────────────────────────────────────────
 
 /**
- * Returns the two controller IDs for the current face-off pair.
- * Team 0 players map to wands 1–5; team 1 players map to wands 6–10.
- * Falls back to [] (all eligible) if no players are assigned.
+ * Returns the controller IDs eligible to buzz for the current face-off.
+ * Looks up each team's face-off player by index in controllerAssignments.
+ * Falls back to [] (all eligible) if no assignments exist.
  */
 function faceOffWandIds(): string[] {
-  const { teams, roundState } = surveySaysStore.getState();
+  const { teams, roundState, controllerAssignments } = surveySaysStore.getState();
+  if (!controllerAssignments.length) return [];
   const idx = roundState.faceOffPlayerIndex;
-  const t0 = teams[0];
-  const t1 = teams[1];
-  if (!t0.players.length || !t1.players.length) return [];
-  const w0 = String((idx % t0.players.length) + 1);
-  const w1 = String(5 + (idx % t1.players.length) + 1);
-  return [w0, w1];
+  const ids: string[] = [];
+  for (const team of teams) {
+    if (!team.players.length) continue;
+    const playerName = team.players[idx % team.players.length];
+    const assignment = controllerAssignments.find(a => a.teamId === team.id && a.playerName === playerName);
+    if (assignment) ids.push(assignment.controllerId);
+  }
+  return ids.length === 2 ? ids : [];
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────

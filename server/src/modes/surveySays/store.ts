@@ -8,6 +8,7 @@ import type {
   SurveySaysRoundState,
   SurveyTeam,
   GamePhase,
+  ControllerAssignment,
 } from './types.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -17,7 +18,11 @@ const loadPersistedState = (): SurveySaysState | null => {
   try {
     if (existsSync(PERSIST_PATH)) {
       const raw = readFileSync(PERSIST_PATH, 'utf-8');
-      return JSON.parse(raw) as SurveySaysState;
+      const s = JSON.parse(raw) as SurveySaysState;
+      // Hydrate fields added after initial release
+      if (!s.controllerAssignments) s.controllerAssignments = [];
+      if (s.wandTestSeq === undefined) s.wandTestSeq = 0;
+      return s;
     }
   } catch (e) {
     console.warn('SS: could not load persisted state, using defaults.', e);
@@ -54,6 +59,21 @@ const DEFAULT_TEAMS: [SurveyTeam, SurveyTeam] = [
 
 const MAX_POOL = 10;        // 2 families × 5 players
 const MAX_PER_TEAM = 5;
+
+/**
+ * Assign wand controller IDs to players.
+ * Team 0 players → wands 1–5, team 1 players → wands 6–10 (positional).
+ */
+const buildControllerAssignments = (teams: [SurveyTeam, SurveyTeam]): ControllerAssignment[] => {
+  const assignments: ControllerAssignment[] = [];
+  teams[0].players.forEach((playerName, i) => {
+    assignments.push({ controllerId: String(i + 1), teamId: teams[0].id, playerName });
+  });
+  teams[1].players.forEach((playerName, i) => {
+    assignments.push({ controllerId: String(5 + i + 1), teamId: teams[1].id, playerName });
+  });
+  return assignments;
+};
 
 const shuffle = <T,>(items: T[]): T[] => {
   const next = [...items];
@@ -95,6 +115,7 @@ const createInitialState = (): SurveySaysState => ({
   playerPool: [],
   randomizerSeq: 0,
   wandTestSeq: 0,
+  controllerAssignments: [],
 });
 
 // ─── Store ────────────────────────────────────────────────────────────────────
@@ -188,9 +209,11 @@ class SurveySaysStore {
         teams[target].players.push(player);
       }
     });
+    const controllerAssignments = buildControllerAssignments(teams);
     return this.commit({
       ...this.state,
       teams,
+      controllerAssignments,
       randomizerSeq: this.state.randomizerSeq + 1,
     });
   }

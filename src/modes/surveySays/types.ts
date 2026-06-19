@@ -66,6 +66,12 @@ export interface SurveySaysRoundState {
   swept: boolean;
 }
 
+export interface ControllerAssignment {
+  controllerId: string;
+  teamId: string;
+  playerName: string;
+}
+
 export interface SurveyTeam {
   id: string;
   name: string;
@@ -82,4 +88,5 @@ export interface SurveySaysState {
   playerPool: string[];
   randomizerSeq: number;
   wandTestSeq: number;
+  controllerAssignments: ControllerAssignment[];
 }

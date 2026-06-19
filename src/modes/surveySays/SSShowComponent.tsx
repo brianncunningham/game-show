@@ -1134,19 +1134,16 @@ export const SSShowComponent = () => {
   }, [state?.roundState.phase]);
 
   useEffect(() => {
-    const seq = state?.randomizerSeq;
-    if (seq === undefined) return;
-    if (prevSeqRef.current !== null && seq > prevSeqRef.current) {
-      setRandomizing(true);
-    }
+    const seq = state?.randomizerSeq ?? 0;
+    const prev = prevSeqRef.current ?? 0;
+    if (seq > prev) setRandomizing(true);
     prevSeqRef.current = seq;
   }, [state?.randomizerSeq]);
 
   useEffect(() => {
     const seq = state?.wandTestSeq ?? 0;
-    if (prevWandSeqRef.current !== null && seq > prevWandSeqRef.current) {
-      setShowingWandTest(true);
-    }
+    const prev = prevWandSeqRef.current ?? 0;
+    if (seq > prev) setShowingWandTest(true);
     if (seq === 0) setShowingWandTest(false);
     prevWandSeqRef.current = seq;
   }, [state?.wandTestSeq]);

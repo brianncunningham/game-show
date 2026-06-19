@@ -72,6 +72,14 @@ export interface SurveySaysRoundState {
   swept: boolean;                     // board cleared without 3 strikes
 }
 
+// ─── Controller Assignments ────────────────────────────────────────────────
+
+export interface ControllerAssignment {
+  controllerId: string;  // wand number as string e.g. "1"
+  teamId: string;
+  playerName: string;
+}
+
 // ─── Team ────────────────────────────────────────────────────────────────────
 
 export interface SurveyTeam {
@@ -92,4 +100,5 @@ export interface SurveySaysState {
   playerPool: string[];              // names available to assign to families (max 10)
   randomizerSeq: number;             // bumps to trigger the /show team randomizer
   wandTestSeq: number;               // bumps to trigger the /show wand test overlay
+  controllerAssignments: ControllerAssignment[]; // wand→player mapping, rebuilt each randomize
 }
