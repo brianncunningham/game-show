@@ -1172,12 +1172,12 @@ export const SSShowComponent = () => {
     );
   }
 
-  if (state.showIntro) {
-    return <IntroScreen teams={state.teams} />;
-  }
-
   if (showingWandTest) {
     return <SSWandTestOverlay teams={state.teams} />;
+  }
+
+  if (state.showIntro) {
+    return <IntroScreen teams={state.teams} />;
   }
 
   if (state.roundState.phase === 'game_over') {

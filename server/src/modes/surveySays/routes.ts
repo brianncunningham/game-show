@@ -4,9 +4,28 @@ import { surveySaysStore } from './store.js';
 import { createSSSave, deleteSSSave, listSSSaves, loadSSSave, patchSSSaveConfig, updateSSSave } from './saveService.js';
 import { addKnownPlayers, deleteKnownPlayer, listKnownPlayers } from '../../shared/services/knownPlayersService.js';
 import { sendToPico } from '../../shared/buzzer/inputs/hardwareInput.js';
+import { judgeController } from '../../shared/buzzer/judgeController.js';
 import type { SurveySaysConfig, SurveyTeam } from './types.js';
 
 const router = Router();
+
+// ─── Buzzer helpers ───────────────────────────────────────────────────────────
+
+/**
+ * Returns the two controller IDs for the current face-off pair.
+ * Team 0 players map to wands 1–5; team 1 players map to wands 6–10.
+ * Falls back to [] (all eligible) if no players are assigned.
+ */
+function faceOffWandIds(): string[] {
+  const { teams, roundState } = surveySaysStore.getState();
+  const idx = roundState.faceOffPlayerIndex;
+  const t0 = teams[0];
+  const t1 = teams[1];
+  if (!t0.players.length || !t1.players.length) return [];
+  const w0 = String((idx % t0.players.length) + 1);
+  const w1 = String(5 + (idx % t1.players.length) + 1);
+  return [w0, w1];
+}
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -82,10 +101,13 @@ router.post('/intro/show', (_req, res) => {
 });
 
 router.post('/wand-test/show', (_req, res) => {
+  judgeController.openWindow({ windowId: 'ss-wand-test', eligibleControllers: [], earlyBuzzPenalty: false });
+  judgeController.armWindow('ss-wand-test');
   res.json(surveySaysStore.showWandTest());
 });
 
 router.post('/wand-test/hide', (_req, res) => {
+  judgeController.closeWindow('ss-wand-test');
   res.json(surveySaysStore.hideWandTest());
 });
 
@@ -113,12 +135,16 @@ router.post('/faceoff/show-board', (_req, res) => {
 
 // Reveal the question AND arm the buzzers in one step. No arming LED (by design).
 router.post('/faceoff/reveal-question', (_req, res) => {
+  const eligible = faceOffWandIds();
+  judgeController.openWindow({ windowId: 'ss-faceoff', eligibleControllers: eligible, earlyBuzzPenalty: false });
+  judgeController.armWindow('ss-faceoff');
   res.json(surveySaysStore.revealQuestion());
 });
 
 router.post('/faceoff/buzz/:teamId', (req, res) => {
   const color = teamColor(req.params.teamId);
   piLed({ effect: 'flash', color, flashes: 3, on_ms: 120, off_ms: 80 });
+  judgeController.closeWindow('ss-faceoff');
   res.json(surveySaysStore.recordBuzz(req.params.teamId));
 });
 
