@@ -16,7 +16,7 @@ import { registerMode, initModeRegistry } from './shared/services/modeRegistry.j
 import { initModeSocket } from './shared/services/modeSocket.js';
 import { nameThatTuneMode } from './modes/nameThatTune/index.js';
 import { surveySaysMode } from './modes/surveySays/index.js';
-import ssRoutes from './modes/surveySays/routes.js';
+import ssRoutes, { handlePiBuzzAccepted } from './modes/surveySays/routes.js';
 
 const PORT = Number(process.env.PORT ?? 3001);
 const JUDGE_URL = process.env['JUDGE_URL'] ?? null;
@@ -89,6 +89,30 @@ if (!JUDGE_URL) {
     piWs.on('error', () => clientWs.close());
     clientWs.on('error', () => piWs.close());
   });
+
+  // Server-side sniffer: persistent WS connection to Pi that dispatches
+  // BUZZ_ACCEPTED events into active mode game logic (since judgeController
+  // on the VPS never receives buzzes — the Pi handles them locally).
+  const connectPiSniffer = () => {
+    const snifferWs = new WebSocket(`ws://${piHost}:${piPort}/ws/buzzer`, { perMessageDeflate: false });
+    snifferWs.on('message', (raw) => {
+      try {
+        const msg = JSON.parse(raw.toString()) as { type: string; payload: Record<string, unknown> };
+        if (msg.type === 'BUZZ_ACCEPTED') {
+          const windowId = msg.payload['windowId'] as string | null;
+          const controllerId = String(msg.payload['controllerId'] ?? '');
+          console.log(`[PiSniffer] BUZZ_ACCEPTED windowId=${windowId} controllerId=${controllerId}`);
+          handlePiBuzzAccepted(windowId, controllerId);
+        }
+      } catch { /* ignore malformed */ }
+    });
+    snifferWs.on('close', () => {
+      console.warn('[PiSniffer] disconnected — reconnecting in 3s...');
+      setTimeout(connectPiSniffer, 3000);
+    });
+    snifferWs.on('error', () => snifferWs.close());
+  };
+  setTimeout(connectPiSniffer, 2000);
 }
 
 registerMode(nameThatTuneMode);

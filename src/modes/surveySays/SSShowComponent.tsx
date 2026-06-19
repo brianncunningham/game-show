@@ -1168,23 +1168,24 @@ export const SSShowComponent = () => {
     prevPhaseRef.current = phase;
   }, [state?.roundState.phase]);
 
+  const randomizerSeededRef = useRef(false);
   useEffect(() => {
-    const seq = state?.randomizerSeq ?? 0;
-    console.log(`[SS-DBG] randomizerSeq effect: seq=${seq} prev=${prevSeqRef.current} randomizing=${randomizing}`);
-    if (prevSeqRef.current === null) {
-      console.log(`[SS-DBG] seeding prevSeqRef to ${seq}`);
+    if (!state) return;
+    const seq = state.randomizerSeq ?? 0;
+    if (!randomizerSeededRef.current) {
+      // On first real state load, seed to current seq — never trigger for existing value
       prevSeqRef.current = seq;
+      randomizerSeededRef.current = true;
       return;
     }
-    if (seq > 0 && seq > prevSeqRef.current) {
-      console.log(`[SS-DBG] TRIGGERING randomizer: seq=${seq} > prev=${prevSeqRef.current}`);
+    if (seq > 0 && prevSeqRef.current !== null && seq > prevSeqRef.current) {
       randomizerSnapshotRef.current = {
-        showIntro: state?.showIntro ?? false,
-        boardId: state?.roundState.currentBoardId ?? null,
+        showIntro: state.showIntro ?? false,
+        boardId: state.roundState.currentBoardId ?? null,
       };
       setRandomizing(true);
     }
-    prevSeqRef.current = seq;
+    if (prevSeqRef.current === null || seq >= prevSeqRef.current) prevSeqRef.current = seq;
   }, [state?.randomizerSeq]);
 
   // Dismiss randomizer when host navigates away from snapshot state

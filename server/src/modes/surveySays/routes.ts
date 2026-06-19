@@ -12,25 +12,29 @@ const router = Router();
 // ─── Auto-record face-off buzz from hardware ─────────────────────────────────
 // When a wand buzzes in during the ss-faceoff window, BUZZ_ACCEPTED fires.
 // Map the controllerId → teamId and call recordBuzz automatically.
-judgeController.onEvent((event) => {
-  if (event.type !== 'BUZZ_ACCEPTED') return;
-  const payload = event.payload as { windowId: string | null; controllerId: string };
-  console.log(`[SS] BUZZ_ACCEPTED: windowId=${payload.windowId} controllerId=${payload.controllerId}`);
-  if (payload.windowId !== 'ss-faceoff') return;
+export function handlePiBuzzAccepted(windowId: string | null, controllerId: string): void {
+  console.log(`[SS] BUZZ_ACCEPTED: windowId=${windowId} controllerId=${controllerId}`);
+  if (windowId !== 'ss-faceoff') return;
   const { controllerAssignments, teams } = surveySaysStore.getState();
   console.log(`[SS] controllerAssignments count=${controllerAssignments.length}`, JSON.stringify(controllerAssignments));
-  const assignment = controllerAssignments.find(a => a.controllerId === payload.controllerId);
+  const assignment = controllerAssignments.find(a => a.controllerId === controllerId);
   const teamId = assignment?.teamId ?? teams.find(t =>
-    t.players.some((_, i) => String(i + 1) === payload.controllerId || String(5 + i + 1) === payload.controllerId)
+    t.players.some((_, i) => String(i + 1) === controllerId || String(5 + i + 1) === controllerId)
   )?.id;
   if (!teamId) {
-    console.warn(`[SS] BUZZ_ACCEPTED on ss-faceoff: no team found for controller ${payload.controllerId}`);
+    console.warn(`[SS] BUZZ_ACCEPTED on ss-faceoff: no team found for controller ${controllerId}`);
     return;
   }
-  console.log(`[SS] Auto-recording faceoff buzz: controller ${payload.controllerId} → team ${teamId}`);
+  console.log(`[SS] Auto-recording faceoff buzz: controller ${controllerId} → team ${teamId}`);
   const color = teamColor(teamId);
   piLed({ effect: 'flash', color, flashes: 3, on_ms: 120, off_ms: 80 });
   surveySaysStore.recordBuzz(teamId);
+}
+
+judgeController.onEvent((event) => {
+  if (event.type !== 'BUZZ_ACCEPTED') return;
+  const payload = event.payload as { windowId: string | null; controllerId: string };
+  handlePiBuzzAccepted(payload.windowId, payload.controllerId);
 });
 
 // ─── Buzzer helpers ───────────────────────────────────────────────────────────
