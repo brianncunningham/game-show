@@ -1173,7 +1173,6 @@ export const SSShowComponent = () => {
     if (!state) return;
     const seq = state.randomizerSeq ?? 0;
     if (!randomizerSeededRef.current) {
-      // On first real state load, seed to current seq — never trigger for existing value
       prevSeqRef.current = seq;
       randomizerSeededRef.current = true;
       return;

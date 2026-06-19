@@ -13,10 +13,8 @@ const router = Router();
 // When a wand buzzes in during the ss-faceoff window, BUZZ_ACCEPTED fires.
 // Map the controllerId → teamId and call recordBuzz automatically.
 export function handlePiBuzzAccepted(windowId: string | null, controllerId: string): void {
-  console.log(`[SS] BUZZ_ACCEPTED: windowId=${windowId} controllerId=${controllerId}`);
   if (windowId !== 'ss-faceoff') return;
   const { controllerAssignments, teams } = surveySaysStore.getState();
-  console.log(`[SS] controllerAssignments count=${controllerAssignments.length}`, JSON.stringify(controllerAssignments));
   const assignment = controllerAssignments.find(a => a.controllerId === controllerId);
   const teamId = assignment?.teamId ?? teams.find(t =>
     t.players.some((_, i) => String(i + 1) === controllerId || String(5 + i + 1) === controllerId)
