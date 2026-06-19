@@ -125,7 +125,7 @@ function QuestionPanel({ question, boardSlotsVisible, buzzArmed }: { question: s
   return (
     <Box sx={{
       flex: 1,
-      height: '160px',
+      height: '210px',
       position: 'relative',
       overflow: 'visible',
     }}>
@@ -528,7 +528,7 @@ function FaceOffAnnounceOverlay({ teamA, playerA, colorA, teamB, playerB, colorB
       animation: 'ssFadeIn 0.4s ease-out',
     }}>
       <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '32px' }}>
-        <Typography sx={{ ...fontSx, fontSize: '2.4rem', color: GOLD, fontWeight: 900, letterSpacing: '0.22em', textTransform: 'uppercase', textShadow: `0 0 24px ${GOLD}88` }}>
+        <Typography sx={{ ...fontSx, fontSize: '4.5rem', color: GOLD, fontWeight: 900, letterSpacing: '0.28em', textTransform: 'uppercase', textShadow: `0 0 40px ${GOLD}, 0 0 80px ${GOLD}66`, lineHeight: 1 }}>
           Face Off
         </Typography>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: '60px' }}>

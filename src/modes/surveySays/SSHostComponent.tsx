@@ -310,8 +310,7 @@ export const SSHostComponent = () => {
               {faceOffState === 'showing_board' && (
                 <>
                   <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-                    Board slots are visible on the show screen. Announce the number of
-                    answers, then reveal the question — buzzers arm automatically.
+                    There {currentBoard ? (currentBoard.answers.length === 1 ? 'is 1 answer' : `are ${currentBoard.answers.length} answers`) : 'are answers'} on the board.
                   </Typography>
                   <Button fullWidth variant="contained" color="info" sx={bigBtnSx}
                     onClick={act(() => revealQuestion())}>
@@ -323,9 +322,13 @@ export const SSHostComponent = () => {
               {/* ── Sub-step B: armed, waiting for buzz (hardware or manual fallback) ── */}
               {faceOffState === 'waiting_buzz' && (
                 <>
+                  {currentBoard && (
+                    <Typography variant="body2" sx={{ mb: 1, p: 1, borderRadius: 1, bgcolor: 'rgba(255,255,255,0.06)', fontStyle: 'italic', color: 'text.primary' }}>
+                      "{currentBoard.question}"
+                    </Typography>
+                  )}
                   <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-                    Buzzers are armed. First team to buzz answers first. Use a button below
-                    only if hardware buzz-in is unavailable.
+                    Buzzers armed — waiting for buzz.
                   </Typography>
                   <Grid container spacing={1.5}>
                     {teams.map((t, i) => (

@@ -211,7 +211,7 @@ router.post('/players/assign', (req, res) => {
 
 router.post('/players/random-assign', (_req, res) => {
   const [c1, c2] = [teamColor('team-1'), teamColor('team-2')];
-  piLed({ effect: 'spin', colors: [c2, c1], settle_colors: [c1, c2], duration_ms: 3000 });
+  piLed({ effect: 'spin', colors: [c2, c1], settle_colors: [c2, c1], duration_ms: 3000 });
   res.json(surveySaysStore.randomAssignPlayers());
 });
 
