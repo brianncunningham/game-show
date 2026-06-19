@@ -20,8 +20,9 @@ const loadPersistedState = (): SurveySaysState | null => {
       const raw = readFileSync(PERSIST_PATH, 'utf-8');
       const s = JSON.parse(raw) as SurveySaysState;
       // Hydrate fields added after initial release
-      if (!s.controllerAssignments) s.controllerAssignments = [];
-      if (s.wandTestSeq === undefined) s.wandTestSeq = 0;
+      s.controllerAssignments = s.controllerAssignments ?? [];
+      s.wandTestSeq = s.wandTestSeq ?? 0;
+      s.randomizerSeq = s.randomizerSeq ?? 0;
       return s;
     }
   } catch (e) {
