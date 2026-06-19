@@ -125,7 +125,7 @@ function QuestionPanel({ question, boardSlotsVisible, buzzArmed }: { question: s
   return (
     <Box sx={{
       flex: 1,
-      height: '110px',
+      height: '160px',
       position: 'relative',
       overflow: 'visible',
     }}>
@@ -165,11 +165,11 @@ function QuestionPanel({ question, boardSlotsVisible, buzzArmed }: { question: s
         src="/survey-says/emblem/survey-says-emblem.png"
         sx={{
           position: 'absolute',
-          top: '-150px',
+          top: '-220px',
           left: '50%',
           transform: 'translateX(-50%)',
-          width: '500px',
-          height: '240px',
+          width: '520px',
+          height: '260px',
           objectFit: 'contain',
           zIndex: 10,
           mixBlendMode: 'screen',
@@ -925,6 +925,8 @@ export const SSShowComponent = () => {
   const [stealResult, setStealResult] = useState<{ teamName: string; success: boolean; color: string } | null>(null);
   const prevPhaseRef = useRef<string | null>(null);
   const stealResultTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const prevStealingTeamIdRef = useRef<string | null>(null);
+  const stealRevealedCountRef = useRef<number>(0);
   
   // Stage scaling for fixed 1920x1080 layout - MUST be before any conditional returns
   const [scale, setScale] = useState(1);
@@ -973,15 +975,25 @@ export const SSShowComponent = () => {
     if (!state) return;
     const phase = state.roundState.phase;
     const prevPhase = prevPhaseRef.current;
-    // Detect transition from steal -> post_round to show steal result
-    if (prevPhase === 'steal' && phase === 'post_round') {
-      const stealingId = state.roundState.stealingTeamId;
+    // While in steal phase: track stealingTeamId and current revealed count
+    if (phase === 'steal') {
+      if (state.roundState.stealingTeamId) {
+        prevStealingTeamIdRef.current = state.roundState.stealingTeamId;
+      }
+      stealRevealedCountRef.current = state.roundState.revealedAnswers.length;
+    }
+    // Detect transition from steal -> post_round/game_over
+    if (prevPhase === 'steal' && (phase === 'post_round' || phase === 'game_over')) {
+      const stealingId = prevStealingTeamIdRef.current;
       const controllingId = state.roundState.controllingTeamId;
-      const stealSuccess = stealingId !== null && stealingId === controllingId;
-      const winnerTeam = state.teams.find(t => t.id === controllingId);
+      // Server appends the stolen answer to revealedAnswers only on success.
+      // So if count increased, steal succeeded.
+      const stealSucceeded = state.roundState.revealedAnswers.length > stealRevealedCountRef.current;
+      const winnerTeamId = stealSucceeded ? stealingId : controllingId;
+      const winnerTeam = state.teams.find(t => t.id === winnerTeamId);
       const winnerColor = winnerTeam?.id === state.teams[0].id ? TEAM_COLORS[0] : TEAM_COLORS[1];
       if (winnerTeam) {
-        setStealResult({ teamName: winnerTeam.name, success: stealSuccess, color: winnerColor });
+        setStealResult({ teamName: winnerTeam.name, success: stealSucceeded, color: winnerColor });
         if (stealResultTimerRef.current) clearTimeout(stealResultTimerRef.current);
         stealResultTimerRef.current = setTimeout(() => setStealResult(null), 4000);
       }
