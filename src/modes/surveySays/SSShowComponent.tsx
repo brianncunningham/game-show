@@ -1108,7 +1108,7 @@ export const SSShowComponent = () => {
           src="/survey-says/emblem/survey-says-emblem.png"
           sx={{
             position: 'absolute',
-            top: '0px',
+            top: '-80px',
             left: '50%',
             transform: 'translateX(-50%)',
             width: '520px',
