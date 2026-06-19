@@ -793,7 +793,9 @@ const getBuzzerWsUrl = () => {
   return `${protocol}//${host}/ws/buzzer`;
 };
 
-function SSWandTestOverlay({ teams }: { teams: [SurveyTeam, SurveyTeam] }) {
+const TEAM_PANEL_COLORS = ['#00e5ff', '#ff6a00'] as const;
+
+function SSWandTestOverlay({ teams, controllerAssignments }: { teams: [SurveyTeam, SurveyTeam]; controllerAssignments: import('./types').ControllerAssignment[] }) {
   const [activeWands, setActiveWands] = useState<Set<string>>(new Set());
   const timersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
@@ -825,110 +827,142 @@ function SSWandTestOverlay({ teams }: { teams: [SurveyTeam, SurveyTeam] }) {
     };
   }, []);
 
-  // Build label: prefer player name from pool if assigned, else just wand #
-  const allPlayers = [...teams[0].players, ...teams[1].players];
+  const hasAssignments = controllerAssignments.length > 0;
 
   return (
     <Box sx={{
-      height: '100vh',
-      width: '100vw',
-      bgcolor: BG,
-      backgroundImage: 'radial-gradient(ellipse at 50% 20%, #1a0a3a 0%, transparent 55%)',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: 4,
+      height: '100vh', width: '100vw', bgcolor: BG,
+      backgroundImage: 'radial-gradient(ellipse at 50% 15%, #1a0a3a 0%, transparent 60%)',
+      display: 'flex', flexDirection: 'column', alignItems: 'center',
+      gap: 0,
     }}>
-      <Typography sx={{
-        ...fontSx,
-        fontSize: 'clamp(2rem, 5vw, 3.5rem)',
-        fontWeight: 900,
-        color: GOLD,
-        letterSpacing: '0.2em',
-        textTransform: 'uppercase',
-        textShadow: `0 0 20px ${GOLD}88`,
-      }}>
-        Wand Test
-      </Typography>
+      {/* Header */}
+      <Box sx={{ pt: '3vh', pb: '2vh', textAlign: 'center' }}>
+        <Typography sx={{
+          ...fontSx, fontSize: 'clamp(1.8rem, 4vw, 3rem)', fontWeight: 900,
+          color: GOLD, letterSpacing: '0.2em', textTransform: 'uppercase',
+          textShadow: `0 0 20px ${GOLD}88`,
+        }}>
+          Teams &amp; Controllers
+        </Typography>
+        <Typography sx={{ ...fontSx, fontSize: 'clamp(0.75rem, 1.2vw, 1rem)', color: 'rgba(255,255,255,0.25)', letterSpacing: '0.2em', textTransform: 'uppercase', mt: 0.5 }}>
+          Press your wand to test it
+        </Typography>
+      </Box>
 
-      <Box sx={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(5, 1fr)',
-        gap: '24px',
-        width: 'clamp(400px, 60vw, 900px)',
-      }}>
-        {Array.from({ length: 10 }, (_, i) => {
-          const cid = String(i + 1);
-          const isActive = activeWands.has(cid);
-          const playerName = allPlayers[i] ?? null;
+      {/* Team panels */}
+      <Box sx={{ flex: 1, width: '100%', display: 'flex', gap: '3vw', px: '4vw', pb: '4vh' }}>
+        {teams.map((team, ti) => {
+          const color = TEAM_PANEL_COLORS[ti];
+          const teamAssignments = controllerAssignments
+            .filter(a => a.teamId === team.id)
+            .sort((a, b) => Number(a.controllerId) - Number(b.controllerId));
+
           return (
-            <Box key={cid} sx={{
-              borderRadius: 3,
-              border: '3px solid',
-              borderColor: isActive ? '#00ff88' : 'rgba(255,255,255,0.1)',
-              bgcolor: isActive ? 'rgba(0,255,136,0.12)' : 'rgba(255,255,255,0.03)',
-              boxShadow: isActive ? '0 0 30px rgba(0,255,136,0.6), 0 0 60px rgba(0,255,136,0.2)' : 'none',
-              transition: 'all 0.08s ease',
-              p: 2,
-              textAlign: 'center',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: 0.5,
+            <Box key={team.id} sx={{
+              flex: 1, borderRadius: 4,
+              border: `3px solid ${color}`,
+              background: `radial-gradient(ellipse at 50% 0%, ${color}22 0%, rgba(5,10,25,0.97) 60%)`,
+              boxShadow: `0 0 30px ${color}44`,
+              display: 'flex', flexDirection: 'column', alignItems: 'center',
+              pt: '3vh', pb: '3vh', gap: 0,
             }}>
-              <Box sx={{
-                width: 48,
-                height: 48,
-                borderRadius: '50%',
-                border: '3px solid',
-                borderColor: isActive ? '#00ff88' : 'rgba(255,255,255,0.2)',
-                bgcolor: isActive ? 'rgba(0,255,136,0.2)' : 'rgba(255,255,255,0.05)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                transition: 'all 0.08s ease',
-              }}>
-                <Typography sx={{
-                  ...fontSx,
-                  fontSize: '1.4rem',
-                  fontWeight: 900,
-                  color: isActive ? '#00ff88' : 'rgba(255,255,255,0.4)',
-                  lineHeight: 1,
-                  transition: 'color 0.08s ease',
-                }}>
-                  {cid}
-                </Typography>
-              </Box>
-              {playerName && (
-                <Typography sx={{
-                  ...fontSx,
-                  fontSize: '0.9rem',
-                  fontWeight: 700,
-                  color: isActive ? '#ffffff' : 'rgba(255,255,255,0.5)',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
-                  transition: 'color 0.08s ease',
-                }}>
-                  {playerName}
-                </Typography>
-              )}
               <Typography sx={{
-                fontSize: '0.65rem',
-                color: isActive ? '#00ff88' : 'rgba(255,255,255,0.2)',
-                letterSpacing: '0.1em',
-                transition: 'color 0.08s ease',
+                ...fontSx, fontWeight: 900, fontSize: 'clamp(1.4rem, 2.8vw, 3.5rem)',
+                textTransform: 'uppercase', letterSpacing: '0.1em', color, mb: '2vh',
+                textShadow: `0 0 16px ${color}88`,
               }}>
-                {isActive ? 'BUZZ!' : 'idle'}
+                {team.name}
               </Typography>
+
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: '1.2vh', width: '100%', px: '8%' }}>
+                {hasAssignments ? teamAssignments.map(a => {
+                  const isActive = activeWands.has(a.controllerId);
+                  return (
+                    <Box key={a.controllerId} sx={{
+                      display: 'flex', alignItems: 'center', gap: 2,
+                      borderRadius: 3, border: '2px solid',
+                      borderColor: isActive ? '#00ff88' : `${color}44`,
+                      bgcolor: isActive ? 'rgba(0,255,136,0.1)' : `${color}0a`,
+                      boxShadow: isActive ? '0 0 20px rgba(0,255,136,0.5)' : 'none',
+                      px: 2, py: 1.2,
+                      transition: 'all 0.08s ease',
+                    }}>
+                      {/* Wand number badge */}
+                      <Box sx={{
+                        minWidth: 44, height: 44, borderRadius: '50%',
+                        border: '2px solid',
+                        borderColor: isActive ? '#00ff88' : color,
+                        bgcolor: isActive ? 'rgba(0,255,136,0.2)' : `${color}22`,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        flexShrink: 0, transition: 'all 0.08s ease',
+                      }}>
+                        <Typography sx={{
+                          ...fontSx, fontWeight: 900,
+                          fontSize: 'clamp(1rem, 1.8vw, 1.8rem)',
+                          color: isActive ? '#00ff88' : color,
+                          lineHeight: 1, transition: 'color 0.08s ease',
+                        }}>
+                          {a.controllerId}
+                        </Typography>
+                      </Box>
+                      {/* Player name */}
+                      <Typography sx={{
+                        ...fontSx, fontWeight: 700,
+                        fontSize: 'clamp(1rem, 2vw, 2.2rem)',
+                        color: isActive ? '#ffffff' : 'rgba(255,255,255,0.85)',
+                        letterSpacing: '0.04em', flex: 1,
+                        transition: 'color 0.08s ease',
+                      }}>
+                        {a.playerName}
+                      </Typography>
+                      {/* Buzz indicator */}
+                      {isActive && (
+                        <Typography sx={{
+                          ...fontSx, fontWeight: 900, fontSize: 'clamp(0.8rem, 1.4vw, 1.4rem)',
+                          color: '#00ff88', letterSpacing: '0.1em',
+                        }}>
+                          BUZZ!
+                        </Typography>
+                      )}
+                    </Box>
+                  );
+                }) : (
+                  // No assignments — show numbered slots
+                  Array.from({ length: 5 }, (_, i) => {
+                    const cid = String(ti === 0 ? i + 1 : 5 + i + 1);
+                    const isActive = activeWands.has(cid);
+                    return (
+                      <Box key={cid} sx={{
+                        display: 'flex', alignItems: 'center', gap: 2,
+                        borderRadius: 3, border: '2px solid',
+                        borderColor: isActive ? '#00ff88' : `${color}33`,
+                        bgcolor: isActive ? 'rgba(0,255,136,0.1)' : 'transparent',
+                        px: 2, py: 1.2, transition: 'all 0.08s ease',
+                      }}>
+                        <Box sx={{
+                          minWidth: 44, height: 44, borderRadius: '50%',
+                          border: '2px solid', borderColor: isActive ? '#00ff88' : `${color}66`,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          flexShrink: 0,
+                        }}>
+                          <Typography sx={{ ...fontSx, fontWeight: 900, fontSize: '1.4rem', color: isActive ? '#00ff88' : `${color}aa`, lineHeight: 1 }}>
+                            {cid}
+                          </Typography>
+                        </Box>
+                        <Typography sx={{ ...fontSx, fontSize: '1.2rem', color: isActive ? '#ffffff' : 'rgba(255,255,255,0.25)', fontStyle: 'italic' }}>
+                          unassigned
+                        </Typography>
+                        {isActive && <Typography sx={{ ...fontSx, fontWeight: 900, fontSize: '1.2rem', color: '#00ff88' }}>BUZZ!</Typography>}
+                      </Box>
+                    );
+                  })
+                )}
+              </Box>
             </Box>
           );
         })}
       </Box>
-
-      <Typography sx={{ ...fontSx, fontSize: '1rem', color: 'rgba(255,255,255,0.2)', letterSpacing: '0.15em', textTransform: 'uppercase', mt: 1 }}>
-        Press any wand to verify
-      </Typography>
     </Box>
   );
 }
@@ -1140,12 +1174,13 @@ export const SSShowComponent = () => {
     prevSeqRef.current = seq;
   }, [state?.randomizerSeq]);
 
-  // Dismiss randomizer when host moves to another screen or game starts
+  // Dismiss randomizer when host navigates away (showIntro toggled, board loaded, wand test started)
   useEffect(() => {
     if (!randomizing) return;
     if (state?.roundState.phase !== 'idle') { setRandomizing(false); return; }
     if (state?.showIntro) { setRandomizing(false); return; }
-  }, [randomizing, state?.roundState.phase, state?.showIntro]);
+    if (showingWandTest) { setRandomizing(false); return; }
+  }, [randomizing, state?.roundState.phase, state?.showIntro, showingWandTest]);
 
   useEffect(() => {
     const seq = state?.wandTestSeq ?? 0;
@@ -1177,7 +1212,7 @@ export const SSShowComponent = () => {
   }
 
   if (showingWandTest) {
-    return <SSWandTestOverlay teams={state.teams} />;
+    return <SSWandTestOverlay teams={state.teams} controllerAssignments={state.controllerAssignments ?? []} />;
   }
 
   if (state.showIntro) {
