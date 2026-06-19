@@ -1149,7 +1149,7 @@ export const SSShowComponent = () => {
         }}>
 
         {/* ── Top row: Score | Question | Score ── */}
-        <Box sx={{ display: 'flex', gap: '16px', alignItems: 'flex-end', height: '220px', flexShrink: 0, overflow: 'visible' }}>
+        <Box sx={{ display: 'flex', gap: '16px', alignItems: 'flex-start', height: '220px', flexShrink: 0, overflow: 'visible' }}>
         <ScorePanel team={teams[0]} active={activeTeamId === teams[0].id} colorHex={TEAM_COLORS[0]} player={activeTeamId === teams[0].id ? activePlayer : null} />
         <QuestionPanel question={questionRevealed ? (currentBoard?.question ?? '') : ''} boardSlotsVisible={boardSlotsVisible} buzzArmed={buzzArmed} />
         <ScorePanel team={teams[1]} active={activeTeamId === teams[1].id} colorHex={TEAM_COLORS[1]} player={activeTeamId === teams[1].id ? activePlayer : null} />
