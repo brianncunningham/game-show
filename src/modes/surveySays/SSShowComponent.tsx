@@ -527,34 +527,39 @@ function FaceOffAnnounceOverlay({ teamA, playerA, colorA, teamB, playerB, colorB
       background: 'rgba(5,7,26,0.6)',
       animation: 'ssFadeIn 0.4s ease-out',
     }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: '60px' }}>
-        {/* Team A */}
-        <Box sx={{ textAlign: 'center' }}>
-          <Typography sx={{ ...fontSx, fontSize: '1.4rem', color: colorA, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', textShadow: `0 0 16px ${colorA}` }}>
-            {teamA}
-          </Typography>
-          {playerA && (
-            <Typography sx={{ ...fontSx, fontSize: '3.6rem', color: '#fff', fontWeight: 900, letterSpacing: '0.06em', textTransform: 'uppercase', lineHeight: 1.1, textShadow: `0 0 24px ${colorA}88` }}>
-              {playerA}
-            </Typography>
-          )}
-        </Box>
-
-        {/* VS */}
-        <Typography sx={{ ...fontSx, fontSize: '3rem', color: GOLD, fontWeight: 900, letterSpacing: '0.1em', textShadow: `0 0 20px ${GOLD}` }}>
-          VS
+      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '32px' }}>
+        <Typography sx={{ ...fontSx, fontSize: '2.4rem', color: GOLD, fontWeight: 900, letterSpacing: '0.22em', textTransform: 'uppercase', textShadow: `0 0 24px ${GOLD}88` }}>
+          Face Off
         </Typography>
-
-        {/* Team B */}
-        <Box sx={{ textAlign: 'center' }}>
-          <Typography sx={{ ...fontSx, fontSize: '1.4rem', color: colorB, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', textShadow: `0 0 16px ${colorB}` }}>
-            {teamB}
-          </Typography>
-          {playerB && (
-            <Typography sx={{ ...fontSx, fontSize: '3.6rem', color: '#fff', fontWeight: 900, letterSpacing: '0.06em', textTransform: 'uppercase', lineHeight: 1.1, textShadow: `0 0 24px ${colorB}88` }}>
-              {playerB}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: '60px' }}>
+          {/* Team A */}
+          <Box sx={{ textAlign: 'center' }}>
+            <Typography sx={{ ...fontSx, fontSize: '1.4rem', color: colorA, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', textShadow: `0 0 16px ${colorA}` }}>
+              {teamA}
             </Typography>
-          )}
+            {playerA && (
+              <Typography sx={{ ...fontSx, fontSize: '3.6rem', color: '#fff', fontWeight: 900, letterSpacing: '0.06em', textTransform: 'uppercase', lineHeight: 1.1, textShadow: `0 0 24px ${colorA}88` }}>
+                {playerA}
+              </Typography>
+            )}
+          </Box>
+
+          {/* VS */}
+          <Typography sx={{ ...fontSx, fontSize: '3rem', color: GOLD, fontWeight: 900, letterSpacing: '0.1em', textShadow: `0 0 20px ${GOLD}` }}>
+            VS
+          </Typography>
+
+          {/* Team B */}
+          <Box sx={{ textAlign: 'center' }}>
+            <Typography sx={{ ...fontSx, fontSize: '1.4rem', color: colorB, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', textShadow: `0 0 16px ${colorB}` }}>
+              {teamB}
+            </Typography>
+            {playerB && (
+              <Typography sx={{ ...fontSx, fontSize: '3.6rem', color: '#fff', fontWeight: 900, letterSpacing: '0.06em', textTransform: 'uppercase', lineHeight: 1.1, textShadow: `0 0 24px ${colorB}88` }}>
+                {playerB}
+              </Typography>
+            )}
+          </Box>
         </Box>
       </Box>
     </Box>
