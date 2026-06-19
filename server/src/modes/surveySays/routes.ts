@@ -60,6 +60,25 @@ function faceOffWandIds(): string[] {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
+function piJudge(path: string, body: Record<string, unknown>): void {
+  const judgeUrl = process.env['JUDGE_URL'];
+  if (!judgeUrl) return; // local mode: VPS judge handles it directly
+  try {
+    const u = new URL(judgeUrl);
+    const bodyStr = JSON.stringify(body);
+    const req = httpRequest({
+      hostname: u.hostname,
+      port: Number(u.port) || 3001,
+      path: `/api/buzzer/${path}`,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(bodyStr) },
+    });
+    req.on('error', () => { /* fire and forget */ });
+    req.write(bodyStr);
+    req.end();
+  } catch { /* ignore */ }
+}
+
 function piLed(params: Record<string, unknown>): void {
   const judgeUrl = process.env['JUDGE_URL'];
   if (judgeUrl) {
@@ -134,11 +153,14 @@ router.post('/intro/show', (_req, res) => {
 router.post('/wand-test/show', (_req, res) => {
   judgeController.openWindow({ windowId: 'ss-wand-test', eligibleControllers: [], earlyBuzzPenalty: false });
   judgeController.armWindow('ss-wand-test');
+  piJudge('open-window', { windowId: 'ss-wand-test', eligibleControllers: [], earlyBuzzPenalty: false });
+  setTimeout(() => piJudge('arm-window', { windowId: 'ss-wand-test' }), 100);
   res.json(surveySaysStore.showWandTest());
 });
 
 router.post('/wand-test/hide', (_req, res) => {
   judgeController.closeWindow('ss-wand-test');
+  piJudge('close-window', { windowId: 'ss-wand-test' });
   res.json(surveySaysStore.hideWandTest());
 });
 
@@ -169,6 +191,9 @@ router.post('/faceoff/reveal-question', (_req, res) => {
   const eligible = faceOffWandIds();
   judgeController.openWindow({ windowId: 'ss-faceoff', eligibleControllers: eligible, earlyBuzzPenalty: false });
   judgeController.armWindow('ss-faceoff');
+  // Also open/arm on Pi's judge (proxy mode — Pi handles physical buzzes)
+  piJudge('open-window', { windowId: 'ss-faceoff', eligibleControllers: eligible, earlyBuzzPenalty: false });
+  setTimeout(() => piJudge('arm-window', { windowId: 'ss-faceoff' }), 100);
   res.json(surveySaysStore.revealQuestion());
 });
 
@@ -176,6 +201,7 @@ router.post('/faceoff/buzz/:teamId', (req, res) => {
   const color = teamColor(req.params.teamId);
   piLed({ effect: 'flash', color, flashes: 3, on_ms: 120, off_ms: 80 });
   judgeController.closeWindow('ss-faceoff');
+  piJudge('close-window', { windowId: 'ss-faceoff' });
   res.json(surveySaysStore.recordBuzz(req.params.teamId));
 });
 
