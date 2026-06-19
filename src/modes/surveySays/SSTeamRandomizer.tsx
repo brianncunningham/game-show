@@ -1,10 +1,11 @@
 import { Box, Stack, Typography } from '@mui/material';
 import { useEffect, useRef, useState } from 'react';
-import type { SurveyTeam } from './types';
+import type { ControllerAssignment, SurveyTeam } from './types';
 
 interface Props {
   teams: [SurveyTeam, SurveyTeam];
   playerPool: string[];
+  controllerAssignments?: ControllerAssignment[];
   onDone?: () => void;
 }
 
@@ -28,7 +29,7 @@ const PHASE_DONE = 2;
 const CHAOS_DURATION = 3400;
 const SETTLE_DURATION = 1600;
 
-export const SSTeamRandomizer = ({ teams, playerPool, onDone }: Props) => {
+export const SSTeamRandomizer = ({ teams, playerPool, controllerAssignments = [], onDone }: Props) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const bubblesRef = useRef<PlayerBubble[]>([]);
   const phaseRef = useRef(PHASE_CHAOS);
@@ -214,21 +215,45 @@ export const SSTeamRandomizer = ({ teams, playerPool, onDone }: Props) => {
             </Typography>
             {settled && (
               <Stack spacing={1.2} alignItems="center" sx={{ width: '100%', px: 2 }}>
-                {team.players.map((p, pi) => (
-                  <Typography key={p} sx={{
-                    ...fontSx, color: '#fff', fontWeight: 700, letterSpacing: '0.05em', textAlign: 'center',
-                    fontSize: 'clamp(1.1rem, 2.2vw, 2.8rem)',
-                    textShadow: `0 0 10px ${TEAM_COLORS[ti]}88`,
-                    opacity: 0,
-                    animation: `ssFadePlayer 500ms ease ${pi * 120}ms forwards`,
-                    '@keyframes ssFadePlayer': {
-                      from: { opacity: 0, transform: 'translateY(16px)' },
-                      to: { opacity: 1, transform: 'none' },
-                    },
-                  }}>
-                    {p}
-                  </Typography>
-                ))}
+                {team.players.map((p, pi) => {
+                  const assignment = controllerAssignments.find(a => a.teamId === team.id && a.playerName === p);
+                  return (
+                    <Box key={p} sx={{
+                      display: 'flex', alignItems: 'center', gap: 1.5, justifyContent: 'center',
+                      opacity: 0,
+                      animation: `ssFadePlayer 500ms ease ${pi * 120}ms forwards`,
+                      '@keyframes ssFadePlayer': {
+                        from: { opacity: 0, transform: 'translateY(16px)' },
+                        to: { opacity: 1, transform: 'none' },
+                      },
+                    }}>
+                      {assignment && (
+                        <Box sx={{
+                          minWidth: 36, height: 36, borderRadius: '50%',
+                          border: `2px solid ${TEAM_COLORS[ti]}`,
+                          bgcolor: `${TEAM_COLORS[ti]}22`,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          flexShrink: 0,
+                        }}>
+                          <Typography sx={{
+                            ...fontSx, fontWeight: 900,
+                            fontSize: 'clamp(0.8rem, 1.4vw, 1.5rem)',
+                            color: TEAM_COLORS[ti], lineHeight: 1,
+                          }}>
+                            {assignment.controllerId}
+                          </Typography>
+                        </Box>
+                      )}
+                      <Typography sx={{
+                        ...fontSx, color: '#fff', fontWeight: 700, letterSpacing: '0.05em', textAlign: 'center',
+                        fontSize: 'clamp(1.1rem, 2.2vw, 2.8rem)',
+                        textShadow: `0 0 10px ${TEAM_COLORS[ti]}88`,
+                      }}>
+                        {p}
+                      </Typography>
+                    </Box>
+                  );
+                })}
               </Stack>
             )}
           </Box>

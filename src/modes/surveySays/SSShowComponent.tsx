@@ -1051,7 +1051,6 @@ export const SSShowComponent = () => {
   const faceOffTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [randomizing, setRandomizing] = useState(false);
   const prevSeqRef = useRef<number | null>(null);
-  const randomizerHideRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [showingWandTest, setShowingWandTest] = useState(false);
   const prevWandSeqRef = useRef<number | null>(null);
   const [stealResult, setStealResult] = useState<{ teamName: string; success: boolean; color: string } | null>(null);
@@ -1140,6 +1139,11 @@ export const SSShowComponent = () => {
     prevSeqRef.current = seq;
   }, [state?.randomizerSeq]);
 
+  // Dismiss randomizer once the game is actively in progress (board loaded)
+  useEffect(() => {
+    if (randomizing && state?.roundState.phase !== 'idle') setRandomizing(false);
+  }, [randomizing, state?.roundState.phase]);
+
   useEffect(() => {
     const seq = state?.wandTestSeq ?? 0;
     const prev = prevWandSeqRef.current ?? 0;
@@ -1161,10 +1165,8 @@ export const SSShowComponent = () => {
       <SSTeamRandomizer
         teams={state.teams}
         playerPool={state.playerPool}
-        onDone={() => {
-          if (randomizerHideRef.current) clearTimeout(randomizerHideRef.current);
-          randomizerHideRef.current = setTimeout(() => setRandomizing(false), 3500);
-        }}
+        controllerAssignments={state.controllerAssignments ?? []}
+        onDone={() => { /* stay on screen until host moves on */ }}
       />
     );
   }
