@@ -1,3 +1,6 @@
+import { existsSync, readFileSync, writeFileSync, renameSync } from 'fs';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
 import type {
   SurveySaysState,
   SurveySaysConfig,
@@ -6,6 +9,31 @@ import type {
   SurveyTeam,
   GamePhase,
 } from './types.js';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const PERSIST_PATH = join(__dirname, '../../../../game-state-survey-says.json');
+
+const loadPersistedState = (): SurveySaysState | null => {
+  try {
+    if (existsSync(PERSIST_PATH)) {
+      const raw = readFileSync(PERSIST_PATH, 'utf-8');
+      return JSON.parse(raw) as SurveySaysState;
+    }
+  } catch (e) {
+    console.warn('SS: could not load persisted state, using defaults.', e);
+  }
+  return null;
+};
+
+const persistState = (state: SurveySaysState): void => {
+  const tmp = PERSIST_PATH + '.tmp';
+  try {
+    writeFileSync(tmp, JSON.stringify(state, null, 2));
+    renameSync(tmp, PERSIST_PATH);
+  } catch (e) {
+    console.warn('SS: could not persist state.', e);
+  }
+};
 
 // ─── Defaults ────────────────────────────────────────────────────────────────
 
@@ -71,7 +99,10 @@ const createInitialState = (): SurveySaysState => ({
 // ─── Store ────────────────────────────────────────────────────────────────────
 
 class SurveySaysStore {
-  private state: SurveySaysState = createInitialState();
+  private state: SurveySaysState = (() => {
+    const persisted = loadPersistedState();
+    return persisted ?? createInitialState();
+  })();
   private history: SurveySaysState[] = [];
 
   getState(): SurveySaysState {
@@ -85,9 +116,16 @@ class SurveySaysStore {
     if (this.history.length > 50) this.history.shift();
   }
 
+  private commit(next: SurveySaysState): SurveySaysState {
+    this.state = next;
+    persistState(this.state);
+    return this.state;
+  }
+
   undo(): SurveySaysState {
     const prev = this.history.pop();
     if (prev) this.state = prev;
+    persistState(this.state);
     return this.state;
   }
 
@@ -96,15 +134,13 @@ class SurveySaysStore {
   }
 
   reset(): SurveySaysState {
-    this.state = createInitialState();
-    return this.state;
+    return this.commit(createInitialState());
   }
 
   // ── Config ──────────────────────────────────────────────────────────────────
 
   updateConfig(patch: Partial<Pick<SurveySaysState, 'config' | 'teams' | 'boards' | 'playerPool'>>): SurveySaysState {
-    this.state = { ...this.state, ...patch };
-    return this.state;
+    return this.commit({ ...this.state, ...patch });
   }
 
   // ── Players & teams ───────────────────────────────────────────────────────
@@ -117,8 +153,7 @@ class SurveySaysStore {
       ...t,
       players: t.players.filter(p => cleaned.includes(p)),
     })) as [SurveyTeam, SurveyTeam];
-    this.state = { ...this.state, playerPool: cleaned, teams };
-    return this.state;
+    return this.commit({ ...this.state, playerPool: cleaned, teams });
   }
 
   setTeams(teams: SurveyTeam[]): SurveySaysState {
@@ -132,8 +167,7 @@ class SurveySaysStore {
         players: (incoming.players ?? t.players).slice(0, MAX_PER_TEAM),
       };
     }) as [SurveyTeam, SurveyTeam];
-    this.state = { ...this.state, teams: next };
-    return this.state;
+    return this.commit({ ...this.state, teams: next });
   }
 
   // Shuffle the pool (max 10) into the two families (max 5 each) and trigger
@@ -153,44 +187,39 @@ class SurveySaysStore {
         teams[target].players.push(player);
       }
     });
-    this.state = {
+    return this.commit({
       ...this.state,
       teams,
       randomizerSeq: this.state.randomizerSeq + 1,
-    };
-    return this.state;
+    });
   }
 
   setBoards(boards: SurveyBoard[]): SurveySaysState {
-    this.state = { ...this.state, boards };
-    return this.state;
+    return this.commit({ ...this.state, boards });
   }
 
   setTeamName(teamId: string, name: string): SurveySaysState {
-    this.state = {
+    return this.commit({
       ...this.state,
       teams: this.state.teams.map(t =>
         t.id === teamId ? { ...t, name } : t
       ) as [SurveyTeam, SurveyTeam],
-    };
-    return this.state;
+    });
   }
 
   // ── Show / Intro ────────────────────────────────────────────────────────────
 
   setShowIntro(show: boolean): SurveySaysState {
-    this.state = { ...this.state, showIntro: show };
-    return this.state;
+    return this.commit({ ...this.state, showIntro: show });
   }
 
   // ── Round control ───────────────────────────────────────────────────────────
 
   private patchRound(patch: Partial<SurveySaysRoundState>): SurveySaysState {
-    this.state = {
+    return this.commit({
       ...this.state,
       roundState: { ...this.state.roundState, ...patch },
-    };
-    return this.state;
+    });
   }
 
   loadBoard(boardId: string): SurveySaysState {
@@ -232,13 +261,12 @@ class SurveySaysStore {
   // New game: keep boards/config/team names, reset scores + round to start.
   newGame(): SurveySaysState {
     this.begin();
-    this.state = {
+    return this.commit({
       ...this.state,
       teams: this.state.teams.map(t => ({ ...t, score: 0 })) as [SurveyTeam, SurveyTeam],
       roundState: initialRoundState(),
       showIntro: true,
-    };
-    return this.state;
+    });
   }
 
   // ── Face-off ────────────────────────────────────────────────────────────────
@@ -477,7 +505,7 @@ class SurveySaysStore {
     const winnerScore = newTeams.find(t => t.id === winnerTeamId)!.score;
     const gameOver = winnerScore >= this.state.config.winningThreshold;
 
-    this.state = {
+    return this.commit({
       ...this.state,
       teams: newTeams,
       roundState: {
@@ -486,8 +514,7 @@ class SurveySaysStore {
         revealedAnswers,
         swept,
       },
-    };
-    return this.state;
+    });
   }
 
   advanceRound(): SurveySaysState {
@@ -502,13 +529,12 @@ class SurveySaysStore {
   // ── Manual score adjustment ──────────────────────────────────────────────────
 
   adjustScore(teamId: string, delta: number): SurveySaysState {
-    this.state = {
+    return this.commit({
       ...this.state,
       teams: this.state.teams.map(t =>
         t.id === teamId ? { ...t, score: Math.max(0, t.score + delta) } : t
       ) as [SurveyTeam, SurveyTeam],
-    };
-    return this.state;
+    });
   }
 
   setPhase(phase: GamePhase): SurveySaysState {
