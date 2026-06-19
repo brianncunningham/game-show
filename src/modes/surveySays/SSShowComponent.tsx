@@ -125,7 +125,7 @@ function QuestionPanel({ question, boardSlotsVisible, buzzArmed }: { question: s
   return (
     <Box sx={{
       flex: 1,
-      height: '210px',
+      height: '220px',
       position: 'relative',
       overflow: 'visible',
     }}>

@@ -347,6 +347,9 @@ export const SSHostComponent = () => {
               {/* ── Sub-step C: a team is answering — only answer-or-strike, gameplay decides winner ── */}
               {faceOffState === 'answering' && currentBoard && (
                 <>
+                  <Typography variant="body2" sx={{ mb: 1, p: 1, borderRadius: 1, bgcolor: 'rgba(255,255,255,0.06)', fontStyle: 'italic', color: 'text.primary' }}>
+                    "{currentBoard.question}"
+                  </Typography>
                   <Box sx={{ mb: 1.5, p: 1.25, borderRadius: 1.5,
                     border: `2px solid ${faceOffAnsweringColor}`,
                     background: `${faceOffAnsweringColor}1a` }}>
@@ -390,6 +393,11 @@ export const SSHostComponent = () => {
               <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1.5 }}>
                 <Chip label="3" size="small" color="warning" />
                 <Typography sx={{ ...sectionLabelSx, mb: 0 }}>Play or Pass</Typography>
+                {currentBoard && (
+                  <Typography variant="caption" sx={{ ml: 'auto', fontStyle: 'italic', color: 'text.secondary' }}>
+                    "{currentBoard.question}"
+                  </Typography>
+                )}
                 {faceOffWinnerTeamId && (() => {
                   const w = teams.find(t => t.id === faceOffWinnerTeamId);
                   const wIdx = teams.findIndex(t => t.id === faceOffWinnerTeamId);
@@ -421,6 +429,9 @@ export const SSHostComponent = () => {
               <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1.5 }}>
                 <Chip label="4" size="small" color="warning" />
                 <Typography sx={{ ...sectionLabelSx, mb: 0 }}>Main Play</Typography>
+                <Typography variant="caption" sx={{ ml: 'auto', fontStyle: 'italic', color: 'text.secondary' }}>
+                  "{currentBoard.question}"
+                </Typography>
                 {controllingTeam && (
                   <Chip label={mainPlayPlayer ? `${mainPlayPlayer} — ${controllingTeam.name}` : `${controllingTeam.name} playing`} size="small"
                     sx={{ ml: 'auto', color: controllingColor, border: `1px solid ${controllingColor}` }} variant="outlined" />
@@ -482,6 +493,9 @@ export const SSHostComponent = () => {
               <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1.5 }}>
                 <Chip label="5" size="small" color="error" />
                 <Typography sx={{ ...sectionLabelSx, mb: 0 }}>Steal Opportunity</Typography>
+                <Typography variant="caption" sx={{ ml: 'auto', fontStyle: 'italic', color: 'text.secondary' }}>
+                  "{currentBoard.question}"
+                </Typography>
                 {stealEligibleTeam && (
                   <Chip label={stealEligibleTeam.name} size="small"
                     sx={{ ml: 'auto', color: stealTeamColor, border: `1px solid ${stealTeamColor}` }} variant="outlined" />
