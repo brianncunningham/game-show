@@ -248,6 +248,7 @@ export const SSHostComponent = () => {
                     if (config.buzzerMode === 'hardware') {
                       void ledEffect('off');
                     }
+                    if ((state.wandTestSeq ?? 0) > 0) await hideWandTest();
                     return hideIntro();
                   })}>
                   📺 Game Board
