@@ -1087,8 +1087,6 @@ export const SSShowComponent = () => {
   const prevSeqRef = useRef<number | null>(null);
   const randomizerSnapshotRef = useRef<{ showIntro: boolean; boardId: string | null } | null>(null);
   const [showingWandTest, setShowingWandTest] = useState(false);
-  const prevWandSeqRef = useRef<number | null>(null);
-  const wandTestSnapshotRef = useRef<{ showIntro: boolean; boardId: string | null } | null>(null);
   const [stealResult, setStealResult] = useState<{ teamName: string; success: boolean; color: string } | null>(null);
   const prevPhaseRef = useRef<string | null>(null);
   const stealResultTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -1195,27 +1193,9 @@ export const SSShowComponent = () => {
     if ((state.roundState.currentBoardId ?? null) !== snap.boardId) { setRandomizing(false); return; }
   }, [randomizing, state?.showIntro, state?.roundState.currentBoardId]);
 
-  const wandTestSeededRef = useRef(false);
   useEffect(() => {
     if (!state) return;
-    const seq = state.wandTestSeq ?? 0;
-    if (seq === 0) {
-      setShowingWandTest(false);
-      if (!wandTestSeededRef.current) {
-        prevWandSeqRef.current = 0;
-        wandTestSeededRef.current = true;
-      }
-      return;
-    }
-    if (!wandTestSeededRef.current) {
-      prevWandSeqRef.current = seq;
-      wandTestSeededRef.current = true;
-      return;
-    }
-    if (prevWandSeqRef.current !== null && seq > prevWandSeqRef.current) {
-      setShowingWandTest(true);
-    }
-    prevWandSeqRef.current = seq;
+    setShowingWandTest((state.wandTestSeq ?? 0) > 0);
   }, [state?.wandTestSeq]);
 
   if (!state) {
