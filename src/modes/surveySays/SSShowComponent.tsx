@@ -1195,30 +1195,28 @@ export const SSShowComponent = () => {
     if ((state.roundState.currentBoardId ?? null) !== snap.boardId) { setRandomizing(false); return; }
   }, [randomizing, state?.showIntro, state?.roundState.currentBoardId]);
 
+  const wandTestSeededRef = useRef(false);
   useEffect(() => {
-    const seq = state?.wandTestSeq ?? 0;
-    if (prevWandSeqRef.current === null) {
-      prevWandSeqRef.current = seq;
+    if (!state) return;
+    const seq = state.wandTestSeq ?? 0;
+    if (seq === 0) {
+      setShowingWandTest(false);
+      if (!wandTestSeededRef.current) {
+        prevWandSeqRef.current = 0;
+        wandTestSeededRef.current = true;
+      }
       return;
     }
-    if (seq > prevWandSeqRef.current) {
-      wandTestSnapshotRef.current = {
-        showIntro: state?.showIntro ?? false,
-        boardId: state?.roundState.currentBoardId ?? null,
-      };
+    if (!wandTestSeededRef.current) {
+      prevWandSeqRef.current = seq;
+      wandTestSeededRef.current = true;
+      return;
+    }
+    if (prevWandSeqRef.current !== null && seq > prevWandSeqRef.current) {
       setShowingWandTest(true);
     }
-    if (seq === 0) setShowingWandTest(false);
     prevWandSeqRef.current = seq;
   }, [state?.wandTestSeq]);
-
-  // Dismiss wand test when host navigates away
-  useEffect(() => {
-    if (!showingWandTest || !wandTestSnapshotRef.current || !state) return;
-    const snap = wandTestSnapshotRef.current;
-    if (state.showIntro !== snap.showIntro) { setShowingWandTest(false); return; }
-    if ((state.roundState.currentBoardId ?? null) !== snap.boardId) { setShowingWandTest(false); return; }
-  }, [showingWandTest, state?.showIntro, state?.roundState.currentBoardId]);
 
   if (!state) {
     return (
