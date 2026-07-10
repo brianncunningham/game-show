@@ -600,18 +600,18 @@ function FaceOffStrikeOverlay({ teamName, color }: { teamName: string; color: st
       animation: 'ssFadeIn 0.2s ease-out',
     }}>
       <Box sx={{
-        border: `3px solid #ff2020`,
-        borderRadius: 3,
-        px: 5,
-        py: 3,
-        background: `radial-gradient(ellipse at 50% 50%, #2a000088, #05071acc)`,
-        boxShadow: `0 0 60px #ff202088`,
+        border: '5px solid #ff2020',
+        borderRadius: 4,
+        px: 8,
+        py: 5,
+        background: 'radial-gradient(ellipse at 50% 50%, #3a000099, #05071acc)',
+        boxShadow: '0 0 100px #ff202099, 0 0 40px #ff202055',
         textAlign: 'center',
       }}>
-        <Typography sx={{ ...fontSx, fontSize: 'clamp(2rem, 5vw, 4rem)', color: '#ff2020', fontWeight: 900, letterSpacing: '0.1em' }}>
+        <Typography sx={{ ...fontSx, fontSize: 'clamp(6rem, 14vw, 12rem)', color: '#ff2020', fontWeight: 900, lineHeight: 1, textShadow: '0 0 40px #ff202088' }}>
           ✕
         </Typography>
-        <Typography sx={{ ...fontSx, fontSize: 'clamp(0.9rem, 1.6vw, 1.3rem)', color, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+        <Typography sx={{ ...fontSx, fontSize: 'clamp(1rem, 2vw, 1.8rem)', color, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', mt: 1 }}>
           {teamName}
         </Typography>
       </Box>
@@ -1501,7 +1501,7 @@ export const SSShowComponent = () => {
         {stealingTeam && roundState.phase === 'steal' && strikeOverlay === null && (
           <StealBanner teamName={stealingTeam.name} color={stealTeamColor} />
         )}
-        {stealResult && (
+        {stealResult && strikeOverlay === null && (
           <StealResultOverlay teamName={stealResult.teamName} success={stealResult.success} color={stealResult.color} />
         )}
       </Box>
