@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Box, Typography } from '@mui/material';
 import type { SurveySaysState, SurveyTeam } from './types';
 import { getState } from './api';
@@ -842,6 +842,13 @@ function SSWandTestOverlay({ teams, controllerAssignments, buzzerMode }: { teams
   const isTeamHardware = buzzerMode === 'hardware-team';
   const [activeWands, setActiveWands] = useState<Set<string>>(new Set());
   const timersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  const soundDebounceRef = useRef<Map<string, number>>(new Map());
+
+  // Controllers eligible to buzz (and thus show on screen / play sound)
+  const eligibleIds = useMemo<Set<string>>(() => {
+    if (isTeamHardware) return new Set(['1', '2']);
+    return new Set(controllerAssignments.map(a => a.controllerId));
+  }, [isTeamHardware, controllerAssignments]);
 
   useEffect(() => {
     const ws = new WebSocket(getBuzzerWsUrl());
@@ -851,6 +858,12 @@ function SSWandTestOverlay({ teams, controllerAssignments, buzzerMode }: { teams
         if (msg.type === 'BUZZ_RECEIVED') {
           const cid = String(msg.payload.controllerId ?? '');
           if (!cid) return;
+          // Only eligible controllers trigger sound/visual feedback
+          if (!eligibleIds.has(cid)) return;
+          // Debounce: ignore repeated events within 400ms (Pico GPIO bounce)
+          const now = Date.now();
+          if (now - (soundDebounceRef.current.get(cid) ?? 0) < 400) return;
+          soundDebounceRef.current.set(cid, now);
           const audio = new Audio('/buzz.mp3');
           void audio.play().catch(() => {});
           setActiveWands(prev => { const s = new Set(prev); s.add(cid); return s; });
@@ -869,7 +882,7 @@ function SSWandTestOverlay({ teams, controllerAssignments, buzzerMode }: { teams
       timersRef.current.forEach(t => clearTimeout(t));
       timersRef.current.clear();
     };
-  }, []);
+  }, [eligibleIds]);
 
   const hasAssignments = controllerAssignments.length > 0;
 
