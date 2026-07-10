@@ -9,6 +9,10 @@ import type { SurveySaysConfig, SurveyTeam } from './types.js';
 
 const router = Router();
 
+// When running as hardware relay on Pi (HARDWARE_INPUT=1), this process is a dumb judge only.
+// All game logic (LEDs, recordBuzz) must run via the VPS sniffer to avoid double-firing.
+const IS_PI = process.env['HARDWARE_INPUT'] === '1';
+
 // ─── Auto-record face-off buzz from hardware ─────────────────────────────────
 // When a wand buzzes in during the ss-faceoff window, BUZZ_ACCEPTED fires.
 // Map the controllerId → teamId and call recordBuzz automatically.
@@ -45,6 +49,7 @@ export function handlePiBuzzAccepted(windowId: string | null, controllerId: stri
 }
 
 judgeController.onEvent((event) => {
+  if (IS_PI) return;  // Pi is a dumb relay — VPS sniffer handles game logic
   if (event.type !== 'BUZZ_ACCEPTED') return;
   const payload = event.payload as { windowId: string | null; controllerId: string };
   if (payload.windowId === 'ss-wand-test') {
