@@ -174,7 +174,7 @@ router.post('/intro/hide', (_req, res) => {
 });
 
 router.post('/intro/show', (_req, res) => {
-  piLed({ effect: 'marquee', color: [245, 197, 24], color2: [255, 240, 80], bulb_size: 4, gap_size: 2, speed_ms: 25 });
+  piLed({ effect: 'marquee', color: [160, 0, 255], color2: [255, 200, 0], bulb_size: 4, gap_size: 3, speed_ms: 28 });
   res.json(surveySaysStore.setShowIntro(true));
 });
 
@@ -317,7 +317,7 @@ router.post('/round/next', (_req, res) => {
 });
 
 router.post('/game/new', (_req, res) => {
-  piLed({ effect: 'marquee', color: [245, 197, 24], color2: [255, 240, 80], bulb_size: 4, gap_size: 2, speed_ms: 25 });
+  piLed({ effect: 'marquee', color: [160, 0, 255], color2: [255, 200, 0], bulb_size: 4, gap_size: 3, speed_ms: 28 });
   res.json(surveySaysStore.newGame());
 });
 
@@ -386,7 +386,7 @@ router.post('/saves/:id/load', (req, res) => {
   const state = surveySaysStore.setBoards(save.boards);
   if (save.config) surveySaysStore.updateConfig({ config: { ...state.config, ...save.config } });
   // Loading a game always starts fresh: scores 0, round 1, idle.
-  piLed({ effect: 'marquee', color: [245, 197, 24], color2: [255, 240, 80], bulb_size: 4, gap_size: 2, speed_ms: 25 });
+  piLed({ effect: 'marquee', color: [160, 0, 255], color2: [255, 200, 0], bulb_size: 4, gap_size: 3, speed_ms: 28 });
   res.json(surveySaysStore.newGame());
 });
 

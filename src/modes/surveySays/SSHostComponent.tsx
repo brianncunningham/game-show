@@ -261,11 +261,19 @@ export const SSHostComponent = () => {
                   </Button>
                 )}
               </Stack>
-              {config.buzzerMode !== 'manual' && (state.wandTestSeq ?? 0) > 0 && (
-                <Button size="small" variant="text" color="warning" sx={{ mt: 0.5 }}
-                  onClick={act(() => hideWandTest())}>
-                  ✕ Stop Wand Test
-                </Button>
+              {config.buzzerMode !== 'manual' && (
+                <Stack direction="row" spacing={1} sx={{ mt: 0.5 }} alignItems="center">
+                  {(state.wandTestSeq ?? 0) > 0 && (
+                    <Button size="small" variant="text" color="warning"
+                      onClick={act(() => hideWandTest())}>
+                      ✕ Stop Wand Test
+                    </Button>
+                  )}
+                  <Button size="small" variant="text" color="inherit" sx={{ opacity: 0.5 }}
+                    onClick={() => { void ledEffect('off'); }}>
+                    💡 Clear LEDs
+                  </Button>
+                </Stack>
               )}
             </Collapse>
           </CardContent>
