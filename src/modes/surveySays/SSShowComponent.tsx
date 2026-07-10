@@ -254,6 +254,7 @@ function AnswerSlot({ rank, text, points, revealed, animIndex }: {
         alignItems: 'center',
         px: 2,
         gap: 2,
+        overflow: 'hidden',
       }}>
         {/* Number badge - inside slot left edge */}
         <Box sx={{ position: 'relative', width: '80px', height: '80px', flexShrink: 0, ml: 0 }}>
@@ -290,15 +291,17 @@ function AnswerSlot({ rank, text, points, revealed, animIndex }: {
             <Typography sx={{
               ...fontSx,
               flex: 1,
-              fontSize: text.length <= 20 ? '3.2rem' : text.length <= 30 ? '2.8rem' : text.length <= 42 ? '2.3rem' : text.length <= 55 ? '1.9rem' : '1.6rem',
+              fontSize: text.length <= 20 ? '3.2rem' : text.length <= 32 ? '2.6rem' : text.length <= 45 ? '2.0rem' : text.length <= 58 ? '1.6rem' : '1.3rem',
               color: '#fff',
               fontWeight: 700,
               textTransform: 'uppercase',
-              letterSpacing: '0.04em',
+              letterSpacing: '0.03em',
               textAlign: 'left',
-              whiteSpace: 'nowrap',
+              lineHeight: 1.15,
               overflow: 'hidden',
-              textOverflow: 'ellipsis',
+              display: '-webkit-box',
+              WebkitBoxOrient: 'vertical',
+              WebkitLineClamp: 2,
             }}>
               {text}
             </Typography>
