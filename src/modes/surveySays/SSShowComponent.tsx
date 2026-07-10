@@ -1166,7 +1166,6 @@ export const SSShowComponent = () => {
   const prevStealingTeamIdRef = useRef<string | null>(null);
   const stealRevealedCountRef = useRef<number>(0);
   const prevFaceOffStateRef = useRef<string | null>(null);
-  const prevFaceOffWinnerRef = useRef<string | null>(null);
   const prevRevealedLenRef = useRef<number>(0);
   
   // Stage scaling for fixed 1920x1080 layout - MUST be before any conditional returns
@@ -1287,19 +1286,13 @@ export const SSShowComponent = () => {
 
   useEffect(() => {
     if (!state) return;
-    const winner = state.roundState.faceOffWinnerTeamId;
-    if (winner && !prevFaceOffWinnerRef.current) {
-      playSound('correct-answer');
-    }
-    prevFaceOffWinnerRef.current = winner;
-  }, [state?.roundState.faceOffWinnerTeamId]);
-
-  useEffect(() => {
-    if (!state) return;
-    const len = state.roundState.revealedAnswers.length;
-    const phase = state.roundState.phase;
-    if (len > prevRevealedLenRef.current && phase === 'main_play') {
-      playSound('answer-reveal');
+    const answers = state.roundState.revealedAnswers;
+    const len = answers.length;
+    if (len > prevRevealedLenRef.current) {
+      const newAnswers = answers.slice(prevRevealedLenRef.current);
+      for (const a of newAnswers) {
+        playSound(a.revealedDuringPlay ? 'correct-answer' : 'answer-reveal');
+      }
     }
     prevRevealedLenRef.current = len;
   }, [state?.roundState.revealedAnswers.length]);
