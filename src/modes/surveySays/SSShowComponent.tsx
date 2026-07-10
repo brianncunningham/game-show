@@ -290,12 +290,15 @@ function AnswerSlot({ rank, text, points, revealed, animIndex }: {
             <Typography sx={{
               ...fontSx,
               flex: 1,
-              fontSize: '3.2rem',
+              fontSize: text.length <= 20 ? '3.2rem' : text.length <= 30 ? '2.8rem' : text.length <= 42 ? '2.3rem' : text.length <= 55 ? '1.9rem' : '1.6rem',
               color: '#fff',
               fontWeight: 700,
               textTransform: 'uppercase',
               letterSpacing: '0.04em',
               textAlign: 'left',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
             }}>
               {text}
             </Typography>
