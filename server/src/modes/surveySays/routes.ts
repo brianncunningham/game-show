@@ -36,6 +36,18 @@ export function handlePiBuzzAccepted(windowId: string | null, controllerId: stri
 judgeController.onEvent((event) => {
   if (event.type !== 'BUZZ_ACCEPTED') return;
   const payload = event.payload as { windowId: string | null; controllerId: string };
+  // Wand test: flash team color on buzz so LED gives team-color feedback
+  if (payload.windowId === 'ss-wand-test') {
+    const { teams, config, controllerAssignments } = surveySaysStore.getState();
+    let teamId: string | undefined;
+    if (config.buzzerMode === 'hardware-team') {
+      teamId = teams[Number(payload.controllerId) - 1]?.id;
+    } else {
+      teamId = controllerAssignments.find(a => a.controllerId === payload.controllerId)?.teamId;
+    }
+    if (teamId) piLed({ effect: 'flash', color: teamColor(teamId), flashes: 2, on_ms: 150, off_ms: 80 });
+    return;
+  }
   handlePiBuzzAccepted(payload.windowId, payload.controllerId);
 });
 
@@ -155,10 +167,14 @@ router.post('/intro/show', (_req, res) => {
 });
 
 router.post('/wand-test/show', (_req, res) => {
-  judgeController.openWindow({ windowId: 'ss-wand-test', eligibleControllers: [], earlyBuzzPenalty: false });
+  const { config } = surveySaysStore.getState();
+  const isTeamMode = config.buzzerMode === 'hardware-team';
+  const eligible = isTeamMode ? ['1', '2'] : [];
+  judgeController.openWindow({ windowId: 'ss-wand-test', eligibleControllers: eligible, earlyBuzzPenalty: false });
   judgeController.armWindow('ss-wand-test');
-  piJudge('open-window', { windowId: 'ss-wand-test', eligibleControllers: [], earlyBuzzPenalty: false });
-  setTimeout(() => piJudge('arm-window', { windowId: 'ss-wand-test' }), 100);
+  piJudge('open-window', { windowId: 'ss-wand-test', eligibleControllers: eligible, earlyBuzzPenalty: false });
+  // Skip arm-window in team mode — no blue armed LED needed
+  if (!isTeamMode) setTimeout(() => piJudge('arm-window', { windowId: 'ss-wand-test' }), 100);
   res.json(surveySaysStore.showWandTest());
 });
 
