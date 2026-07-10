@@ -46,6 +46,9 @@ export function handlePiBuzzAccepted(windowId: string | null, controllerId: stri
   const color = teamColor(teamId);
   piLed({ effect: 'flash', color, flashes: 3, on_ms: 120, off_ms: 80 });
   surveySaysStore.recordBuzz(teamId);
+  // Close window immediately so subsequent presses get DISABLED (not LOCKED) → no red flash on Pico
+  judgeController.closeWindow('ss-faceoff');
+  piJudge('close-window', { windowId: 'ss-faceoff' });
 }
 
 judgeController.onEvent((event) => {
@@ -179,12 +182,11 @@ router.post('/wand-test/show', (_req, res) => {
   const { config } = surveySaysStore.getState();
   const isTeamMode = config.buzzerMode === 'hardware-team';
   const eligible = isTeamMode ? ['1', '2'] : [];
+  // Keep window in WAITING state (not armed): no game_armed() blue pulse, no LOCKED state.
+  // BUZZ_RECEIVED fires for every press; VPS sniffer handles team-color LED via handlePiWandTestBuzz.
+  // Ineligible controllers get BUZZ_REJECTED(INELIGIBLE) → no Pico red flash.
   judgeController.openWindow({ windowId: 'ss-wand-test', eligibleControllers: eligible, earlyBuzzPenalty: false });
-  judgeController.armWindow('ss-wand-test');
   piJudge('open-window', { windowId: 'ss-wand-test', eligibleControllers: eligible, earlyBuzzPenalty: false });
-  setTimeout(() => piJudge('arm-window', { windowId: 'ss-wand-test' }), 100);
-  // Suppress blue armed-pulse LED in team mode
-  if (isTeamMode) setTimeout(() => piLed({ effect: 'off' }), 200);
   res.json(surveySaysStore.showWandTest());
 });
 
@@ -225,9 +227,11 @@ router.post('/faceoff/reveal-question', (_req, res) => {
   judgeController.armWindow('ss-faceoff');
   // Also open/arm on Pi's judge (proxy mode — Pi handles physical buzzes)
   piJudge('open-window', { windowId: 'ss-faceoff', eligibleControllers: eligible, earlyBuzzPenalty: false });
-  setTimeout(() => piJudge('arm-window', { windowId: 'ss-faceoff' }), 100);
-  // Suppress blue armed-pulse LED in team mode — no armed state indicator needed
-  if (isTeamMode) setTimeout(() => piLed({ effect: 'off' }), 200);
+  // Arm Pi and immediately suppress the game_armed() blue pulse in the same tick
+  setTimeout(() => {
+    piJudge('arm-window', { windowId: 'ss-faceoff' });
+    if (isTeamMode) piLed({ effect: 'off' });
+  }, 100);
   res.json(surveySaysStore.revealQuestion());
 });
 
