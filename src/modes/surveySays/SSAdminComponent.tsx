@@ -32,10 +32,14 @@ const EXAMPLE_CSV = `1, Name something you bring to a picnic, Sandwiches, 42, Bl
 2, Name something people do at the beach, Swim, 45, Build sandcastles, 28, Sunbathe, 15, Play volleyball, 8
 3, Name something in a doctor's waiting room, Magazines, 40, Chairs, 30, TV, 18, Fish tank, 8, Pamphlets, 4`;
 
+function csvField(s: string): string {
+  return s.includes(',') ? `"${s}"` : s;
+}
+
 function boardsToCSV(boards: SurveyBoard[]): string {
   return boards.map(b => {
-    const answerParts = b.answers.map(a => `${a.text}, ${a.points}`).join(', ');
-    return `${b.round}, ${b.question}, ${answerParts}`;
+    const answerParts = b.answers.map(a => `${csvField(a.text)}, ${a.points}`).join(', ');
+    return `${b.round}, ${csvField(b.question)}, ${answerParts}`;
   }).join('\n');
 }
 
