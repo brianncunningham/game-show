@@ -145,9 +145,12 @@ export const initHardwareInput = async (): Promise<void> => {
       let msg: typeof event & { teamColor?: number[] } = event;
       if (event.type === 'WINDOW_STATE' && event.payload && 'eligibleControllers' in event.payload) {
         // eligibleControllers is the source of truth — judgeController removes early buzzers from it
-        const eligible = (event.payload as { eligibleControllers?: string[] }).eligibleControllers ?? [];
+        const eligible = (event.payload as { eligibleControllers?: string[]; earlyBuzzPenalty?: boolean }).eligibleControllers ?? [];
+        const earlyBuzzPenalty = (event.payload as { earlyBuzzPenalty?: boolean }).earlyBuzzPenalty ?? false;
         const allControllers = Array.from({ length: 15 }, (_, i) => String(i + 1));
-        const failed = allControllers.filter(c => !eligible.includes(c));
+        // Only mark controllers as failed (causes red flash on Pico) when earlyBuzzPenalty is active.
+        // For penalty-free windows (Survey Says), ineligible controllers are silently ignored.
+        const failed = earlyBuzzPenalty ? allControllers.filter(c => !eligible.includes(c)) : [];
         const { eligibleControllers: _, ...rest } = event.payload as unknown as Record<string, unknown>;
         msg = { ...event, payload: { ...rest, failedControllers: failed } } as unknown as typeof msg;
       }

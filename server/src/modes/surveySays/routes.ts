@@ -208,12 +208,16 @@ router.post('/faceoff/show-board', (_req, res) => {
 
 // Reveal the question AND arm the buzzers in one step. No arming LED (by design).
 router.post('/faceoff/reveal-question', (_req, res) => {
+  const { config } = surveySaysStore.getState();
+  const isTeamMode = config.buzzerMode === 'hardware-team';
   const eligible = faceOffWandIds();
   judgeController.openWindow({ windowId: 'ss-faceoff', eligibleControllers: eligible, earlyBuzzPenalty: false });
   judgeController.armWindow('ss-faceoff');
   // Also open/arm on Pi's judge (proxy mode — Pi handles physical buzzes)
   piJudge('open-window', { windowId: 'ss-faceoff', eligibleControllers: eligible, earlyBuzzPenalty: false });
   setTimeout(() => piJudge('arm-window', { windowId: 'ss-faceoff' }), 100);
+  // Suppress blue armed-pulse LED in team mode — no armed state indicator needed
+  if (isTeamMode) setTimeout(() => piLed({ effect: 'off' }), 200);
   res.json(surveySaysStore.revealQuestion());
 });
 

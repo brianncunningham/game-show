@@ -939,7 +939,7 @@ function SSWandTestOverlay({ teams, controllerAssignments, buzzerMode }: { teams
               </Box>
 
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: '1.2vh', width: '100%', px: '8%' }}>
-                {!isTeamHardware && hasAssignments ? teamAssignments.map(a => {
+                {isTeamHardware ? null : hasAssignments ? teamAssignments.map(a => {
                   const isActive = activeWands.has(a.controllerId);
                   return (
                     <Box key={a.controllerId} sx={{

@@ -110,6 +110,8 @@ export interface WindowStatePayload {
   windowState: WindowState | 'IDLE';
   eligibleControllers?: string[];
   isSteal?: boolean;
+  /** Whether early-buzz penalty is active for this window. Only when true should ineligible controllers be marked as failed on the hardware side. */
+  earlyBuzzPenalty?: boolean;
 }
 export type WindowStateMessage = BuzzerMessage<'WINDOW_STATE', WindowStatePayload>;
 
