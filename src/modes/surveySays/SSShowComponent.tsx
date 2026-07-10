@@ -850,6 +850,12 @@ function SSWandTestOverlay({ teams, controllerAssignments, buzzerMode }: { teams
     return new Set(controllerAssignments.map(a => a.controllerId));
   }, [isTeamHardware, controllerAssignments]);
 
+  // Ref so the stable WS effect always reads the latest set without re-opening the socket.
+  // (Parent polls state every 500ms → new array reference → new Set identity → would cancel
+  //  active timers if eligibleIds were in the effect deps.)
+  const eligibleIdsRef = useRef(eligibleIds);
+  eligibleIdsRef.current = eligibleIds;
+
   useEffect(() => {
     const ws = new WebSocket(getBuzzerWsUrl());
     ws.onmessage = (ev) => {
@@ -859,7 +865,7 @@ function SSWandTestOverlay({ teams, controllerAssignments, buzzerMode }: { teams
           const cid = String(msg.payload.controllerId ?? '');
           if (!cid) return;
           // Only eligible controllers trigger sound/visual feedback
-          if (!eligibleIds.has(cid)) return;
+          if (!eligibleIdsRef.current.has(cid)) return;
           // Debounce: ignore repeated events within 400ms (Pico GPIO bounce)
           const now = Date.now();
           if (now - (soundDebounceRef.current.get(cid) ?? 0) < 400) return;
@@ -882,7 +888,7 @@ function SSWandTestOverlay({ teams, controllerAssignments, buzzerMode }: { teams
       timersRef.current.forEach(t => clearTimeout(t));
       timersRef.current.clear();
     };
-  }, [eligibleIds]);
+  }, []);
 
   const hasAssignments = controllerAssignments.length > 0;
 
