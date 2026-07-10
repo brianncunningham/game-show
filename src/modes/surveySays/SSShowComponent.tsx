@@ -563,20 +563,20 @@ function StrikeOverlay({ count }: { count: number }) {
       animation: 'ssFadeIn 0.2s ease-out',
     }}>
       <Box sx={{
-        border: '3px solid #ff2020',
-        borderRadius: 3,
-        px: 5,
-        py: 3,
-        background: 'radial-gradient(ellipse at 50% 50%, #2a000088, #05071acc)',
-        boxShadow: '0 0 60px #ff202088',
+        border: '5px solid #ff2020',
+        borderRadius: 4,
+        px: 8,
+        py: 5,
+        background: 'radial-gradient(ellipse at 50% 50%, #3a000099, #05071acc)',
+        boxShadow: '0 0 100px #ff202099, 0 0 40px #ff202055',
         textAlign: 'center',
         display: 'flex',
-        gap: '0.6em',
+        gap: '0.8em',
         alignItems: 'center',
         justifyContent: 'center',
       }}>
         {Array.from({ length: count }).map((_, i) => (
-          <Typography key={i} sx={{ ...fontSx, fontSize: 'clamp(3rem, 7vw, 6rem)', color: '#ff2020', fontWeight: 900, lineHeight: 1 }}>
+          <Typography key={i} sx={{ ...fontSx, fontSize: 'clamp(6rem, 14vw, 12rem)', color: '#ff2020', fontWeight: 900, lineHeight: 1, textShadow: '0 0 40px #ff202088' }}>
             ✕
           </Typography>
         ))}
