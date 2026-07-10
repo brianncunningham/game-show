@@ -1133,6 +1133,13 @@ function IntroScreen({ teams }: { teams: [SurveyTeam, SurveyTeam] }) {
   );
 }
 
+// ─── Sound helper ────────────────────────────────────────────────────────────
+
+const playSound = (name: string) => {
+  const audio = new Audio(`/survey-says/sounds/${name}.mp3`);
+  audio.play().catch(() => {});
+};
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export const SSShowComponent = () => {
@@ -1152,6 +1159,9 @@ export const SSShowComponent = () => {
   const stealResultTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const prevStealingTeamIdRef = useRef<string | null>(null);
   const stealRevealedCountRef = useRef<number>(0);
+  const prevFaceOffStateRef = useRef<string | null>(null);
+  const prevFaceOffWinnerRef = useRef<string | null>(null);
+  const prevRevealedLenRef = useRef<number>(0);
   
   // Stage scaling for fixed 1920x1080 layout - MUST be before any conditional returns
   const [scale, setScale] = useState(1);
@@ -1186,6 +1196,7 @@ export const SSShowComponent = () => {
     const strikeTeam = state.roundState.faceOffStrikeTeamId;
     if (strikeTeam && strikeTeam !== prevStrikeTeamRef.current) {
       prevStrikeTeamRef.current = strikeTeam;
+      playSound('strike');
       setFaceOffStrikeVisible(true);
       if (faceOffTimerRef.current) clearTimeout(faceOffTimerRef.current);
       faceOffTimerRef.current = setTimeout(() => setFaceOffStrikeVisible(false), 3000);
@@ -1200,6 +1211,7 @@ export const SSShowComponent = () => {
     if (!state) return;
     const count = state.roundState.strikeCount ?? 0;
     if (count > prevStrikeCountRef.current) {
+      playSound('strike');
       setStrikeOverlay(count);
       if (strikeTimerRef.current) clearTimeout(strikeTimerRef.current);
       strikeTimerRef.current = setTimeout(() => setStrikeOverlay(null), 3000);
@@ -1233,23 +1245,58 @@ export const SSShowComponent = () => {
         const result = { teamName: winnerTeam.name, success: stealSucceeded, color: winnerColor };
         if (!stealSucceeded) {
           // Show 1 X for 3s before revealing the steal result
+          playSound('strike');
           setStrikeOverlay(1);
           if (strikeTimerRef.current) clearTimeout(strikeTimerRef.current);
           strikeTimerRef.current = setTimeout(() => {
             setStrikeOverlay(null);
+            playSound('win-round');
             setStealResult(result);
             if (stealResultTimerRef.current) clearTimeout(stealResultTimerRef.current);
             stealResultTimerRef.current = setTimeout(() => setStealResult(null), 4000);
           }, 3000);
         } else {
+          playSound('win-round');
           setStealResult(result);
           if (stealResultTimerRef.current) clearTimeout(stealResultTimerRef.current);
           stealResultTimerRef.current = setTimeout(() => setStealResult(null), 4000);
         }
       }
     }
+    if ((prevPhase === 'main_play') && (phase === 'post_round' || phase === 'game_over')) {
+      playSound('win-round');
+    }
     prevPhaseRef.current = phase;
   }, [state?.roundState.phase]);
+
+  // ── Sound effects ──
+  useEffect(() => {
+    if (!state) return;
+    const fs = state.roundState.faceOffState;
+    if (fs === 'answering' && prevFaceOffStateRef.current !== 'answering') {
+      playSound('buzz');
+    }
+    prevFaceOffStateRef.current = fs;
+  }, [state?.roundState.faceOffState]);
+
+  useEffect(() => {
+    if (!state) return;
+    const winner = state.roundState.faceOffWinnerTeamId;
+    if (winner && !prevFaceOffWinnerRef.current) {
+      playSound('correct-answer');
+    }
+    prevFaceOffWinnerRef.current = winner;
+  }, [state?.roundState.faceOffWinnerTeamId]);
+
+  useEffect(() => {
+    if (!state) return;
+    const len = state.roundState.revealedAnswers.length;
+    const phase = state.roundState.phase;
+    if (len > prevRevealedLenRef.current && phase === 'main_play') {
+      playSound('answer-reveal');
+    }
+    prevRevealedLenRef.current = len;
+  }, [state?.roundState.revealedAnswers.length]);
 
   const randomizerSeededRef = useRef(false);
   useEffect(() => {
