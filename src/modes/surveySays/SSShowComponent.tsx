@@ -548,6 +548,43 @@ function FaceOffAnnounceOverlay({ teamA, playerA, colorA, teamB, playerB, colorB
   );
 }
 
+// ─── Main Play Strike Overlay ─────────────────────────────────────────────────
+
+function StrikeOverlay({ count }: { count: number }) {
+  return (
+    <Box sx={{
+      position: 'absolute',
+      inset: 0,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 20,
+      pointerEvents: 'none',
+      animation: 'ssFadeIn 0.2s ease-out',
+    }}>
+      <Box sx={{
+        border: '3px solid #ff2020',
+        borderRadius: 3,
+        px: 5,
+        py: 3,
+        background: 'radial-gradient(ellipse at 50% 50%, #2a000088, #05071acc)',
+        boxShadow: '0 0 60px #ff202088',
+        textAlign: 'center',
+        display: 'flex',
+        gap: '0.6em',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}>
+        {Array.from({ length: count }).map((_, i) => (
+          <Typography key={i} sx={{ ...fontSx, fontSize: 'clamp(3rem, 7vw, 6rem)', color: '#ff2020', fontWeight: 900, lineHeight: 1 }}>
+            ✕
+          </Typography>
+        ))}
+      </Box>
+    </Box>
+  );
+}
+
 // ─── Face-off Strike Overlay ──────────────────────────────────────────────────
 
 function FaceOffStrikeOverlay({ teamName, color }: { teamName: string; color: string }) {
@@ -1083,6 +1120,9 @@ export const SSShowComponent = () => {
   const [faceOffStrikeVisible, setFaceOffStrikeVisible] = useState(false);
   const prevStrikeTeamRef = useRef<string | null>(null);
   const faceOffTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [strikeOverlay, setStrikeOverlay] = useState<number | null>(null);
+  const prevStrikeCountRef = useRef<number>(0);
+  const strikeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [randomizing, setRandomizing] = useState(false);
   const prevSeqRef = useRef<number | null>(null);
   const randomizerSnapshotRef = useRef<{ showIntro: boolean; boardId: string | null } | null>(null);
@@ -1135,6 +1175,18 @@ export const SSShowComponent = () => {
       setFaceOffStrikeVisible(false);
     }
   }, [state?.roundState.faceOffStrikeTeamId]);
+
+  useEffect(() => {
+    if (!state) return;
+    const count = state.roundState.strikeCount ?? 0;
+    if (count > prevStrikeCountRef.current) {
+      setStrikeOverlay(count);
+      if (strikeTimerRef.current) clearTimeout(strikeTimerRef.current);
+      strikeTimerRef.current = setTimeout(() => setStrikeOverlay(null), 3000);
+    }
+    if (count === 0) setStrikeOverlay(null);
+    prevStrikeCountRef.current = count;
+  }, [state?.roundState.strikeCount]);
 
   useEffect(() => {
     if (!state) return;
@@ -1424,7 +1476,8 @@ export const SSShowComponent = () => {
         {faceOffStrikeVisible && strikingTeam && (
           <FaceOffStrikeOverlay teamName={strikingTeam.name} color={strikingTeamColor} />
         )}
-        {stealingTeam && roundState.phase === 'steal' && (
+        {strikeOverlay !== null && <StrikeOverlay count={strikeOverlay} />}
+        {stealingTeam && roundState.phase === 'steal' && strikeOverlay === null && (
           <StealBanner teamName={stealingTeam.name} color={stealTeamColor} />
         )}
         {stealResult && (
