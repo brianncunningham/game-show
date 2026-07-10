@@ -23,6 +23,8 @@ const loadPersistedState = (): SurveySaysState | null => {
       s.controllerAssignments = s.controllerAssignments ?? [];
       s.wandTestSeq = s.wandTestSeq ?? 0;
       s.randomizerSeq = s.randomizerSeq ?? 0;
+      // Migrate legacy 'hardware' → 'hardware-player'
+      if ((s.config?.buzzerMode as string) === 'hardware') s.config.buzzerMode = 'hardware-player';
       return s;
     }
   } catch (e) {
@@ -44,7 +46,7 @@ const persistState = (state: SurveySaysState): void => {
 // ─── Defaults ────────────────────────────────────────────────────────────────
 
 const DEFAULT_CONFIG: SurveySaysConfig = {
-  buzzerMode: 'hardware',
+  buzzerMode: 'hardware-player',
   multiplierSchedule: [1, 1, 2, 3],
   winningThreshold: 300,
   sweepBonus: 0,

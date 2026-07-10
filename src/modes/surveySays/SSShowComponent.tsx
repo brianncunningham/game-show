@@ -832,7 +832,8 @@ const getBuzzerWsUrl = () => {
 
 const TEAM_PANEL_COLORS = ['#00e5ff', '#ff6a00'] as const;
 
-function SSWandTestOverlay({ teams, controllerAssignments }: { teams: [SurveyTeam, SurveyTeam]; controllerAssignments: import('./types').ControllerAssignment[] }) {
+function SSWandTestOverlay({ teams, controllerAssignments, buzzerMode }: { teams: [SurveyTeam, SurveyTeam]; controllerAssignments: import('./types').ControllerAssignment[]; buzzerMode: import('./types').BuzzerMode }) {
+  const isTeamHardware = buzzerMode === 'hardware-team';
   const [activeWands, setActiveWands] = useState<Set<string>>(new Set());
   const timersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
@@ -894,23 +895,42 @@ function SSWandTestOverlay({ teams, controllerAssignments }: { teams: [SurveyTea
           const teamAssignments = controllerAssignments
             .filter(a => a.teamId === team.id)
             .sort((a, b) => Number(a.controllerId) - Number(b.controllerId));
+          const teamControllerActive = isTeamHardware && activeWands.has(String(ti + 1));
 
           return (
             <Box key={team.id} sx={{
               flex: 1, borderRadius: 4,
-              border: `3px solid ${color}`,
+              border: `3px solid ${teamControllerActive ? '#00ff88' : color}`,
               background: `radial-gradient(ellipse at 50% 0%, ${color}22 0%, rgba(5,10,25,0.97) 60%)`,
-              boxShadow: `0 0 30px ${color}44`,
+              boxShadow: teamControllerActive ? `0 0 50px rgba(0,255,136,0.6)` : `0 0 30px ${color}44`,
+              transition: 'all 0.08s ease',
               display: 'flex', flexDirection: 'column', alignItems: 'center',
               pt: '3vh', pb: '3vh', gap: 0,
             }}>
-              <Typography sx={{
-                ...fontSx, fontWeight: 900, fontSize: 'clamp(1.4rem, 2.8vw, 3.5rem)',
-                textTransform: 'uppercase', letterSpacing: '0.1em', color, mb: '2vh',
-                textShadow: `0 0 16px ${color}88`,
-              }}>
-                {team.name}
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: '2vh' }}>
+                {isTeamHardware && (
+                  <Box sx={{
+                    minWidth: 44, height: 44, borderRadius: '50%',
+                    border: `2px solid ${teamControllerActive ? '#00ff88' : color}`,
+                    bgcolor: teamControllerActive ? 'rgba(0,255,136,0.2)' : `${color}22`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    flexShrink: 0, transition: 'all 0.08s ease',
+                  }}>
+                    <Typography sx={{ ...fontSx, fontWeight: 900, fontSize: 'clamp(1rem, 1.8vw, 1.8rem)', color: teamControllerActive ? '#00ff88' : color, lineHeight: 1, transition: 'color 0.08s ease' }}>
+                      {ti + 1}
+                    </Typography>
+                  </Box>
+                )}
+                <Typography sx={{
+                  ...fontSx, fontWeight: 900, fontSize: 'clamp(1.4rem, 2.8vw, 3.5rem)',
+                  textTransform: 'uppercase', letterSpacing: '0.1em',
+                  color: teamControllerActive ? '#00ff88' : color,
+                  textShadow: teamControllerActive ? '0 0 20px rgba(0,255,136,0.8)' : `0 0 16px ${color}88`,
+                  transition: 'all 0.08s ease',
+                }}>
+                  {team.name}{teamControllerActive ? ' — BUZZ!' : ''}
+                </Typography>
+              </Box>
 
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: '1.2vh', width: '100%', px: '8%' }}>
                 {hasAssignments ? teamAssignments.map(a => {
@@ -1264,13 +1284,14 @@ export const SSShowComponent = () => {
         teams={state.teams}
         playerPool={state.playerPool}
         controllerAssignments={state.controllerAssignments ?? []}
+        buzzerMode={state.config.buzzerMode}
         onDone={() => { /* stays until host navigates away */ }}
       />
     );
   }
 
   if (showingWandTest) {
-    return <SSWandTestOverlay teams={state.teams} controllerAssignments={state.controllerAssignments ?? []} />;
+    return <SSWandTestOverlay teams={state.teams} controllerAssignments={state.controllerAssignments ?? []} buzzerMode={state.config.buzzerMode} />;
   }
 
   if (state.showIntro) {

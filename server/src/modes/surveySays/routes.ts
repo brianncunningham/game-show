@@ -14,9 +14,13 @@ const router = Router();
 // Map the controllerId → teamId and call recordBuzz automatically.
 export function handlePiBuzzAccepted(windowId: string | null, controllerId: string): void {
   if (windowId !== 'ss-faceoff') return;
-  const { controllerAssignments, teams } = surveySaysStore.getState();
+  const { controllerAssignments, teams, config } = surveySaysStore.getState();
+  // Team hardware: controller 1 → team-1, controller 2 → team-2
+  const teamIdFromTeamMode = config.buzzerMode === 'hardware-team'
+    ? teams[Number(controllerId) - 1]?.id ?? null
+    : null;
   const assignment = controllerAssignments.find(a => a.controllerId === controllerId);
-  const teamId = assignment?.teamId ?? teams.find(t =>
+  const teamId = teamIdFromTeamMode ?? assignment?.teamId ?? teams.find(t =>
     t.players.some((_, i) => String(i + 1) === controllerId || String(5 + i + 1) === controllerId)
   )?.id;
   if (!teamId) {
@@ -43,7 +47,9 @@ judgeController.onEvent((event) => {
  * Falls back to [] (all eligible) if no assignments exist.
  */
 function faceOffWandIds(): string[] {
-  const { teams, roundState, controllerAssignments } = surveySaysStore.getState();
+  const { teams, roundState, controllerAssignments, config } = surveySaysStore.getState();
+  // Team hardware: fixed mapping — controller 1 = team 1, controller 2 = team 2
+  if (config.buzzerMode === 'hardware-team') return ['1', '2'];
   if (!controllerAssignments.length) return [];
   const idx = roundState.faceOffPlayerIndex;
   const ids: string[] = [];

@@ -1,4 +1,4 @@
-export type BuzzerMode = 'manual' | 'hardware';
+export type BuzzerMode = 'manual' | 'hardware' | 'hardware-player' | 'hardware-team';
 
 export interface SurveyAnswer {
   rank: number;

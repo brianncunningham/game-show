@@ -235,7 +235,7 @@ export const SSHostComponent = () => {
                 <Button fullWidth variant={state.showIntro ? 'contained' : 'outlined'} color="secondary"
                   sx={{ ...bigBtnSx, flex: 1, fontSize: { xs: '0.7rem', md: '0.8rem' } }}
                   onClick={act(async () => {
-                    if (config.buzzerMode === 'hardware') {
+                    if (config.buzzerMode !== 'manual') {
                       void ledEffect('marquee', { color: [160, 0, 255], color2: [255, 200, 0], bulb_size: 4, gap_size: 3, speed_ms: 28 });
                     }
                     return showIntro();
@@ -245,7 +245,7 @@ export const SSHostComponent = () => {
                 <Button fullWidth variant={!state.showIntro ? 'contained' : 'outlined'} color="primary"
                   sx={{ ...bigBtnSx, flex: 1, fontSize: { xs: '0.7rem', md: '0.8rem' } }}
                   onClick={act(async () => {
-                    if (config.buzzerMode === 'hardware') {
+                    if (config.buzzerMode !== 'manual') {
                       void ledEffect('off');
                     }
                     if ((state.wandTestSeq ?? 0) > 0) await hideWandTest();
@@ -253,7 +253,7 @@ export const SSHostComponent = () => {
                   })}>
                   📺 Game Board
                 </Button>
-                {config.buzzerMode === 'hardware' && (
+                {config.buzzerMode !== 'manual' && (
                   <Button fullWidth variant="outlined" color="info"
                     sx={{ ...bigBtnSx, flex: 1, fontSize: { xs: '0.7rem', md: '0.8rem' } }}
                     onClick={act(() => showWandTest())}>
@@ -261,7 +261,7 @@ export const SSHostComponent = () => {
                   </Button>
                 )}
               </Stack>
-              {config.buzzerMode === 'hardware' && (state.wandTestSeq ?? 0) > 0 && (
+              {config.buzzerMode !== 'manual' && (state.wandTestSeq ?? 0) > 0 && (
                 <Button size="small" variant="text" color="warning" sx={{ mt: 0.5 }}
                   onClick={act(() => hideWandTest())}>
                   ✕ Stop Wand Test

@@ -1,11 +1,12 @@
 import { Box, Stack, Typography } from '@mui/material';
 import { useEffect, useRef, useState } from 'react';
-import type { ControllerAssignment, SurveyTeam } from './types';
+import type { BuzzerMode, ControllerAssignment, SurveyTeam } from './types';
 
 interface Props {
   teams: [SurveyTeam, SurveyTeam];
   playerPool: string[];
   controllerAssignments?: ControllerAssignment[];
+  buzzerMode?: BuzzerMode;
   onDone?: () => void;
 }
 
@@ -29,7 +30,8 @@ const PHASE_DONE = 2;
 const CHAOS_DURATION = 3400;
 const SETTLE_DURATION = 1600;
 
-export const SSTeamRandomizer = ({ teams, playerPool, controllerAssignments = [], onDone }: Props) => {
+export const SSTeamRandomizer = ({ teams, playerPool, controllerAssignments = [], buzzerMode, onDone }: Props) => {
+  const isTeamHardware = buzzerMode === 'hardware-team';
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const bubblesRef = useRef<PlayerBubble[]>([]);
   const phaseRef = useRef(PHASE_CHAOS);
@@ -205,18 +207,34 @@ export const SSTeamRandomizer = ({ teams, playerPool, controllerAssignments = []
               transition: 'all 500ms ease', opacity: phase === PHASE_CHAOS ? 0.4 : 1,
             }}
           >
-            <Typography sx={{
-              ...fontSx, fontWeight: 900, fontSize: 'clamp(1.5rem, 3vw, 4rem)',
-              textTransform: 'uppercase', letterSpacing: '0.1em', textAlign: 'center',
-              color: TEAM_COLORS[ti], textShadow: `0 0 16px ${TEAM_COLORS[ti]}, 0 0 36px ${TEAM_COLORS[ti]}88`,
-              mb: settled ? 3 : 0, transition: 'margin 400ms ease', px: 2,
-            }}>
-              {team.name}
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: settled ? 3 : 0, transition: 'margin 400ms ease', px: 2 }}>
+              {isTeamHardware && (
+                <Box sx={{
+                  minWidth: 44, height: 44, borderRadius: '50%',
+                  border: `2px solid ${TEAM_COLORS[ti]}`,
+                  bgcolor: `${TEAM_COLORS[ti]}22`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  flexShrink: 0,
+                }}>
+                  <Typography sx={{ ...fontSx, fontWeight: 900, fontSize: 'clamp(0.9rem, 1.6vw, 1.8rem)', color: TEAM_COLORS[ti], lineHeight: 1 }}>
+                    {ti + 1}
+                  </Typography>
+                </Box>
+              )}
+              <Typography sx={{
+                ...fontSx, fontWeight: 900, fontSize: 'clamp(1.5rem, 3vw, 4rem)',
+                textTransform: 'uppercase', letterSpacing: '0.1em', textAlign: 'center',
+                color: TEAM_COLORS[ti], textShadow: `0 0 16px ${TEAM_COLORS[ti]}, 0 0 36px ${TEAM_COLORS[ti]}88`,
+              }}>
+                {team.name}
+              </Typography>
+            </Box>
             {settled && (
               <Stack spacing={1.2} alignItems="center" sx={{ width: '100%', px: 2 }}>
                 {team.players.map((p, pi) => {
-                  const assignment = controllerAssignments.find(a => a.teamId === team.id && a.playerName === p);
+                  const assignment = !isTeamHardware
+                    ? controllerAssignments.find(a => a.teamId === team.id && a.playerName === p)
+                    : undefined;
                   return (
                     <Box key={p} sx={{
                       display: 'flex', alignItems: 'center', gap: 1.5, justifyContent: 'center',
