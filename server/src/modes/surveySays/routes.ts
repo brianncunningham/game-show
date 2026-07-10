@@ -227,10 +227,10 @@ router.post('/faceoff/reveal-question', (_req, res) => {
   judgeController.armWindow('ss-faceoff');
   // Also open/arm on Pi's judge (proxy mode — Pi handles physical buzzes)
   piJudge('open-window', { windowId: 'ss-faceoff', eligibleControllers: eligible, earlyBuzzPenalty: false });
-  // Arm Pi and immediately suppress the game_armed() blue pulse in the same tick
+  // Arm Pi and immediately suppress the game_armed() blue pulse in the same tick (all hardware modes)
   setTimeout(() => {
     piJudge('arm-window', { windowId: 'ss-faceoff' });
-    if (isTeamMode) piLed({ effect: 'off' });
+    if (config.buzzerMode !== 'manual') piLed({ effect: 'off' });
   }, 100);
   res.json(surveySaysStore.revealQuestion());
 });
@@ -317,6 +317,7 @@ router.post('/round/next', (_req, res) => {
 });
 
 router.post('/game/new', (_req, res) => {
+  piLed({ effect: 'marquee', color: [245, 197, 24], color2: [255, 240, 80], bulb_size: 4, gap_size: 2, speed_ms: 25 });
   res.json(surveySaysStore.newGame());
 });
 
@@ -385,6 +386,7 @@ router.post('/saves/:id/load', (req, res) => {
   const state = surveySaysStore.setBoards(save.boards);
   if (save.config) surveySaysStore.updateConfig({ config: { ...state.config, ...save.config } });
   // Loading a game always starts fresh: scores 0, round 1, idle.
+  piLed({ effect: 'marquee', color: [245, 197, 24], color2: [255, 240, 80], bulb_size: 4, gap_size: 2, speed_ms: 25 });
   res.json(surveySaysStore.newGame());
 });
 
