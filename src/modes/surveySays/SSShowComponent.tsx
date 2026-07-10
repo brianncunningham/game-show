@@ -939,7 +939,24 @@ function SSWandTestOverlay({ teams, controllerAssignments, buzzerMode }: { teams
               </Box>
 
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: '1.2vh', width: '100%', px: '8%' }}>
-                {isTeamHardware ? null : hasAssignments ? teamAssignments.map(a => {
+                {isTeamHardware ? team.players.map((playerName, pi) => (
+                  <Box key={pi} sx={{
+                    display: 'flex', alignItems: 'center',
+                    borderRadius: 3, border: '2px solid',
+                    borderColor: `${color}33`,
+                    bgcolor: `${color}0a`,
+                    px: 2, py: 1.2,
+                  }}>
+                    <Typography sx={{
+                      ...fontSx, fontWeight: 700,
+                      fontSize: 'clamp(1rem, 2vw, 2.2rem)',
+                      color: 'rgba(255,255,255,0.85)',
+                      letterSpacing: '0.04em', flex: 1,
+                    }}>
+                      {playerName}
+                    </Typography>
+                  </Box>
+                )) : hasAssignments ? teamAssignments.map(a => {
                   const isActive = activeWands.has(a.controllerId);
                   return (
                     <Box key={a.controllerId} sx={{

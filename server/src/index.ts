@@ -16,7 +16,7 @@ import { registerMode, initModeRegistry } from './shared/services/modeRegistry.j
 import { initModeSocket } from './shared/services/modeSocket.js';
 import { nameThatTuneMode } from './modes/nameThatTune/index.js';
 import { surveySaysMode } from './modes/surveySays/index.js';
-import ssRoutes, { handlePiBuzzAccepted } from './modes/surveySays/routes.js';
+import ssRoutes, { handlePiBuzzAccepted, handlePiWandTestBuzz } from './modes/surveySays/routes.js';
 
 const PORT = Number(process.env.PORT ?? 3001);
 const JUDGE_URL = process.env['JUDGE_URL'] ?? null;
@@ -103,6 +103,11 @@ if (!JUDGE_URL) {
           const controllerId = String(msg.payload['controllerId'] ?? '');
           console.log(`[PiSniffer] BUZZ_ACCEPTED windowId=${windowId} controllerId=${controllerId}`);
           handlePiBuzzAccepted(windowId, controllerId);
+        }
+        // Wand test: fire team-color LED on every BUZZ_RECEIVED (fires regardless of arm state)
+        if (msg.type === 'BUZZ_RECEIVED' && msg.payload['windowId'] === 'ss-wand-test') {
+          const controllerId = String(msg.payload['controllerId'] ?? '');
+          if (controllerId) handlePiWandTestBuzz(controllerId);
         }
       } catch { /* ignore malformed */ }
     });

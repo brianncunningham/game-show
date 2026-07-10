@@ -12,6 +12,17 @@ const router = Router();
 // ─── Auto-record face-off buzz from hardware ─────────────────────────────────
 // When a wand buzzes in during the ss-faceoff window, BUZZ_ACCEPTED fires.
 // Map the controllerId → teamId and call recordBuzz automatically.
+export function handlePiWandTestBuzz(controllerId: string): void {
+  const { teams, config, controllerAssignments } = surveySaysStore.getState();
+  let teamId: string | undefined;
+  if (config.buzzerMode === 'hardware-team') {
+    teamId = teams[Number(controllerId) - 1]?.id;
+  } else {
+    teamId = controllerAssignments.find(a => a.controllerId === controllerId)?.teamId;
+  }
+  if (teamId) piLed({ effect: 'flash', color: teamColor(teamId), flashes: 2, on_ms: 150, off_ms: 80 });
+}
+
 export function handlePiBuzzAccepted(windowId: string | null, controllerId: string): void {
   if (windowId !== 'ss-faceoff') return;
   const { controllerAssignments, teams, config } = surveySaysStore.getState();
@@ -36,16 +47,9 @@ export function handlePiBuzzAccepted(windowId: string | null, controllerId: stri
 judgeController.onEvent((event) => {
   if (event.type !== 'BUZZ_ACCEPTED') return;
   const payload = event.payload as { windowId: string | null; controllerId: string };
-  // Wand test: flash team color on buzz so LED gives team-color feedback
   if (payload.windowId === 'ss-wand-test') {
-    const { teams, config, controllerAssignments } = surveySaysStore.getState();
-    let teamId: string | undefined;
-    if (config.buzzerMode === 'hardware-team') {
-      teamId = teams[Number(payload.controllerId) - 1]?.id;
-    } else {
-      teamId = controllerAssignments.find(a => a.controllerId === payload.controllerId)?.teamId;
-    }
-    if (teamId) piLed({ effect: 'flash', color: teamColor(teamId), flashes: 2, on_ms: 150, off_ms: 80 });
+    // Local (non-proxy) mode: judge fires on VPS directly; use same LED handler
+    handlePiWandTestBuzz(payload.controllerId);
     return;
   }
   handlePiBuzzAccepted(payload.windowId, payload.controllerId);
@@ -173,8 +177,9 @@ router.post('/wand-test/show', (_req, res) => {
   judgeController.openWindow({ windowId: 'ss-wand-test', eligibleControllers: eligible, earlyBuzzPenalty: false });
   judgeController.armWindow('ss-wand-test');
   piJudge('open-window', { windowId: 'ss-wand-test', eligibleControllers: eligible, earlyBuzzPenalty: false });
-  // Skip arm-window in team mode — no blue armed LED needed
-  if (!isTeamMode) setTimeout(() => piJudge('arm-window', { windowId: 'ss-wand-test' }), 100);
+  setTimeout(() => piJudge('arm-window', { windowId: 'ss-wand-test' }), 100);
+  // Suppress blue armed-pulse LED in team mode
+  if (isTeamMode) setTimeout(() => piLed({ effect: 'off' }), 200);
   res.json(surveySaysStore.showWandTest());
 });
 
