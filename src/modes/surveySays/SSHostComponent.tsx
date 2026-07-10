@@ -217,6 +217,14 @@ export const SSHostComponent = () => {
                     🎲 Randomize Families {state.playerPool.length === 0 ? '(add players in /gameadmin)' : ''}
                   </Button>
                 </Grid>
+                {config.buzzerMode !== 'manual' && (
+                  <Grid item xs={12} sm={4}>
+                    <Button fullWidth variant="outlined" color="inherit" sx={{ ...bigBtnSx, opacity: 0.55 }}
+                      onClick={() => { void ledEffect('off'); }}>
+                      💡 Clear LEDs
+                    </Button>
+                  </Grid>
+                )}
               </Grid>
             </Collapse>
           </CardContent>
@@ -261,19 +269,11 @@ export const SSHostComponent = () => {
                   </Button>
                 )}
               </Stack>
-              {config.buzzerMode !== 'manual' && (
-                <Stack direction="row" spacing={1} sx={{ mt: 0.5 }} alignItems="center">
-                  {(state.wandTestSeq ?? 0) > 0 && (
-                    <Button size="small" variant="text" color="warning"
-                      onClick={act(() => hideWandTest())}>
-                      ✕ Stop Wand Test
-                    </Button>
-                  )}
-                  <Button size="small" variant="text" color="inherit" sx={{ opacity: 0.5 }}
-                    onClick={() => { void ledEffect('off'); }}>
-                    💡 Clear LEDs
-                  </Button>
-                </Stack>
+              {config.buzzerMode !== 'manual' && (state.wandTestSeq ?? 0) > 0 && (
+                <Button size="small" variant="text" color="warning" sx={{ mt: 0.5 }}
+                  onClick={act(() => hideWandTest())}>
+                  ✕ Stop Wand Test
+                </Button>
               )}
             </Collapse>
           </CardContent>
