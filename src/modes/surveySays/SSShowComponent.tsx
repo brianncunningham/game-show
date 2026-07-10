@@ -1230,9 +1230,22 @@ export const SSShowComponent = () => {
       const winnerTeam = state.teams.find(t => t.id === winnerTeamId);
       const winnerColor = winnerTeam?.id === state.teams[0].id ? TEAM_COLORS[0] : TEAM_COLORS[1];
       if (winnerTeam) {
-        setStealResult({ teamName: winnerTeam.name, success: stealSucceeded, color: winnerColor });
-        if (stealResultTimerRef.current) clearTimeout(stealResultTimerRef.current);
-        stealResultTimerRef.current = setTimeout(() => setStealResult(null), 4000);
+        const result = { teamName: winnerTeam.name, success: stealSucceeded, color: winnerColor };
+        if (!stealSucceeded) {
+          // Show 1 X for 3s before revealing the steal result
+          setStrikeOverlay(1);
+          if (strikeTimerRef.current) clearTimeout(strikeTimerRef.current);
+          strikeTimerRef.current = setTimeout(() => {
+            setStrikeOverlay(null);
+            setStealResult(result);
+            if (stealResultTimerRef.current) clearTimeout(stealResultTimerRef.current);
+            stealResultTimerRef.current = setTimeout(() => setStealResult(null), 4000);
+          }, 3000);
+        } else {
+          setStealResult(result);
+          if (stealResultTimerRef.current) clearTimeout(stealResultTimerRef.current);
+          stealResultTimerRef.current = setTimeout(() => setStealResult(null), 4000);
+        }
       }
     }
     prevPhaseRef.current = phase;
