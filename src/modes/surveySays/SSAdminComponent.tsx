@@ -253,13 +253,16 @@ function Settings({ state, onRefresh }: { state: SurveySaysState; onRefresh: () 
                   onBlur={e => void handleConfigChange({ answerTimerSecs: parseInt(e.target.value, 10) })} />
               )}
             </Stack>
-            <Stack direction="row" spacing={1} alignItems="center">
-              <Button size="small"
-                variant={config.buzzerMode === 'hardware' ? 'contained' : 'outlined'}
-                color={config.buzzerMode === 'hardware' ? 'info' : 'inherit'}
-                onClick={() => void handleConfigChange({ buzzerMode: config.buzzerMode === 'hardware' ? 'manual' : 'hardware' })}>
-                Buzzer: {config.buzzerMode === 'hardware' ? 'HARDWARE' : 'MANUAL'}
-              </Button>
+            <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+              <Typography variant="caption" sx={{ color: 'text.secondary', mr: 0.5 }}>Buzzer:</Typography>
+              {(['manual', 'hardware-player', 'hardware-team'] as const).map(mode => (
+                <Button key={mode} size="small"
+                  variant={config.buzzerMode === mode || (mode === 'hardware-player' && config.buzzerMode === 'hardware') ? 'contained' : 'outlined'}
+                  color="info"
+                  onClick={() => void handleConfigChange({ buzzerMode: mode })}>
+                  {mode === 'manual' ? 'Manual' : mode === 'hardware-player' ? 'Player HW' : 'Team HW'}
+                </Button>
+              ))}
             </Stack>
           </Stack>
         </CardContent>
