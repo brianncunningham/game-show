@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      font-size: 13px;
+      padding: 8px;
+      color: #202124;
+    }
+    h3 { margin: 4px 0; font-size: 14px; }
+    .now-tagging { margin-bottom: 6px; }
+    .now-tagging .title { font-weight: bold; }
+    .progress { color: #5f6368; font-size: 12px; }
+    .elapsed {
+      font-size: 28px;
+      text-align: center;
+      margin: 10px 0;
+      font-family: monospace;
+    }
+    .row { display: flex; gap: 4px; margin-bottom: 6px; flex-wrap: wrap; }
+    button {
+      flex: 1;
+      padding: 8px 4px;
+      font-size: 12px;
+      cursor: pointer;
+      border: 1px solid #dadce0;
+      border-radius: 4px;
+      background: #fff;
+    }
+    button:hover:not(:disabled) { background: #f1f3f4; }
+    button:disabled { opacity: 0.5; cursor: default; }
+    .mark-btn {
+      background: #1a73e8;
+      color: #fff;
+      font-weight: bold;
+      font-size: 15px;
+      padding: 14px;
+    }
+    .mark-btn:hover:not(:disabled) { background: #1765cc; }
+    .test-btn { background: #34a853; color: #fff; }
+    .test-btn:hover:not(:disabled) { background: #2d9249; }
+    .next-btn { background: #fbbc04; }
+    .saved-value { font-size: 12px; color: #34a853; margin-top: 2px; }
+    .status {
+      margin-top: 10px;
+      padding: 6px;
+      border-radius: 4px;
+      font-size: 12px;
+      min-height: 16px;
+    }
+    .status.error { background: #fce8e6; color: #c5221f; }
+    .status.info { background: #e8f0fe; color: #1967d2; }
+    .device-list { margin-top: 6px; }
+    .device-list button { display: block; width: 100%; margin-bottom: 4px; text-align: left; }
+    hr { border: none; border-top: 1px solid #dadce0; margin: 10px 0; }
+    .hint { color: #80868b; font-size: 11px; }
+  </style>
+</head>
+<body>
+
+  <div class="now-tagging">
+    <div class="title" id="nowTitle">Loading…</div>
+    <div class="progress" id="progressLabel"></div>
+  </div>
+
+  <div class="elapsed" id="elapsed">0:00</div>
+
+  <div class="row">
+    <button id="playPauseBtn">▶ Play</button>
+  </div>
+
+  <div class="hint">Quick jump</div>
+  <div class="row">
+    <button data-seek="30000">0:30</button>
+    <button data-seek="45000">0:45</button>
+    <button data-seek="60000">1:00</button>
+    <button data-seek="75000">1:15</button>
+  </div>
+
+  <div class="hint">Nudge</div>
+  <div class="row">
+    <button data-nudge="-5000">−5s</button>
+    <button data-nudge="-1000">−1s</button>
+    <button data-nudge="-500">−0.5s</button>
+    <button data-nudge="500">+0.5s</button>
+    <button data-nudge="1000">+1s</button>
+    <button data-nudge="5000">+5s</button>
+  </div>
+
+  <hr>
+
+  <div class="row">
+    <button class="mark-btn" id="markBtn">MARK CHORUS (M)</button>
+  </div>
+  <div class="saved-value" id="savedValue"></div>
+
+  <div class="hint">Adjust saved value (no playback change)</div>
+  <div class="row">
+    <button data-adjust="-500" class="adjust-btn" disabled>−0.5s</button>
+    <button data-adjust="-250" class="adjust-btn" disabled>−0.25s</button>
+    <button data-adjust="250" class="adjust-btn" disabled>+0.25s</button>
+    <button data-adjust="500" class="adjust-btn" disabled>+0.5s</button>
+  </div>
+
+  <div class="row">
+    <button class="test-btn" id="testBtn">Test jump</button>
+    <button class="next-btn" id="nextBtn">Next song (N)</button>
+  </div>
+
+  <hr>
+  <div class="hint">Space = play/pause · M = mark · N = next · ←/→ = ±1s · ⇧←/⇧→ = ±5s</div>
+
+  <div class="status" id="status"></div>
+
+  <script>
+    var state = {
+      row: null,
+      trackId: null,
+      lastProgressMs: 0,
+      durationMs: 0,
+      isPlaying: false,
+      pollHandle: null,
+      busy: false,
+      savedMs: null,
+    };
+
+    function setBusy(busy) {
+      state.busy = busy;
+      document.querySelectorAll('button').forEach(function (b) { b.disabled = busy; });
+      if (!busy) updateAdjustButtons();
+    }
+
+    function updateAdjustButtons() {
+      var disabled = state.savedMs === null;
+      document.querySelectorAll('.adjust-btn').forEach(function (b) { b.disabled = disabled; });
+    }
+
+    function fmt(ms) {
+      var totalSec = Math.max(0, Math.round(ms / 1000));
+      var m = Math.floor(totalSec / 60);
+      var s = totalSec % 60;
+      return m + ':' + (s < 10 ? '0' : '') + s;
+    }
+
+    function showStatus(message, type) {
+      var el = document.getElementById('status');
+      el.textContent = message || '';
+      el.className = 'status' + (type ? ' ' + type : '');
+    }
+
+    function parseError(err) {
+      var raw = (err && err.message) || String(err);
+      // Apps Script prepends "Error: " (or similar) to the message across
+      // the client/server boundary, so extract the JSON substring rather
+      // than parsing the whole string.
+      var start = raw.indexOf('{');
+      var end = raw.lastIndexOf('}');
+      if (start !== -1 && end !== -1 && end > start) {
+        try {
+          var parsed = JSON.parse(raw.substring(start, end + 1));
+          if (parsed && parsed.ctError) return parsed;
+        } catch (e) { /* not a structured error */ }
+      }
+      return { type: 'error', message: raw };
+    }
+
+    function handleError(err) {
+      setBusy(false);
+      var parsed = parseError(err);
+      if (parsed.type === 'no_device') {
+        showStatus(parsed.message + ' Pick a device:', 'error');
+        renderDevicePicker(parsed.extra || []);
+      } else if (parsed.type === 'reauth') {
+        showStatus(parsed.message + ' Use the "Name That Tune" menu → Authorize Spotify (Chorus Tagger).', 'error');
+      } else if (parsed.type === 'premium_required') {
+        showStatus(parsed.message, 'error');
+      } else {
+        showStatus(parsed.message, 'error');
+      }
+    }
+
+    function renderDevicePicker(devices) {
+      var container = document.getElementById('status');
+      var list = document.createElement('div');
+      list.className = 'device-list';
+      devices.forEach(function (d) {
+        var btn = document.createElement('button');
+        btn.textContent = (d.isActive ? '● ' : '') + d.name + ' (' + d.type + ')';
+        btn.onclick = function () {
+          setBusy(true);
+          google.script.run.withSuccessHandler(function () {
+            setBusy(false);
+            showStatus('Device selected. Try again.', 'info');
+          }).withFailureHandler(handleError).ctTransferPlayback(d.id);
+        };
+        list.appendChild(btn);
+      });
+      container.appendChild(list);
+    }
+
+    function loadNext() {
+      setBusy(true);
+      showStatus('Loading next song…', 'info');
+      google.script.run.withSuccessHandler(function (result) {
+        if (!result || result.row === null) {
+          document.getElementById('nowTitle').textContent = 'All songs tagged 🎉';
+          document.getElementById('progressLabel').textContent =
+            result ? (result.tagged + ' / ' + result.total + ' tagged') : '';
+          setBusy(false);
+          stopPolling();
+          return;
+        }
+        state.row = result.row;
+        state.trackId = result.trackId;
+        state.savedMs = null;
+        document.getElementById('nowTitle').textContent = result.title + ' — ' + result.artist;
+        document.getElementById('progressLabel').textContent = result.tagged + ' / ' + result.total + ' tagged';
+        document.getElementById('savedValue').textContent = '';
+        updateAdjustButtons();
+        showStatus('', '');
+        playAt(20000);
+      }).withFailureHandler(handleError).ctGetNextUntagged();
+    }
+
+    function playAt(positionMs) {
+      setBusy(true);
+      google.script.run.withSuccessHandler(function () {
+        setBusy(false);
+        state.isPlaying = true;
+        document.getElementById('playPauseBtn').textContent = '⏸ Pause';
+        startPolling();
+      }).withFailureHandler(handleError).ctPlayTrack(state.trackId, positionMs);
+    }
+
+    function togglePlayPause() {
+      setBusy(true);
+      if (state.isPlaying) {
+        google.script.run.withSuccessHandler(function () {
+          setBusy(false);
+          state.isPlaying = false;
+          document.getElementById('playPauseBtn').textContent = '▶ Play';
+          stopPolling();
+        }).withFailureHandler(handleError).ctPause();
+      } else {
+        google.script.run.withSuccessHandler(function () {
+          setBusy(false);
+          state.isPlaying = true;
+          document.getElementById('playPauseBtn').textContent = '⏸ Pause';
+          startPolling();
+        }).withFailureHandler(handleError).ctResume();
+      }
+    }
+
+    function seekTo(ms) {
+      setBusy(true);
+      google.script.run.withSuccessHandler(function () {
+        setBusy(false);
+        state.lastProgressMs = Math.max(0, ms);
+        document.getElementById('elapsed').textContent = fmt(state.lastProgressMs);
+      }).withFailureHandler(handleError).ctSeek(Math.max(0, ms));
+    }
+
+    function nudge(deltaMs) {
+      seekTo(state.lastProgressMs + deltaMs);
+    }
+
+    function markChorus() {
+      setBusy(true);
+      google.script.run.withSuccessHandler(function (savedMs) {
+        setBusy(false);
+        state.savedMs = savedMs;
+        document.getElementById('savedValue').textContent = 'Saved: ' + fmt(savedMs) + ' (' + savedMs + ' ms)';
+        showStatus('Marked!', 'info');
+      }).withFailureHandler(handleError).ctMarkChorus(state.row, state.lastProgressMs);
+    }
+
+    function adjustSaved(deltaMs) {
+      if (state.savedMs === null || !state.row) return;
+      setBusy(true);
+      var target = state.savedMs + deltaMs;
+      google.script.run.withSuccessHandler(function (savedMs) {
+        setBusy(false);
+        state.savedMs = savedMs;
+        document.getElementById('savedValue').textContent = 'Saved: ' + fmt(savedMs) + ' (' + savedMs + ' ms)';
+        showStatus('Adjusted.', 'info');
+      }).withFailureHandler(handleError).ctSetChorusMs(state.row, target);
+    }
+
+    function testJump() {
+      setBusy(true);
+      google.script.run.withSuccessHandler(function (savedMs) {
+        if (savedMs === null) {
+          setBusy(false);
+          showStatus('No saved chorus_ms for this row yet.', 'error');
+          return;
+        }
+        state.savedMs = savedMs;
+        document.getElementById('savedValue').textContent = 'Saved: ' + fmt(savedMs) + ' (' + savedMs + ' ms)';
+        google.script.run.withSuccessHandler(function () {
+          setBusy(false);
+          state.isPlaying = true;
+          document.getElementById('playPauseBtn').textContent = '⏸ Pause';
+          startPolling();
+        }).withFailureHandler(handleError).ctPlayTrack(state.trackId, savedMs);
+      }).withFailureHandler(handleError).ctGetSavedChorusMs(state.row);
+    }
+
+    function pollState() {
+      google.script.run.withSuccessHandler(function (player) {
+        if (!player) return;
+        state.lastProgressMs = player.progressMs;
+        state.durationMs = player.durationMs;
+        state.isPlaying = player.isPlaying;
+        document.getElementById('elapsed').textContent = fmt(player.progressMs);
+        document.getElementById('playPauseBtn').textContent = player.isPlaying ? '⏸ Pause' : '▶ Play';
+        if (!player.isPlaying) stopPolling();
+      }).withFailureHandler(function (err) {
+        stopPolling();
+        handleError(err);
+      }).ctGetPlayerState();
+    }
+
+    function startPolling() {
+      if (state.pollHandle) return;
+      state.pollHandle = setInterval(pollState, 1000);
+    }
+
+    function stopPolling() {
+      if (state.pollHandle) {
+        clearInterval(state.pollHandle);
+        state.pollHandle = null;
+      }
+    }
+
+    document.getElementById('playPauseBtn').addEventListener('click', togglePlayPause);
+    document.getElementById('markBtn').addEventListener('click', markChorus);
+    document.getElementById('testBtn').addEventListener('click', testJump);
+    document.getElementById('nextBtn').addEventListener('click', loadNext);
+
+    document.querySelectorAll('[data-seek]').forEach(function (btn) {
+      btn.addEventListener('click', function () { seekTo(Number(btn.getAttribute('data-seek'))); });
+    });
+    document.querySelectorAll('[data-nudge]').forEach(function (btn) {
+      btn.addEventListener('click', function () { nudge(Number(btn.getAttribute('data-nudge'))); });
+    });
+    document.querySelectorAll('[data-adjust]').forEach(function (btn) {
+      btn.addEventListener('click', function () { adjustSaved(Number(btn.getAttribute('data-adjust'))); });
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if (state.busy) return;
+      var tag = (e.target && e.target.tagName) || '';
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+
+      if (e.code === 'Space') { e.preventDefault(); togglePlayPause(); }
+      else if (e.key === 'm' || e.key === 'M') { markChorus(); }
+      else if (e.key === 'n' || e.key === 'N') { loadNext(); }
+      else if (e.key === 'ArrowLeft') { nudge(e.shiftKey ? -5000 : -1000); }
+      else if (e.key === 'ArrowRight') { nudge(e.shiftKey ? 5000 : 1000); }
+    });
+
+    // Initial load.
+    loadNext();
+  </script>
+</body>
+</html>

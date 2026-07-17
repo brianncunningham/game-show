@@ -1,9 +1,10 @@
 var SHEET_NAME = 'Themes & Songs';
-var COL_TITLE = 2;       // B
-var COL_ARTIST = 3;      // C
-var COL_SPOTIFY_ID = 4;  // D
-var COL_CLIP_START = 5;  // E (reserved — not auto-filled, left for manual entry)
-var COL_VERIFY = 6;      // F — "Track Name — Artist (Album, Year)" for manual review
+var COL_TITLE = 2;        // B
+var COL_ARTIST = 3;       // C
+var COL_SPOTIFY_ID = 4;   // D
+var COL_CLIP_START = 5;   // E (reserved — not auto-filled, left for manual entry)
+var COL_VERIFY = 6;       // F — "Track Name — Artist (Album, Year)" for manual review
+var COL_CHORUS_START = 7; // G (reserved — not auto-filled, left for manual entry)
 var HEADER_ROW = 1;
 
 // ─── Credentials prompt ──────────────────────────────────────────────────────
@@ -60,6 +61,21 @@ function getSpotifyToken_() {
 
 // ─── Search for a single track, return track ID or null ──────────────────────
 
+function buildVerifyResult_(track) {
+  var year = track.album && track.album.release_date
+    ? track.album.release_date.substring(0, 4)
+    : '';
+  var albumName = (track.album && track.album.name) ? track.album.name : '';
+  var trackArtists = track.artists
+    ? track.artists.map(function(a) { return a.name; }).join(', ')
+    : '';
+
+  return {
+    id: track.id,
+    verify: track.name + ' \u2014 ' + trackArtists + ' (' + albumName + ', ' + year + ')',
+  };
+}
+
 function searchSpotifyTrack_(token, title, artist) {
   var query = encodeURIComponent('track:' + title + ' artist:' + artist);
   var url = 'https://api.spotify.com/v1/search?q=' + query + '&type=track&limit=1';
@@ -75,19 +91,91 @@ function searchSpotifyTrack_(token, title, artist) {
   var items = data && data.tracks && data.tracks.items;
   if (!items || items.length === 0) return null;
 
-  var track = items[0];
-  var year = track.album && track.album.release_date
-    ? track.album.release_date.substring(0, 4)
-    : '';
-  var albumName = (track.album && track.album.name) ? track.album.name : '';
-  var trackArtists = track.artists
-    ? track.artists.map(function(a) { return a.name; }).join(', ')
-    : '';
+  return buildVerifyResult_(items[0]);
+}
 
-  return {
-    id: track.id,
-    verify: track.name + ' \u2014 ' + trackArtists + ' (' + albumName + ', ' + year + ')',
-  };
+// ─── Look up a track directly by ID (for re-verifying manually-set IDs) ──────
+
+function getSpotifyTrackById_(token, trackId) {
+  var url = 'https://api.spotify.com/v1/tracks/' + encodeURIComponent(trackId);
+  var response = UrlFetchApp.fetch(url, {
+    headers: { Authorization: 'Bearer ' + token },
+    muteHttpExceptions: true,
+  });
+
+  if (response.getResponseCode() !== 200) return null;
+
+  return buildVerifyResult_(JSON.parse(response.getContentText()));
+}
+
+// ─── Refresh Verify for rows that have a Spotify ID but a blank Verify ───────
+// (e.g. after manually correcting a mismatched Spotify ID in column D)
+
+function fetchMissingVerify() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName(SHEET_NAME);
+
+  if (!sheet) {
+    SpreadsheetApp.getUi().alert('Sheet "' + SHEET_NAME + '" not found.');
+    return;
+  }
+
+  var lastRow = sheet.getLastRow();
+  if (lastRow <= HEADER_ROW) {
+    SpreadsheetApp.getUi().alert('No data rows found.');
+    return;
+  }
+
+  var token;
+  try {
+    token = getSpotifyToken_();
+  } catch (e) {
+    SpreadsheetApp.getUi().alert(e.message);
+    return;
+  }
+
+  var filled = 0;
+  var skipped = 0;
+  var notFound = 0;
+  var errors = [];
+
+  for (var row = HEADER_ROW + 1; row <= lastRow; row++) {
+    var trackId = sheet.getRange(row, COL_SPOTIFY_ID).getValue();
+    var existingVerify = sheet.getRange(row, COL_VERIFY).getValue();
+
+    if (!trackId || trackId === 'NOT_FOUND') continue;
+    if (existingVerify) {
+      skipped++;
+      continue;
+    }
+
+    try {
+      var result = getSpotifyTrackById_(token, String(trackId));
+      if (result) {
+        sheet.getRange(row, COL_VERIFY).setValue(result.verify);
+        filled++;
+      } else {
+        errors.push('Row ' + row + ': Spotify ID "' + trackId + '" not found');
+        notFound++;
+      }
+      Utilities.sleep(100); // stay well under Spotify rate limits
+    } catch (e) {
+      errors.push('Row ' + row + ' (' + trackId + '): ' + e.message);
+    }
+  }
+
+  var summary = [
+    'Done!',
+    '  Verify filled: ' + filled,
+    '  Already had Verify (skipped): ' + skipped,
+    '  ID not found on Spotify: ' + notFound,
+  ];
+  if (errors.length > 0) {
+    summary.push('  Errors: ' + errors.length);
+    summary = summary.concat(errors.slice(0, 5));
+  }
+
+  SpreadsheetApp.getUi().alert(summary.join('\n'));
 }
 
 // ─── Main: iterate rows, fill column D ───────────────────────────────────────
