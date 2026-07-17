@@ -72,7 +72,7 @@ export const ContentManager = ({ questions, onChange }: ContentManagerProps) => 
       .map((line) => line.trim())
       .filter(Boolean)
       .map((line, index) => {
-        const [roundStr = '1', category = '', basePoints = '100', t1 = '', a1 = '', id1 = '', ms1 = '', t2 = '', a2 = '', id2 = '', ms2 = '', t3 = '', a3 = '', id3 = '', ms3 = ''] = parseCsvLine(line);
+        const [roundStr = '1', category = '', basePoints = '100', t1 = '', a1 = '', id1 = '', ms1 = '', cms1 = '', t2 = '', a2 = '', id2 = '', ms2 = '', cms2 = '', t3 = '', a3 = '', id3 = '', ms3 = '', cms3 = ''] = parseCsvLine(line);
         const round = Number(roundStr) || 1;
         return {
           id: `csv-r${round}q${index + 1}`,
@@ -80,9 +80,9 @@ export const ContentManager = ({ questions, onChange }: ContentManagerProps) => 
           category,
           songLabel: '',
           songs: [
-            { title: t1, artist: a1, ...(id1 ? { spotifyTrackId: id1 } : {}), ...(ms1 ? { clipStartMs: Number(ms1) } : {}) },
-            { title: t2, artist: a2, ...(id2 ? { spotifyTrackId: id2 } : {}), ...(ms2 ? { clipStartMs: Number(ms2) } : {}) },
-            { title: t3, artist: a3, ...(id3 ? { spotifyTrackId: id3 } : {}), ...(ms3 ? { clipStartMs: Number(ms3) } : {}) },
+            { title: t1, artist: a1, ...(id1 ? { spotifyTrackId: id1 } : {}), ...(ms1 ? { clipStartMs: Number(ms1) } : {}), ...(cms1 ? { chorusStartMs: Number(cms1) } : {}) },
+            { title: t2, artist: a2, ...(id2 ? { spotifyTrackId: id2 } : {}), ...(ms2 ? { clipStartMs: Number(ms2) } : {}), ...(cms2 ? { chorusStartMs: Number(cms2) } : {}) },
+            { title: t3, artist: a3, ...(id3 ? { spotifyTrackId: id3 } : {}), ...(ms3 ? { clipStartMs: Number(ms3) } : {}), ...(cms3 ? { chorusStartMs: Number(cms3) } : {}) },
           ],
           clipStart: 0,
           clipDuration: 0,
@@ -201,6 +201,18 @@ export const ContentManager = ({ questions, onChange }: ContentManagerProps) => 
                                 updateQuestion(question.id, { songs: updated });
                               }}
                             />
+                            <TextField
+                              label="Chorus start (ms)"
+                              size="small"
+                              type="number"
+                              sx={{ width: 130 }}
+                              value={song.chorusStartMs ?? ''}
+                              onChange={(event) => {
+                                const updated = [...(question.songs ?? emptySongs())];
+                                updated[si] = { ...updated[si], chorusStartMs: event.target.value ? Number(event.target.value) : undefined };
+                                updateQuestion(question.id, { songs: updated });
+                              }}
+                            />
                           </Stack>
                         ))}
                       </Stack>
@@ -218,12 +230,12 @@ export const ContentManager = ({ questions, onChange }: ContentManagerProps) => 
 
           <Typography variant="subtitle1">Quick CSV import</Typography>
           <Typography variant="body2" color="text.secondary">
-            Format per line: round, category, basePoints, song1 title, song1 artist, song1 spotifyId, song1 clipStartMs, song2 title, song2 artist, song2 spotifyId, song2 clipStartMs, song3 title, song3 artist, song3 spotifyId, song3 clipStartMs
+            Format per line: round, category, basePoints, song1 title, song1 artist, song1 spotifyId, song1 clipStartMs, song1 chorusStartMs, song2 title, song2 artist, song2 spotifyId, song2 clipStartMs, song2 chorusStartMs, song3 title, song3 artist, song3 spotifyId, song3 clipStartMs, song3 chorusStartMs
           </Typography>
           <TextField
             multiline
             minRows={4}
-            placeholder={'1, The 80s, 100, Sweet Child O Mine, Guns N Roses, 7snQQk1zcKl8gZ92AnueZW, 0, Billie Jean, Michael Jackson, , , Livin on a Prayer, Bon Jovi, ,'}
+            placeholder={'1, The 80s, 100, Sweet Child O Mine, Guns N Roses, 7snQQk1zcKl8gZ92AnueZW, 0, 45000, Billie Jean, Michael Jackson, , , , Livin on a Prayer, Bon Jovi, , , '}
             value={csvText}
             onChange={(event) => setCsvText(event.target.value)}
           />

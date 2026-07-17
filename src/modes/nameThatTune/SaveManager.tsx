@@ -16,7 +16,8 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import FolderOpenIcon from '@mui/icons-material/FolderOpen';
 import SaveIcon from '@mui/icons-material/Save';
 import SettingsBackupRestoreIcon from '@mui/icons-material/SettingsBackupRestore';
-import { createSave, deleteSave, listSaves, loadSave, patchSaveConfig } from './api';
+import SyncIcon from '@mui/icons-material/Sync';
+import { createSave, deleteSave, listSaves, loadSave, patchSaveConfig, updateSaveQuestions } from './api';
 import type { GameSaveMeta } from './api';
 
 interface SaveManagerProps {
@@ -30,6 +31,7 @@ export const SaveManager = ({ onLoaded }: SaveManagerProps) => {
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [patchingId, setPatchingId] = useState<string | null>(null);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     const list = await listSaves();
@@ -67,6 +69,16 @@ export const SaveManager = ({ onLoaded }: SaveManagerProps) => {
       await refresh();
     } finally {
       setPatchingId(null);
+    }
+  };
+
+  const handleUpdateQuestions = async (id: string) => {
+    setUpdatingId(id);
+    try {
+      await updateSaveQuestions(id);
+      await refresh();
+    } finally {
+      setUpdatingId(null);
     }
   };
 
@@ -137,7 +149,19 @@ export const SaveManager = ({ onLoaded }: SaveManagerProps) => {
                   color="primary" variant="outlined"
                   sx={{ cursor: 'pointer' }}
                 />
-                <Tooltip title="Update this save's config from current settings">
+                <Tooltip title="Overwrite this save's songs with current content">
+                  <span>
+                    <IconButton
+                      size="small"
+                      color="warning"
+                      disabled={updatingId === save.id}
+                      onClick={() => void handleUpdateQuestions(save.id)}
+                    >
+                      <SyncIcon fontSize="small" />
+                    </IconButton>
+                  </span>
+                </Tooltip>
+                <Tooltip title="Update this save's settings only (rules, clock, buzzer mode)">
                   <span>
                     <IconButton
                       size="small"

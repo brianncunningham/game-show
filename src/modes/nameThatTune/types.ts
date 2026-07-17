@@ -11,6 +11,7 @@ export interface GameShowSong {
   artist: string;
   spotifyTrackId?: string;
   clipStartMs?: number;
+  chorusStartMs?: number;
 }
 
 export interface GameShowQuestion {

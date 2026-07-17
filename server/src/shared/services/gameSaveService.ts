@@ -78,6 +78,14 @@ export const patchSaveConfig = (modeId: string, id: string, config: GameSaveConf
   return patched;
 };
 
+export const updateSaveQuestions = (modeId: string, id: string, questions: GameShowQuestion[]): GameSave | null => {
+  const save = loadSave(modeId, id);
+  if (!save) return null;
+  const updated: GameSave = { ...save, questions, savedAt: new Date().toISOString() };
+  writeFileSync(savePath(modeId, id), JSON.stringify(updated, null, 2));
+  return updated;
+};
+
 export const deleteSave = (modeId: string, id: string): boolean => {
   const path = savePath(modeId, id);
   if (!existsSync(path)) return false;

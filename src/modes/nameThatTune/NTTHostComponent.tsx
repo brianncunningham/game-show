@@ -501,24 +501,43 @@ export const NTTHostComponent = () => {
                             )}
                           </Button>
                           {isActive && spotify.isConnected && (
-                            <Button
-                              fullWidth
-                              variant="outlined"
-                              color="warning"
-                              size="small"
-                              onClick={() => {
-                                if (spotifyPaused) {
-                                  void spotify.resume();
-                                  setSpotifyPaused(false);
-                                  armActiveStealWindow();
-                                } else {
-                                  void spotify.pause();
-                                  setSpotifyPaused(true);
-                                }
-                              }}
-                            >
-                              {spotifyPaused ? '▶ Resume' : '⏸ Pause'}
-                            </Button>
+                            <Stack direction="row" spacing={0.5}>
+                              <Button
+                                fullWidth
+                                variant="outlined"
+                                color="warning"
+                                size="small"
+                                onClick={() => {
+                                  if (spotifyPaused) {
+                                    void spotify.resume();
+                                    setSpotifyPaused(false);
+                                    armActiveStealWindow();
+                                  } else {
+                                    void spotify.pause();
+                                    setSpotifyPaused(true);
+                                  }
+                                }}
+                              >
+                                {spotifyPaused ? '▶ Resume' : '⏸ Pause'}
+                              </Button>
+                              <Button
+                                fullWidth
+                                variant="outlined"
+                                color="secondary"
+                                size="small"
+                                disabled={songMeta?.chorusStartMs == null}
+                                onClick={() => {
+                                  const trackId = songMeta?.spotifyTrackId;
+                                  const chorusMs = songMeta?.chorusStartMs;
+                                  if (trackId && chorusMs != null) {
+                                    void spotify.play(trackId, chorusMs);
+                                    setSpotifyPaused(false);
+                                  }
+                                }}
+                              >
+                                🎤 Chorus
+                              </Button>
+                            </Stack>
                           )}
                         </Stack>
                       </Grid>

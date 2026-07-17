@@ -167,6 +167,14 @@ export const patchSaveConfig = async (id: string): Promise<void> => {
   if (!response.ok) throw new Error('Failed to patch save config');
 };
 
+export const updateSaveQuestions = async (id: string): Promise<void> => {
+  const response = await fetch(`${API_BASE}/saves/${id}/questions`, {
+    method: 'PATCH',
+    credentials: 'include',
+  });
+  if (!response.ok) throw new Error('Failed to update save questions');
+};
+
 export const listKnownPlayers = async (): Promise<string[]> => {
   const response = await fetch(`${API_BASE}/known-players`, { credentials: 'include' });
   if (!response.ok) throw new Error('Failed to list known players');
