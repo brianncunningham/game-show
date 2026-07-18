@@ -16,7 +16,7 @@ function onEdit(e) {
   const theme = sheet.getRange(row, 2).getValue();
 
   // Song title dropdown columns
-  const songCols = [4, 8, 12]; // D, H, L
+  const songCols = [4, 9, 14]; // D, I, N
 
   // Clear existing song title cells and validations
   songCols.forEach(c => sheet.getRange(row, c).clearContent().clearDataValidations());
