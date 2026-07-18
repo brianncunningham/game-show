@@ -55,6 +55,13 @@
     .status.info { background: #e8f0fe; color: #1967d2; }
     .device-list { margin-top: 6px; }
     .device-list button { display: block; width: 100%; margin-bottom: 4px; text-align: left; }
+    .search-results { margin-bottom: 6px; max-height: 160px; overflow-y: auto; border: 1px solid #dadce0; border-radius: 4px; }
+    .search-result {
+      display: block; width: 100%; text-align: left; border: none; border-bottom: 1px solid #f1f3f4;
+      border-radius: 0; padding: 6px 8px; font-size: 12px;
+    }
+    .search-result:last-child { border-bottom: none; }
+    .search-result .sr-tagged { color: #34a853; margin-left: 4px; }
     hr { border: none; border-top: 1px solid #dadce0; margin: 10px 0; }
     .hint { color: #80868b; font-size: 11px; }
   </style>
@@ -65,6 +72,11 @@
     <div class="title" id="nowTitle">Loading…</div>
     <div class="progress" id="progressLabel"></div>
   </div>
+
+  <div class="row">
+    <input type="text" id="searchInput" placeholder="Jump to song (title or artist)…" style="flex: 1; padding: 6px; font-size: 12px; border: 1px solid #dadce0; border-radius: 4px;">
+  </div>
+  <div id="searchResults"></div>
 
   <div class="elapsed" id="elapsed">0:00</div>
 
@@ -201,6 +213,18 @@
       container.appendChild(list);
     }
 
+    function applyLoadedSong(result) {
+      state.row = result.row;
+      state.trackId = result.trackId;
+      state.savedMs = null;
+      document.getElementById('nowTitle').textContent = result.title + ' — ' + result.artist;
+      document.getElementById('progressLabel').textContent = result.tagged + ' / ' + result.total + ' tagged';
+      document.getElementById('savedValue').textContent = '';
+      updateAdjustButtons();
+      showStatus('', '');
+      playAt(20000);
+    }
+
     function loadNext() {
       setBusy(true);
       showStatus('Loading next song…', 'info');
@@ -213,16 +237,59 @@
           stopPolling();
           return;
         }
-        state.row = result.row;
-        state.trackId = result.trackId;
-        state.savedMs = null;
-        document.getElementById('nowTitle').textContent = result.title + ' — ' + result.artist;
-        document.getElementById('progressLabel').textContent = result.tagged + ' / ' + result.total + ' tagged';
-        document.getElementById('savedValue').textContent = '';
-        updateAdjustButtons();
-        showStatus('', '');
-        playAt(20000);
+        applyLoadedSong(result);
       }).withFailureHandler(handleError).ctGetNextUntagged();
+    }
+
+    function jumpToRow(row) {
+      clearSearch();
+      setBusy(true);
+      showStatus('Loading song…', 'info');
+      google.script.run.withSuccessHandler(function (result) {
+        applyLoadedSong(result);
+      }).withFailureHandler(handleError).ctLoadRow(row);
+    }
+
+    function clearSearch() {
+      document.getElementById('searchInput').value = '';
+      document.getElementById('searchResults').innerHTML = '';
+    }
+
+    var searchDebounceHandle = null;
+    function onSearchInput() {
+      var query = document.getElementById('searchInput').value.trim();
+      if (searchDebounceHandle) clearTimeout(searchDebounceHandle);
+      if (!query) {
+        document.getElementById('searchResults').innerHTML = '';
+        return;
+      }
+      searchDebounceHandle = setTimeout(function () {
+        google.script.run.withSuccessHandler(renderSearchResults)
+          .withFailureHandler(handleError).ctSearchSongs(query);
+      }, 300);
+    }
+
+    function renderSearchResults(results) {
+      var container = document.getElementById('searchResults');
+      container.innerHTML = '';
+      if (!results || results.length === 0) return;
+      var list = document.createElement('div');
+      list.className = 'search-results';
+      results.forEach(function (r) {
+        var btn = document.createElement('button');
+        btn.className = 'search-result';
+        btn.innerHTML = escapeHtml(r.title) + (r.artist ? ' — ' + escapeHtml(r.artist) : '') +
+          (r.tagged ? '<span class="sr-tagged">✓ tagged</span>' : '');
+        btn.addEventListener('click', function () { jumpToRow(r.row); });
+        list.appendChild(btn);
+      });
+      container.appendChild(list);
+    }
+
+    function escapeHtml(s) {
+      var div = document.createElement('div');
+      div.textContent = s || '';
+      return div.innerHTML;
     }
 
     function playAt(positionMs) {
@@ -339,6 +406,7 @@
     document.getElementById('markBtn').addEventListener('click', markChorus);
     document.getElementById('testBtn').addEventListener('click', testJump);
     document.getElementById('nextBtn').addEventListener('click', loadNext);
+    document.getElementById('searchInput').addEventListener('input', onSearchInput);
 
     document.querySelectorAll('[data-seek]').forEach(function (btn) {
       btn.addEventListener('click', function () { seekTo(Number(btn.getAttribute('data-seek'))); });

@@ -225,6 +225,90 @@ function ctGetNextUntagged() {
 }
 
 /**
+ * Searches rows by title/artist substring (case-insensitive), for jumping
+ * directly to a specific song instead of only the next untagged one.
+ * @param {string} query
+ * @return {Array<{row:number,title:string,artist:string,tagged:boolean}>}
+ */
+function ctSearchSongs(query) {
+  var cols = ctResolveColumns_();
+  var headerRow = CHORUS_TAGGER_CONFIG.HEADER_ROW;
+  var lastRow = cols.lastRow;
+  if (lastRow <= headerRow || !query) return [];
+
+  var numRows = lastRow - headerRow;
+  var titles = cols.sheet.getRange(headerRow + 1, cols.colTitle, numRows, 1).getValues();
+  var artists = cols.sheet.getRange(headerRow + 1, cols.colArtist, numRows, 1).getValues();
+  var trackIds = cols.sheet.getRange(headerRow + 1, cols.colTrackId, numRows, 1).getValues();
+  var chorusVals = cols.sheet.getRange(headerRow + 1, cols.colChorusMs, numRows, 1).getValues();
+
+  var needle = String(query).toLowerCase();
+  var results = [];
+  for (var i = 0; i < numRows; i++) {
+    var title = String(titles[i][0] || '');
+    var artist = String(artists[i][0] || '');
+    var trackId = trackIds[i][0];
+    if (!title && !trackId) continue; // skip blank rows
+    if (title.toLowerCase().indexOf(needle) === -1 && artist.toLowerCase().indexOf(needle) === -1) continue;
+
+    var chorusVal = chorusVals[i][0];
+    results.push({
+      row: headerRow + 1 + i,
+      title: title,
+      artist: artist,
+      tagged: chorusVal !== '' && chorusVal !== null && chorusVal !== undefined,
+    });
+    if (results.length >= 25) break;
+  }
+  return results;
+}
+
+/**
+ * Loads a specific row's song info (used by search/jump, mirrors the shape
+ * returned by ctGetNextUntagged).
+ * @param {number} row
+ * @return {{row:number,trackId:string,title:string,artist:string,tagged:number,total:number}|null}
+ */
+function ctLoadRow(row) {
+  var cols = ctResolveColumns_();
+  var headerRow = CHORUS_TAGGER_CONFIG.HEADER_ROW;
+  var lastRow = cols.lastRow;
+  if (row <= headerRow || row > lastRow) {
+    throw new Error('Row ' + row + ' is out of range.');
+  }
+
+  var numRows = lastRow - headerRow;
+  var chorusVals = cols.sheet.getRange(headerRow + 1, cols.colChorusMs, numRows, 1).getValues();
+  var trackIds = cols.sheet.getRange(headerRow + 1, cols.colTrackId, numRows, 1).getValues();
+  var titles0 = cols.sheet.getRange(headerRow + 1, cols.colTitle, numRows, 1).getValues();
+
+  var tagged = 0;
+  var total = 0;
+  for (var i = 0; i < numRows; i++) {
+    var tid = trackIds[i][0];
+    var title0 = titles0[i][0];
+    if (!title0 && !tid) continue;
+    total++;
+    var cv = chorusVals[i][0];
+    if (cv !== '' && cv !== null && cv !== undefined) tagged++;
+  }
+
+  var trackId = cols.sheet.getRange(row, cols.colTrackId).getValue();
+  if (!trackId) {
+    throw new Error('Row ' + row + ' has no Spotify ID.');
+  }
+
+  return {
+    row: row,
+    trackId: String(trackId),
+    title: String(cols.sheet.getRange(row, cols.colTitle).getValue()),
+    artist: String(cols.sheet.getRange(row, cols.colArtist).getValue()),
+    tagged: tagged,
+    total: total,
+  };
+}
+
+/**
  * Writes max(0, progressMs - REACTION_OFFSET_MS) into the chorus_ms cell.
  * @param {number} row sheet row number
  * @param {number} progressMs captured playback position
