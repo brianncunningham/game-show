@@ -1177,8 +1177,24 @@ function IntroScreen({ teams }: { teams: [SurveyTeam, SurveyTeam] }) {
 
 // ─── Sound helper ────────────────────────────────────────────────────────────
 
-const playSound = (name: string) => {
+// Preload every effect on module load so the browser has already fetched +
+// decoded the mp3 by the time it's needed — avoids the network/decode delay
+// that otherwise causes a perceptible pause between the visual cue (e.g. the
+// strike X) and the sound actually starting.
+const SOUND_NAMES = ['answer-reveal', 'buzz', 'correct-answer', 'strike', 'win-round'] as const;
+const soundCache = new Map<string, HTMLAudioElement>();
+for (const name of SOUND_NAMES) {
   const audio = new Audio(`/survey-says/sounds/${name}.mp3`);
+  audio.preload = 'auto';
+  audio.load();
+  soundCache.set(name, audio);
+}
+
+const playSound = (name: string) => {
+  const cached = soundCache.get(name);
+  // Clone the preloaded element so overlapping triggers of the same sound don't
+  // cut each other off; cloneNode reuses the browser's cached network fetch.
+  const audio = cached ? (cached.cloneNode(true) as HTMLAudioElement) : new Audio(`/survey-says/sounds/${name}.mp3`);
   audio.play().catch(() => {});
 };
 
