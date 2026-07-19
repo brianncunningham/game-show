@@ -64,6 +64,7 @@ export interface SurveySaysRoundState {
   revealedAnswers: RevealedAnswer[];
   buzzWinnerTeamId: string | null;
   swept: boolean;
+  postGameReveal: boolean;
 }
 
 export interface ControllerAssignment {

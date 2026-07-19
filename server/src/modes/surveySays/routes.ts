@@ -88,23 +88,53 @@ function faceOffWandIds(): string[] {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-function piJudge(path: string, body: Record<string, unknown>): void {
+/**
+ * Relay a buzzer command to the Pi's judge over HTTP.
+ * Awaits the response and retries once on failure (network hiccup / Pi busy),
+ * logging clearly on final failure so a missed arm during real gameplay is
+ * diagnosable instead of silently swallowed.
+ */
+function piJudge(path: string, body: Record<string, unknown>, attempt = 1): Promise<boolean> {
   const judgeUrl = process.env['JUDGE_URL'];
-  if (!judgeUrl) return; // local mode: VPS judge handles it directly
-  try {
-    const u = new URL(judgeUrl);
-    const bodyStr = JSON.stringify(body);
-    const req = httpRequest({
-      hostname: u.hostname,
-      port: Number(u.port) || 3001,
-      path: `/api/buzzer/${path}`,
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(bodyStr) },
-    });
-    req.on('error', () => { /* fire and forget */ });
-    req.write(bodyStr);
-    req.end();
-  } catch { /* ignore */ }
+  if (!judgeUrl) return Promise.resolve(true); // local mode: VPS judge handles it directly
+
+  const attemptOnce = (): Promise<boolean> => new Promise((resolve) => {
+    try {
+      const u = new URL(judgeUrl);
+      const bodyStr = JSON.stringify(body);
+      const req = httpRequest({
+        hostname: u.hostname,
+        port: Number(u.port) || 3001,
+        path: `/api/buzzer/${path}`,
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(bodyStr) },
+        timeout: 2000,
+      }, (res) => {
+        res.resume();
+        resolve((res.statusCode ?? 500) < 400);
+      });
+      req.on('timeout', () => req.destroy(new Error('timeout')));
+      req.on('error', (err) => {
+        console.warn(`[SS] piJudge ${path} (attempt ${attempt}) failed: ${err.message}`);
+        resolve(false);
+      });
+      req.write(bodyStr);
+      req.end();
+    } catch (err) {
+      console.warn(`[SS] piJudge ${path} (attempt ${attempt}) threw: ${(err as Error).message}`);
+      resolve(false);
+    }
+  });
+
+  return attemptOnce().then(async (ok) => {
+    if (ok) return true;
+    if (attempt < 2) {
+      console.warn(`[SS] piJudge ${path} retrying (attempt ${attempt + 1})...`);
+      return piJudge(path, body, attempt + 1);
+    }
+    console.error(`[SS] piJudge ${path} FAILED after ${attempt} attempts — Pi hardware buzzers may not be armed! body=${JSON.stringify(body)}`);
+    return false;
+  });
 }
 
 function piLed(params: Record<string, unknown>): void {
@@ -221,17 +251,18 @@ router.post('/faceoff/show-board', (_req, res) => {
 // Reveal the question AND arm the buzzers in one step. No arming LED (by design).
 router.post('/faceoff/reveal-question', (_req, res) => {
   const { config } = surveySaysStore.getState();
-  const isTeamMode = config.buzzerMode === 'hardware-team';
   const eligible = faceOffWandIds();
   judgeController.openWindow({ windowId: 'ss-faceoff', eligibleControllers: eligible, earlyBuzzPenalty: false });
   judgeController.armWindow('ss-faceoff');
-  // Also open/arm on Pi's judge (proxy mode — Pi handles physical buzzes)
-  piJudge('open-window', { windowId: 'ss-faceoff', eligibleControllers: eligible, earlyBuzzPenalty: false });
-  // Arm Pi and immediately suppress the game_armed() blue pulse in the same tick (all hardware modes)
-  setTimeout(() => {
-    piJudge('arm-window', { windowId: 'ss-faceoff' });
-    if (config.buzzerMode !== 'manual') piLed({ effect: 'off' });
-  }, 100);
+  // Also open/arm on Pi's judge (proxy mode — Pi handles physical buzzes).
+  // Sequential + awaited (with retry) so a dropped request can't leave the
+  // real hardware window un-armed while the host believes buzzers are live.
+  void (async () => {
+    const opened = await piJudge('open-window', { windowId: 'ss-faceoff', eligibleControllers: eligible, earlyBuzzPenalty: false });
+    if (!opened) return; // failure already logged; don't arm a window that was never opened
+    const armed = await piJudge('arm-window', { windowId: 'ss-faceoff' });
+    if (armed && config.buzzerMode !== 'manual') piLed({ effect: 'off' });
+  })();
   res.json(surveySaysStore.revealQuestion());
 });
 
@@ -365,6 +396,14 @@ router.post('/game/over', (_req, res) => {
   const color = teamColor(winner.id);
   piLed({ effect: 'sparkle', color, density: 0.2, speed_ms: 30 });
   res.json(surveySaysStore.setPhase('game_over'));
+});
+
+// Toggle /show between the victory screen and the board (so remaining answers can be revealed
+// after the game has ended without losing the "Game Over" state).
+router.post('/game-over/reveal-board', (req, res) => {
+  const { reveal } = req.body as { reveal?: boolean };
+  if (typeof reveal !== 'boolean') { res.status(400).json({ error: 'reveal (boolean) required' }); return; }
+  res.json(surveySaysStore.setPostGameReveal(reveal));
 });
 
 // ─── Saves ────────────────────────────────────────────────────────────────────

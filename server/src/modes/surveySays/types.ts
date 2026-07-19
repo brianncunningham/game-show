@@ -70,6 +70,7 @@ export interface SurveySaysRoundState {
   revealedAnswers: RevealedAnswer[];  // which answer ranks have been revealed
   buzzWinnerTeamId: string | null;    // face-off buzz winner
   swept: boolean;                     // board cleared without 3 strikes
+  postGameReveal: boolean;            // when true (during game_over), /show renders the board instead of the victory screen
 }
 
 // ─── Controller Assignments ────────────────────────────────────────────────

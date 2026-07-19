@@ -70,6 +70,7 @@ export const stealFail = () => post('/steal/fail');
 export const nextRound = () => post('/round/next');
 export const newGame = () => post('/game/new');
 export const endGame = () => post('/game/over');
+export const setPostGameReveal = (reveal: boolean) => post('/game-over/reveal-board', { reveal });
 export const undo = () => post('/undo');
 
 // ── Players & teams ─────────────────────────────────────────────────────────

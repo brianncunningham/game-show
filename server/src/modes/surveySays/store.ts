@@ -23,6 +23,7 @@ const loadPersistedState = (): SurveySaysState | null => {
       s.controllerAssignments = s.controllerAssignments ?? [];
       s.wandTestSeq = s.wandTestSeq ?? 0;
       s.randomizerSeq = s.randomizerSeq ?? 0;
+      s.roundState.postGameReveal = s.roundState.postGameReveal ?? false;
       // Migrate legacy 'hardware' → 'hardware-player'
       if ((s.config?.buzzerMode as string) === 'hardware') s.config.buzzerMode = 'hardware-player';
       return s;
@@ -107,6 +108,7 @@ const initialRoundState = (): SurveySaysRoundState => ({
   revealedAnswers: [],
   buzzWinnerTeamId: null,
   swept: false,
+  postGameReveal: false,
 });
 
 const createInitialState = (): SurveySaysState => ({
@@ -574,6 +576,12 @@ class SurveySaysStore {
 
   setPhase(phase: GamePhase): SurveySaysState {
     return this.patchRound({ phase });
+  }
+
+  // ── Post-game reveal (toggle /show between victory screen and board) ────────
+
+  setPostGameReveal(reveal: boolean): SurveySaysState {
+    return this.patchRound({ postGameReveal: reveal });
   }
 }
 

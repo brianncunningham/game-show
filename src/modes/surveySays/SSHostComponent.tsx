@@ -16,7 +16,7 @@ import {
   setPlayOrPass,
   revealAnswer, revealAnswerPostRound, addStrike,
   stealSuccess, stealFail,
-  nextRound, newGame, endGame, undo,
+  nextRound, newGame, endGame, setPostGameReveal, undo,
   loadBoard, randomAssignPlayers,
   hideIntro, showIntro,
   showWandTest, hideWandTest,
@@ -28,6 +28,20 @@ import { ledEffect } from '../../features/buzzer/buzzerApi';
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const TEAM_COLORS = ['#00e5ff', '#ff6a00'] as const;
+
+const getBuzzerSocketUrl = () => {
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const host = window.location.port === '4174'
+    ? `${window.location.hostname}:3001`
+    : window.location.host;
+  return `${protocol}//${host}/ws/buzzer`;
+};
+
+interface BuzzerWindowState {
+  windowId: string | null;
+  windowState: 'IDLE' | 'WAITING' | 'ARMED' | 'LOCKED';
+  eligibleControllers?: string[];
+}
 
 const sectionLabelSx = {
   fontWeight: 700,
@@ -52,6 +66,47 @@ export const SSHostComponent = () => {
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [gameOpen, setGameOpen] = useState(false);
   const [showScreenOpen, setShowScreenOpen] = useState(true);
+  const [buzzerWindow, setBuzzerWindow] = useState<BuzzerWindowState>({ windowId: null, windowState: 'IDLE' });
+  const [buzzerSocketConnected, setBuzzerSocketConnected] = useState(false);
+
+  // Live buzzer window state (real hardware ARM/LOCKED state, via /ws/buzzer proxy to the Pi
+  // judge when JUDGE_URL is set on the server). Lets the host visually confirm buzzers are
+  // actually armed for the face-off, instead of just assuming the relay to the Pi succeeded.
+  useEffect(() => {
+    let ws: WebSocket | null = null;
+    let cancelled = false;
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const connect = () => {
+      if (cancelled) return;
+      ws = new WebSocket(getBuzzerSocketUrl());
+      ws.onopen = () => setBuzzerSocketConnected(true);
+      ws.onclose = () => {
+        setBuzzerSocketConnected(false);
+        if (!cancelled) reconnectTimer = setTimeout(connect, 2000);
+      };
+      ws.onerror = () => { /* onclose will fire too */ };
+      ws.onmessage = (ev) => {
+        try {
+          const msg = JSON.parse(ev.data as string) as { type: string; payload: Record<string, unknown> };
+          if (msg.type === 'WINDOW_STATE') {
+            setBuzzerWindow({
+              windowId: (msg.payload.windowId as string | null) ?? null,
+              windowState: (msg.payload.windowState as BuzzerWindowState['windowState']) ?? 'IDLE',
+              eligibleControllers: msg.payload.eligibleControllers as string[] | undefined,
+            });
+          }
+        } catch { /* ignore malformed */ }
+      };
+    };
+    connect();
+
+    return () => {
+      cancelled = true;
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+      ws?.close();
+    };
+  }, []);
 
   const refresh = useCallback(async () => {
     try { setState(await getState()); } catch { /* ignore */ }
@@ -109,6 +164,14 @@ export const SSHostComponent = () => {
   const playerAt = (t: typeof teams[number] | undefined, idx: number): string | null =>
     t && t.players.length ? t.players[((idx % t.players.length) + t.players.length) % t.players.length] : null;
   const faceOffPlayer = playerAt(faceOffAnsweringTeam, roundState.faceOffPlayerIndex);
+
+  // Both face-off contestants (before the winning team is decided), for host visibility.
+  const faceOffContestant0 = playerAt(teams[0], roundState.faceOffPlayerIndex);
+  const faceOffContestant1 = playerAt(teams[1], roundState.faceOffPlayerIndex);
+
+  // Live hardware buzzer status for the current face-off window (only meaningful in hardware modes).
+  const isHardwareMode = config.buzzerMode === 'hardware-team' || config.buzzerMode === 'hardware-player';
+  const isFaceOffWindow = buzzerWindow.windowId === 'ss-faceoff';
 
   // The non-controlling team gets the steal
   const stealEligibleTeam = teams.find(t => t.id !== controllingTeamId);
@@ -327,6 +390,21 @@ export const SSHostComponent = () => {
                 )}
               </Stack>
 
+              {/* Who's facing off — visible for the whole face-off phase */}
+              {(faceOffContestant0 || faceOffContestant1) && (
+                <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1.5, flexWrap: 'wrap' }}>
+                  <Typography variant="caption" color="text.secondary">Facing off:</Typography>
+                  {faceOffContestant0 && (
+                    <Chip label={`${faceOffContestant0} (${teams[0].name})`} size="small"
+                      sx={{ color: TEAM_COLORS[0], border: `1px solid ${TEAM_COLORS[0]}` }} variant="outlined" />
+                  )}
+                  {faceOffContestant1 && (
+                    <Chip label={`${faceOffContestant1} (${teams[1].name})`} size="small"
+                      sx={{ color: TEAM_COLORS[1], border: `1px solid ${TEAM_COLORS[1]}` }} variant="outlined" />
+                  )}
+                </Stack>
+              )}
+
               {/* ── Sub-step A: announcing face-off ── */}
               {faceOffState === 'announcing' && (
                 <>
@@ -360,6 +438,38 @@ export const SSHostComponent = () => {
                     <Typography variant="body2" sx={{ mb: 1, p: 1, borderRadius: 1, bgcolor: 'rgba(255,255,255,0.06)', fontStyle: 'italic', color: 'text.primary' }}>
                       "{currentBoard.question}"
                     </Typography>
+                  )}
+                  {isHardwareMode && (
+                    <Box sx={{
+                      mb: 1.5, p: 1, borderRadius: 1, display: 'flex', alignItems: 'center', gap: 1,
+                      border: '1px solid',
+                      borderColor: !buzzerSocketConnected ? 'warning.main'
+                        : (isFaceOffWindow && buzzerWindow.windowState === 'ARMED') ? 'success.main'
+                        : 'error.main',
+                      bgcolor: !buzzerSocketConnected ? 'rgba(245,197,24,0.08)'
+                        : (isFaceOffWindow && buzzerWindow.windowState === 'ARMED') ? 'rgba(0,255,100,0.08)'
+                        : 'rgba(255,32,32,0.08)',
+                    }}>
+                      <Box sx={{
+                        width: 10, height: 10, borderRadius: '50%', flexShrink: 0,
+                        bgcolor: !buzzerSocketConnected ? 'warning.main'
+                          : (isFaceOffWindow && buzzerWindow.windowState === 'ARMED') ? 'success.main'
+                          : 'error.main',
+                      }} />
+                      <Typography variant="caption" sx={{ fontWeight: 700, flex: 1 }}>
+                        {!buzzerSocketConnected
+                          ? 'Buzzer link disconnected — status unknown'
+                          : (isFaceOffWindow && buzzerWindow.windowState === 'ARMED')
+                            ? `Hardware buzzers ARMED${buzzerWindow.eligibleControllers?.length ? ` (wands ${buzzerWindow.eligibleControllers.join(', ')})` : ''}`
+                            : `Hardware buzzers NOT armed (${buzzerWindow.windowState})`}
+                      </Typography>
+                      {buzzerSocketConnected && !(isFaceOffWindow && buzzerWindow.windowState === 'ARMED') && (
+                        <Button size="small" variant="outlined" color="error"
+                          onClick={act(() => revealQuestion())}>
+                          Retry Arm
+                        </Button>
+                      )}
+                    </Box>
                   )}
                   <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
                     Buzzers armed — waiting for buzz.
@@ -568,12 +678,14 @@ export const SSHostComponent = () => {
         )}
 
         {/* ── Post-Round: reveal remaining ── */}
-        {isPostRound && currentBoard && (
+        {(isPostRound || isGameOver) && currentBoard && (
           <Card>
             <CardContent>
               <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1.5 }}>
                 <Chip label="6" size="small" />
-                <Typography sx={{ ...sectionLabelSx, mb: 0 }}>Post-Round — Reveal Remaining</Typography>
+                <Typography sx={{ ...sectionLabelSx, mb: 0 }}>
+                  {isGameOver ? 'Reveal Remaining Answers' : 'Post-Round — Reveal Remaining'}
+                </Typography>
               </Stack>
               <Stack spacing={0.75} sx={{ mb: 1.5 }}>
                 {currentBoard.answers.map(a => {
@@ -592,20 +704,27 @@ export const SSHostComponent = () => {
                 })}
               </Stack>
               <Divider sx={{ my: 1 }} />
-              <Grid container spacing={1.5}>
-                <Grid item xs={6}>
-                  <Button fullWidth variant="contained" color="primary" sx={bigBtnSx}
-                    onClick={act(() => nextRound())}>
-                    Next Round →
-                  </Button>
+              {isPostRound ? (
+                <Grid container spacing={1.5}>
+                  <Grid item xs={6}>
+                    <Button fullWidth variant="contained" color="primary" sx={bigBtnSx}
+                      onClick={act(() => nextRound())}>
+                      Next Round →
+                    </Button>
+                  </Grid>
+                  <Grid item xs={6}>
+                    <Button fullWidth variant="outlined" color="warning" sx={bigBtnSx}
+                      onClick={act(() => endGame())}>
+                      🏆 End Game
+                    </Button>
+                  </Grid>
                 </Grid>
-                <Grid item xs={6}>
-                  <Button fullWidth variant="outlined" color="warning" sx={bigBtnSx}
-                    onClick={act(() => endGame())}>
-                    🏆 End Game
-                  </Button>
-                </Grid>
-              </Grid>
+              ) : (
+                <Button fullWidth variant="outlined" color="warning" sx={bigBtnSx}
+                  onClick={act(() => setPostGameReveal(false))}>
+                  🏆 Back to Victory Screen
+                </Button>
+              )}
             </CardContent>
           </Card>
         )}
@@ -630,7 +749,13 @@ export const SSHostComponent = () => {
                   </Grid>
                 ))}
               </Grid>
-              <Button fullWidth variant="contained" sx={{ mt: 2, ...bigBtnSx }} onClick={act(() => newGame())}>
+              {currentBoard && !roundState.postGameReveal && (
+                <Button fullWidth variant="outlined" color="warning" sx={{ mt: 2, ...bigBtnSx }}
+                  onClick={act(() => setPostGameReveal(true))}>
+                  👁 Reveal Remaining Answers
+                </Button>
+              )}
+              <Button fullWidth variant="contained" sx={{ mt: 1.5, ...bigBtnSx }} onClick={act(() => newGame())}>
                 New Game
               </Button>
             </CardContent>

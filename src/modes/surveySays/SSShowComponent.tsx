@@ -1393,7 +1393,7 @@ export const SSShowComponent = () => {
     return <IntroScreen teams={state.teams} />;
   }
 
-  if (state.roundState.phase === 'game_over') {
+  if (state.roundState.phase === 'game_over' && !state.roundState.postGameReveal) {
     const gameWinner = [...state.teams].sort((a, b) => b.score - a.score)[0];
     return <GameOverScreen winner={gameWinner} teams={state.teams} />;
   }
