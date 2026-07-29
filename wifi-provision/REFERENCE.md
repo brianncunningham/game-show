@@ -61,9 +61,17 @@ sudo systemctl restart wifi-provision
 nmcli connection show
 ```
 
-**Add a new network:**
+**Add a new network (while in range of it):**
 ```bash
 nmcli device wifi connect "SSID-Name" password "yourpassword"
+```
+
+**Pre-register a network you're NOT currently near:**
+Use this to add a venue's Wi-Fi to the accepted list ahead of time, so the Pi
+tries it automatically at boot instead of falling back to AP/hotspot mode.
+```bash
+sudo bash /usr/local/bin/add-network.sh "SSID-Name" "yourpassword"
+sudo bash /usr/local/bin/add-network.sh "OpenNetworkName"   # open network, no password
 ```
 
 **Remove a network:**
@@ -127,6 +135,7 @@ sudo bash install.sh
 | `/opt/wifi-provision/public/index.html` | Portal UI |
 | `/usr/local/bin/wifi-provision.sh` | Boot orchestration script |
 | `/usr/local/bin/wifi-provision-success.sh` | Called after successful portal connect |
+| `/usr/local/bin/add-network.sh` | Pre-register a network you're not currently near |
 | `/etc/systemd/system/wifi-provision.service` | systemd unit |
 | `/etc/hostapd/hostapd.conf` | AP configuration |
 | `/etc/dnsmasq.d/ap.conf` | DHCP + DNS for AP clients |

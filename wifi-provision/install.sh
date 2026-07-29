@@ -37,8 +37,10 @@ cp "$SCRIPT_DIR/dnsmasq-ap.conf" /etc/dnsmasq.d/ap.conf
 echo "[4/7] Installing scripts..."
 cp "$SCRIPT_DIR/wifi-provision.sh" /usr/local/bin/wifi-provision.sh
 cp "$SCRIPT_DIR/wifi-provision-success.sh" /usr/local/bin/wifi-provision-success.sh
+cp "$SCRIPT_DIR/add-network.sh" /usr/local/bin/add-network.sh
 chmod +x /usr/local/bin/wifi-provision.sh
 chmod +x /usr/local/bin/wifi-provision-success.sh
+chmod +x /usr/local/bin/add-network.sh
 
 # 5. Create state directory
 echo "[5/7] Creating state directory..."
