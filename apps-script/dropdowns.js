@@ -4,8 +4,9 @@ function onEdit(e) {
   const row = e.range.getRow();
   const col = e.range.getColumn();
 
-  // Only run on Game tabs
-  if (!/^Game\s+\d+$/i.test(sheetName)) return;
+  // Only run on Game tabs (matches "Game 1", "MG Game", "Blank Game", etc.
+  // — anything with "game" in the name — while excluding "Themes & Songs").
+  if (!/game/i.test(sheetName)) return;
 
   // Only rows 2 through 16
   if (row < 2 || row > 16) return;
