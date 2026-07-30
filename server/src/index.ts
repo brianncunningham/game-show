@@ -70,6 +70,37 @@ app.get('*', (_req, res) => {
 
 const server = createServer(app);
 
+// Keep a WS connection to the Pi alive-checked: a dropped Wi-Fi/Tailscale link
+// on the Pi doesn't always send a clean TCP FIN, so the socket can go
+// "zombie" (readyState stays OPEN but no data ever arrives again) without
+// 'close'/'error' ever firing. Left alone, that silently swallows every real
+// hardware buzz (or freezes the host's live status display) until the OS
+// eventually times out the connection (which can take minutes). Ping/pong
+// every 5s and force-terminate if a pong doesn't come back within 10s so
+// callers' 'close' handlers fire promptly and can reconnect.
+const PING_INTERVAL_MS = 5000;
+const PONG_TIMEOUT_MS = 10000;
+
+function keepAlive(ws: WebSocket, label: string): void {
+  let pongTimer: ReturnType<typeof setTimeout> | null = null;
+  const pingInterval = setInterval(() => {
+    if (ws.readyState !== WebSocket.OPEN) return;
+    pongTimer = setTimeout(() => {
+      console.warn(`[${label}] no pong within timeout — terminating stale connection`);
+      ws.terminate();
+    }, PONG_TIMEOUT_MS);
+    ws.ping();
+  }, PING_INTERVAL_MS);
+  ws.on('pong', () => {
+    if (pongTimer) clearTimeout(pongTimer);
+    pongTimer = null;
+  });
+  ws.on('close', () => {
+    clearInterval(pingInterval);
+    if (pongTimer) clearTimeout(pongTimer);
+  });
+}
+
 attachGameShowSocket(server);
 initModeSocket();
 if (!JUDGE_URL) {
@@ -81,6 +112,7 @@ if (!JUDGE_URL) {
   registerWsPath('/ws/buzzer', (clientWs) => {
     const piWs = new WebSocket(`ws://${piHost}:${piPort}/ws/buzzer`, { perMessageDeflate: false });
     piWs.on('open', () => {
+      keepAlive(piWs, 'BuzzerProxy');
       clientWs.on('message', (msg, isBinary) => piWs.readyState === WebSocket.OPEN && piWs.send(msg, { binary: isBinary }));
       piWs.on('message', (msg) => clientWs.readyState === WebSocket.OPEN && clientWs.send(msg.toString()));
     });
@@ -95,6 +127,10 @@ if (!JUDGE_URL) {
   // on the VPS never receives buzzes — the Pi handles them locally).
   const connectPiSniffer = () => {
     const snifferWs = new WebSocket(`ws://${piHost}:${piPort}/ws/buzzer`, { perMessageDeflate: false });
+    snifferWs.on('open', () => {
+      console.log('[PiSniffer] connected');
+      keepAlive(snifferWs, 'PiSniffer');
+    });
     snifferWs.on('message', (raw) => {
       try {
         const msg = JSON.parse(raw.toString()) as { type: string; payload: Record<string, unknown> };
