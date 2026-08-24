@@ -11,9 +11,10 @@ A team-vs-team, three-choice multiple-choice round. The host reads a prompt and 
 labeled answer options — **This**, **That**, and **The Other** — one team locks in an
 answer, and if they're wrong, the question passes to the other team to steal.
 
-It reuses the plunger-style team buzzers (or can be adapted to individual wands — see §5),
-and every question is judged from a pre-built answer key, so it fits the buzzer-box's core
-host constraint: the host never types an answer live, only glances and taps.
+It runs on the existing buzzer system: **two teams, every player holding their own wand**,
+with a buzz-in race deciding who answers first (see §5). Every question is judged from a
+pre-built answer key, so it fits the buzzer-box's core host constraint: the host never types
+an answer live, only glances and taps.
 
 Working name is intentionally a nod to existing game-show history without duplicating any
 single format — see §7.
@@ -24,12 +25,13 @@ single format — see §7.
 
 1. Host reads the prompt and the three labeled choices aloud (also shown on the
    player-facing display).
-2. One team commits to an answer: This, That, or The Other. (Which team goes first —
-   prior turn order, a buzz-in, or a fixed rotation — **TBD**.)
+2. Buzzers arm; the first player to buzz wins the answer for their team, and that team
+   commits to an answer: This, That, or The Other.
 3. Host taps the matching choice on their tablet.
 4. If it matches the pre-flagged correct choice: team scores, round ends.
-5. If not: the question passes to the opposing team, who picks from the two remaining
-   choices.
+5. If not: the question passes to the **opposing team**, who picks from the two remaining
+   choices. (Whether the steal is another buzz-in race among that team's wands or a single
+   team answer with no re-arm — **TBD**.)
 6. If the second team also misses (only relevant when it's down to one remaining choice,
    which is now known-correct by elimination) — round ends, no score, or optionally an
    "everyone missed" consolation rule (**TBD**).
@@ -67,29 +69,32 @@ Carried over from the existing host-tablet constraints and specialized for TToTO
   recall.
 - Three tap targets, one per choice, always visible — tapping the flagged-correct one
   scores the active team; tapping either other one triggers a miss/steal transition.
-- A visible "which team is currently answering" indicator, since the same three choices
-  get reused across the steal handoff.
+- A visible "which team is currently answering" indicator (and which player buzzed in),
+  since the same three choices get reused across the steal handoff.
+- Standard arm/reset controls for the buzz-in race, reusing the existing judge/wand
+  arming flow.
 - No open-text entry anywhere in the round flow.
 - Media-ID flavor needs host-side playback controls (play/pause the clip or reveal the
   image) layered onto the same three-choice screen.
 
 ---
 
-## 5. Player Modes
+## 5. Player Mode (decided)
 
-- **Team plunger mode (primary design target):** Two teams, one plunger buzzer each.
-  Matches the "wrong answer steals to the other team" premise directly — this is the
-  format §2 describes.
-- **Individual wand mode (needs a design decision):** The core mechanic assumes exactly
-  two sides. With up to 20 individual wands, TToTO needs one of:
-  - (a) **Arbitrary team split** — divide players into two sides for the round/game,
-    functionally identical to plunger mode.
-  - (b) **Sudden-death free-for-all steal** — first buzz answers; a miss re-opens the same
-    question to a fastest-buzz race among everyone else, continuing until it's answered
-    correctly or choices run out.
+**Two teams, individual wands, buzz-in race.** Players are split into two teams and every
+player carries their own wand. Buzzers arm with the prompt, and the fastest buzz wins the
+answer for that player's team. A miss steals to the opposing team, exactly as §2 describes
+— buzzing is per-player, but answering, scoring, and the steal are all team-level.
 
-  *Recommendation:* decide this before building the individual-wand path; not needed for a
-  first plunger-only build.
+No separate plunger-only path is needed: plunger-style team buzzers are just the degenerate
+case of one wand per team.
+
+Consequences for the build:
+
+- Wand→team assignment must exist for the round (reuses the existing
+  controller-assignment mapping).
+- The steal target is determined by team, not by next-fastest buzz — a wrong answer never
+  hands the question to a teammate.
 
 ---
 
@@ -175,12 +180,13 @@ actually, unambiguously wrong.
 
 ## 10. Open Questions
 
-1. Individual-wand adaptation (§5) — arbitrary team split vs. sudden-death free-for-all.
+1. On a steal, does the opposing team re-arm for its own buzz-in race, or answer as a team
+   with no re-arm?
 2. What happens when both teams miss on a fully-eliminated question — no score, or a
    consolation rule?
 3. Point-value curve across a flavor-rotation session, and shape of a final/bonus round.
 4. Whether any flavor ever needs more than 3 choices, and if so how that affects the
    host-tablet layout.
-5. Which team answers first on each question (§2 step 2) — fixed rotation, alternating,
-   or buzz-in race.
+5. False-start handling: any lockout for buzzing before the host finishes reading all
+   three choices?
 6. Visual design direction — next phase, tracked separately.
