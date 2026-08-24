@@ -29,9 +29,9 @@ single format — see §7.
    commits to an answer: This, That, or The Other.
 3. Host taps the matching choice on their tablet.
 4. If it matches the pre-flagged correct choice: team scores, round ends.
-5. If not: the question passes to the **opposing team**, who picks from the two remaining
-   choices. (Whether the steal is another buzz-in race among that team's wands or a single
-   team answer with no re-arm — **TBD**.)
+5. If not: the question passes to the **opposing team**, who answers as a team from the two
+   remaining choices — no re-arm, no second buzz-in race (leaning, see §10 Q1 for the
+   "exclusive window then open steal" variant).
 6. If the second team also misses (only relevant when it's down to one remaining choice,
    which is now known-correct by elimination) — round ends, no score, or optionally an
    "everyone missed" consolation rule (**TBD**).
@@ -178,15 +178,22 @@ actually, unambiguously wrong.
 
 ---
 
-## 10. Open Questions
+> All answers below are early leanings, not final.
 
-1. On a steal, does the opposing team re-arm for its own buzz-in race, or answer as a team
-   with no re-arm?
-2. What happens when both teams miss on a fully-eliminated question — no score, or a
+1. **Steal shape.** Leaning: the opposing team simply answers as a team, no re-arm.
+   Variant worth prototyping: the stealing team gets a ~5s exclusive window to buzz in,
+   after which the steal opens to *anyone* still eligible — turns a guaranteed steal into a
+   race and gives the losing side a reason to stay alert.
+2. **Reveal timing (new).** Does the player display show the prompt first and the three
+   choices after a beat, or prompt and choices together? This gates Q3 and shapes the
+   player-facing screen, so decide it before host/show layout work.
+3. **False-start penalty.** Any penalty would apply to the window *before* the choices are
+   visible, under either reveal order in Q2 — buzzing once all three choices are up isn't a
+   false start. Open: whether that window carries a real penalty (lockout for the round,
+   point deduction) or just an ignored buzz.
+4. What happens when both teams miss on a fully-eliminated question — no score, or a
    consolation rule?
-3. Point-value curve across a flavor-rotation session, and shape of a final/bonus round.
-4. Whether any flavor ever needs more than 3 choices, and if so how that affects the
+5. Point-value curve across a flavor-rotation session, and shape of a final/bonus round.
+6. Whether any flavor ever needs more than 3 choices, and if so how that affects the
    host-tablet layout.
-5. False-start handling: any lockout for buzzing before the host finishes reading all
-   three choices?
-6. Visual design direction — next phase, tracked separately.
+7. Visual design direction — next phase, tracked separately.
