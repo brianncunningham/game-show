@@ -29,9 +29,8 @@ single format — see §7.
    commits to an answer: This, That, or The Other.
 3. Host taps the matching choice on their tablet.
 4. If it matches the pre-flagged correct choice: team scores, round ends.
-5. If not: the question passes to the **opposing team**, who answers as a team from the two
-   remaining choices — no re-arm, no second buzz-in race (leaning, see §10 Q1 for the
-   "exclusive window then open steal" variant).
+5. If not: the question passes to the **opposing team**, who picks from the two remaining
+   choices. Steal shape is configurable — see the `Steal Mode` setting in §5.
 6. If the second team also misses (only relevant when it's down to one remaining choice,
    which is now known-correct by elimination) — round ends, no score, or optionally an
    "everyone missed" consolation rule (**TBD**).
@@ -94,7 +93,22 @@ Consequences for the build:
 - Wand→team assignment must exist for the round (reuses the existing
   controller-assignment mapping).
 - The steal target is determined by team, not by next-fastest buzz — a wrong answer never
-  hands the question to a teammate.
+  hands the question to a teammate (except in the open phase of `TIMED_WINDOW` below).
+
+### Configurable rules (draft `/gameadmin` settings)
+
+Following the Survey Says pattern of putting contested rules behind game settings rather
+than hard-coding one answer:
+
+| Setting | Type | Default | Notes |
+|---|---|---|---|
+| **Steal Mode** | `EXCLUSIVE` \| `TIMED_WINDOW` | `EXCLUSIVE` | `EXCLUSIVE`: opposing team answers as a team, no re-arm. `TIMED_WINDOW`: opposing team gets an exclusive window to buzz in, then the steal opens to an all-play buzz race. |
+| **Steal Window Seconds** | Number | `5` | Only used when Steal Mode is `TIMED_WINDOW`. |
+
+`TIMED_WINDOW` is the more interesting variant (it keeps the whole room engaged on a miss)
+but is also the bigger build — it needs a second arming pass with a per-team eligibility
+filter that expires. `EXCLUSIVE` needs no re-arm at all, so it is the sane first
+implementation with `TIMED_WINDOW` layered on after.
 
 ---
 
@@ -180,10 +194,9 @@ actually, unambiguously wrong.
 
 > All answers below are early leanings, not final.
 
-1. **Steal shape.** Leaning: the opposing team simply answers as a team, no re-arm.
-   Variant worth prototyping: the stealing team gets a ~5s exclusive window to buzz in,
-   after which the steal opens to *anyone* still eligible — turns a guaranteed steal into a
-   race and gives the losing side a reason to stay alert.
+1. **Open-steal eligibility.** When `Steal Mode = TIMED_WINDOW` and the exclusive window
+   expires, who may buzz — everyone including the team that already missed, or only the
+   stealing team's players plus anyone who hasn't answered yet?
 2. **Reveal timing (new).** Does the player display show the prompt first and the three
    choices after a beat, or prompt and choices together? This gates Q3 and shapes the
    player-facing screen, so decide it before host/show layout work.
