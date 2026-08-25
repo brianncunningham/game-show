@@ -13,6 +13,8 @@ omission.
 - [`reference-combo-screen.html`](reference-combo-screen.html) — committed. A standalone (no
   design-tool wrapper), verified-rendering HTML/CSS/JS implementation of the confirmed
   screen. Copy/adapt this directly; don't rebuild from the screenshots.
+- [`ttoto-letterstyles-preview.png`](ttoto-letterstyles-preview.png) — committed. The three
+  letter-display techniques rendering the same word side by side (§4).
 - `crackvariants-preview.png` — the four miss-state crack patterns (§5). **Not committed —
   see §9.**
 - `crackrotation-preview.png` — rotation test for the crack overlay (§5). **Not committed —
@@ -94,6 +96,17 @@ canvas. **Decision: style is tied to round type, not all three used at once on s
 Specific round-type → technique pairings are still open (§7) — what's locked in is the
 *mechanism* for each technique, all three achievable with zero per-character or per-word
 image assets.
+
+Side-by-side comparison (all three rendering "MERCURY"):
+![Letter-display techniques](ttoto-letterstyles-preview.png)
+
+Character of each, to inform the pairing decision:
+
+| Technique | Reads as | Trade-off |
+|---|---|---|
+| Analog split-flap | Mechanical departures board — warm, tactile, retro-analog homage, with a physical clack cue on flip | Needs the real per-tile flip animation (§4d) to sell the mechanism |
+| Digital dot-matrix | LED signage / modern scoreboard — crisp and legible at distance, cheap to animate (scroll, chase, flash) | Loses the tactile/mechanical charm of the flap board |
+| Hybrid segmented | Airport gate sign — alphanumeric LED with unlit-segment ghosting behind the lit glyph | Splits the difference: mechanical flavor, digital flexibility |
 
 ### 4a. Analog split-flap (the technique built out fully — see §4d)
 
@@ -298,7 +311,7 @@ reference-only — nothing here blocks implementation):
 
 - `crackvariants-preview.png`, `crackrotation-preview.png` (§5).
 - The working canvas files referenced in passing: `LetterStyles.dc.html`,
-  `CrackVariants.dc.html`, `CrackRotation.dc.html`. Note that the dot-matrix (§4b) and
-  segmented (§4c) techniques exist *only* in `LetterStyles.dc.html` — unlike the split-flap
-  style, they are not represented in the committed reference screen, so whoever builds them
-  works from the prose in §4b/§4c unless that file is exported.
+  `CrackVariants.dc.html`, `CrackRotation.dc.html`. The dot-matrix (§4b) and segmented (§4c)
+  techniques have a committed screenshot but no committed code — unlike the split-flap style,
+  they are not implemented in the reference screen, so whoever builds them works from the
+  prose in §4b/§4c plus the preview image unless `LetterStyles.dc.html` is exported.
