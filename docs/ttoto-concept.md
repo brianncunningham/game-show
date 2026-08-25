@@ -2,6 +2,7 @@
 
 > **Status: concept approved for future build, not yet in development.**
 > Captured for later implementation planning. No code exists for this mode.
+> Visual direction and screen build notes: [`designs/ttoto-visual-notes.md`](designs/ttoto-visual-notes.md).
 
 ---
 
