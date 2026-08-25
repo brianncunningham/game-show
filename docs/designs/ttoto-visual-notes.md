@@ -9,12 +9,14 @@ Everything here reflects decisions actually made and confirmed during the visual
 pass. Where something is still open, it's called out explicitly in §7 rather than implied by
 omission.
 
-**Companion files (not yet committed — see §9):**
-- `reference-combo-screen.html` — a standalone (no design-tool wrapper), verified-rendering
-  HTML/CSS/JS implementation of the confirmed screen. Copy/adapt this directly; don't
-  rebuild from the screenshots.
-- `crackvariants-preview.png` — the four miss-state crack patterns, for reference alongside §5.
-- `crackrotation-preview.png` — rotation test for the crack overlay (§5).
+**Companion files:**
+- [`reference-combo-screen.html`](reference-combo-screen.html) — committed. A standalone (no
+  design-tool wrapper), verified-rendering HTML/CSS/JS implementation of the confirmed
+  screen. Copy/adapt this directly; don't rebuild from the screenshots.
+- `crackvariants-preview.png` — the four miss-state crack patterns (§5). **Not committed —
+  see §9.**
+- `crackrotation-preview.png` — rotation test for the crack overlay (§5). **Not committed —
+  see §9.**
 
 ---
 
@@ -287,13 +289,16 @@ path data for whichever of the four variants in §5 is selected per miss event.
 
 ## 9. Missing Companion Files
 
-The reference implementation and preview screenshots described above live on the design
-canvas and are **not in this repo yet**. Before implementation starts, export and commit them
-next to this file:
+`reference-combo-screen.html` is committed next to this file — that's the piece that matters,
+since it holds the only working implementation of the flip mechanic (§4d) and is the starting
+point for §8.
 
-- `reference-combo-screen.html` (blocking for §4d and §8 — the flip-board code is the one
-  piece here that exists as working code and would otherwise have to be rebuilt from this
-  prose).
-- `crackvariants-preview.png`, `crackrotation-preview.png` (reference only, §5).
-- Optionally the working canvas files referenced in passing: `LetterStyles.dc.html`,
-  `CrackVariants.dc.html`, `CrackRotation.dc.html`.
+Still on the design canvas and **not in this repo**, worth exporting when convenient (all
+reference-only — nothing here blocks implementation):
+
+- `crackvariants-preview.png`, `crackrotation-preview.png` (§5).
+- The working canvas files referenced in passing: `LetterStyles.dc.html`,
+  `CrackVariants.dc.html`, `CrackRotation.dc.html`. Note that the dot-matrix (§4b) and
+  segmented (§4c) techniques exist *only* in `LetterStyles.dc.html` — unlike the split-flap
+  style, they are not represented in the committed reference screen, so whoever builds them
+  works from the prose in §4b/§4c unless that file is exported.
