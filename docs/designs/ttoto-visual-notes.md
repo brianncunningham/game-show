@@ -13,6 +13,10 @@ omission.
 - [`reference-combo-screen.html`](reference-combo-screen.html) — committed. A standalone (no
   design-tool wrapper), verified-rendering HTML/CSS/JS implementation of the confirmed
   screen. Copy/adapt this directly; don't rebuild from the screenshots.
+- [`LetterStyles.dc.html`](LetterStyles.dc.html) — committed. Working source for all three
+  letter-display techniques (§4).
+- [`CrackVariants.dc.html`](CrackVariants.dc.html) — committed. Working source for all four
+  crack paths (§5).
 - [`ttoto-letterstyles-preview.png`](ttoto-letterstyles-preview.png) — committed. The three
   letter-display techniques rendering the same word side by side (§4).
 - [`crackvariants-preview.png`](crackvariants-preview.png) — committed. The four miss-state
@@ -120,8 +124,9 @@ while the state labels/dot/crack layer on top.
 
 ## 4. Letter-Display Architecture
 
-Three techniques were prototyped side-by-side in `LetterStyles.dc.html` on the design
-canvas. **Decision: style is tied to round type, not all three used at once on screen.**
+Three techniques were prototyped side-by-side in
+[`LetterStyles.dc.html`](LetterStyles.dc.html), committed next to this file — take the CSS
+from there rather than re-deriving it from the prose below. **Decision: style is tied to round type, not all three used at once on screen.**
 Specific round-type → technique pairings are still open (§7) — what's locked in is the
 *mechanism* for each technique, all three achievable with zero per-character or per-word
 image assets.
@@ -147,7 +152,10 @@ per-letter sprites, no pre-rendered flip frames.
 
 CSS-only pixelation via `mask-image` (with `-webkit-mask-image` fallback): a repeating
 radial-gradient dot grid (6px cells) masks solid text (`'Share Tech Mono'` or similar
-monospace, bold, ~60px). This punches the glyph fill into a genuine grid of dots rather than
+monospace, bold, ~60px). The mask in the canvas file is
+`radial-gradient(circle, #000 42%, transparent 46%)` at `mask-size: 6px 6px; mask-repeat:
+repeat`, over a panel that also carries a faint `radial-gradient` dot texture at the same 6px
+pitch so the unlit grid stays visible around the glyphs. This punches the glyph fill into a genuine grid of dots rather than
 just adding a faint texture behind smooth text — the earlier attempt did the latter and read
 as "basically normal text," which is why it was rebuilt. No font changes needed beyond
 loading the monospace family.
@@ -214,9 +222,10 @@ inline SVG — a jagged multi-point polyline rendered twice (a wide blurred glow
 a crisp bright core stroke), plus 1–3 short branch paths off the main line for the branchier
 variants.
 
-**Four variants were mocked up for comparison** (`CrackVariants.dc.html` on the design
-canvas; screenshot committed as `crackvariants-preview.png`), rather than shipping one fixed
-shape:
+**Four variants were mocked up for comparison**
+([`CrackVariants.dc.html`](CrackVariants.dc.html), committed next to this file; screenshot
+committed as `crackvariants-preview.png`), rather than shipping one fixed shape. All four
+path sets are lifted straight from that file — copy them, don't redraw:
 
 ![Crack variants](crackvariants-preview.png)
 
@@ -335,18 +344,24 @@ path data for whichever of the four variants in §5 is selected per miss event.
 
 ---
 
-## 9. Missing Companion Files
+## 9. Source Files and the One Remaining Gap
 
-`reference-combo-screen.html` is committed next to this file — that's the piece that matters,
-since it holds the only working implementation of the flip mechanic (§4d) and is the starting
-point for §8.
+Every visual described here now has committed code, not just a screenshot:
 
-All preview screenshots and the logo assets are now committed alongside this file. Still on
-the design canvas and **not in this repo** are the working canvas HTML files
-(`LetterStyles.dc.html`, `CrackVariants.dc.html`, `CrackRotation.dc.html`). Nothing there
-blocks implementation, but note the gap: the dot-matrix (§4b) and segmented (§4c) techniques
-and all four crack paths (§5) have committed screenshots but **no committed code** — unlike
-the split-flap style, they are not implemented in the reference screen, so whoever builds
-them works from the prose plus the preview images unless those canvas files are exported.
-The crack paths in particular would have to be redrawn by hand from `crackvariants-preview.png`
-(only variant B exists in code, inside the reference screen).
+| Piece | Where the code lives |
+|---|---|
+| Confirmed screen + flip mechanic (§4a/§4d) | `reference-combo-screen.html` |
+| Dot-matrix (§4b), segmented (§4c), split-flap tile styling | `LetterStyles.dc.html` |
+| All four crack paths (§5) | `CrackVariants.dc.html` |
+
+**Only `CrackRotation.dc.html` is still canvas-only** — and it doesn't block anything, since
+§5 already specifies the whole technique (rotate the `.crack-wrap` container, pick the angle
+per miss event); `crackrotation-preview.png` is just the visual proof that mild and extreme
+angles both read correctly.
+
+The two `.dc.html` files came off the design canvas, so they carry a wrapper the repo has no
+use for: a `<script src="./support.js">` that doesn't exist here, plus `<x-dc>` and `<helmet>`
+elements. Both render correctly in a browser regardless (verified — the missing script 404s
+harmlessly and browsers apply `<style>`/`<link>` from anywhere in the document), so they're
+kept as-is rather than edited into standalone pages. When porting, drop the wrapper and lift
+the `<style>` block plus the markup.

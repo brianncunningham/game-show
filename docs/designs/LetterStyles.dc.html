@@ -1,0 +1,112 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=Barlow+Condensed:wght@500;600;700&family=Share+Tech+Mono&display=swap">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+
+    .col { flex:1; display:flex; flex-direction:column; align-items:center; gap:26px; padding:34px 24px; position:relative; }
+    .col-label { font-family:'Big Shoulders Display', sans-serif; font-weight:800; font-size:24px; letter-spacing:2px; }
+    .col-cap { font-family:'Barlow Condensed', sans-serif; font-size:17px; line-height:1.35; color:#aab4c8; text-align:center; max-width:380px; }
+
+    /* Analog split-flap */
+    .flap-row { display:flex; gap:6px; }
+    .flap-cell { width:56px; height:78px; position:relative; border-radius:4px; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.45); filter: drop-shadow(0 5px 4px rgba(0,0,0,0.5)); }
+    .flap-cell::after { content:""; position:absolute; left:0; right:0; top:50%; height:2px; background:rgba(0,0,0,0.55); transform:translateY(-1px); }
+    .flap-cell .letter { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:32px; background:linear-gradient(to bottom,#f0ae4e 0 50%,#d38a26 50% 100%); color:#2a1a04; }
+
+    /* Digital dot-matrix */
+    .dotmatrix-panel {
+      background:#04100e; border:1px solid #123028; padding:26px 30px; position:relative;
+      background-image: radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1.4px);
+      background-size: 6px 6px;
+    }
+    .dotmatrix-text {
+      font-family:'Share Tech Mono', monospace; font-weight:700; font-size:60px; letter-spacing:15px; color:#4dfff0;
+      text-shadow: 0 0 5px rgba(77,255,240,0.95), 0 0 16px rgba(77,255,240,0.7), 0 0 34px rgba(77,255,240,0.4);
+      -webkit-mask-image: radial-gradient(circle, #000 42%, transparent 46%);
+      mask-image: radial-gradient(circle, #000 42%, transparent 46%);
+      -webkit-mask-size: 6px 6px;
+      mask-size: 6px 6px;
+      -webkit-mask-repeat: repeat;
+      mask-repeat: repeat;
+      -webkit-mask-position: 0 0;
+      mask-position: 0 0;
+    }
+
+    /* Hybrid segmented (ghost unlit-segment trick) */
+    .segment-panel { background:#170905; border:1px solid #3a1408; padding:26px 30px; position:relative; }
+    .segment-stack { position:relative; display:inline-block; }
+    .segment-ghost {
+      font-family:'Share Tech Mono', monospace; font-size:56px; letter-spacing:12px; color:#5a2818;
+      position:absolute; inset:0; user-select:none;
+    }
+    .segment-lit {
+      font-family:'Share Tech Mono', monospace; font-size:56px; letter-spacing:12px; color:#ff6a3d; position:relative;
+      text-shadow: 0 0 6px rgba(255,106,61,0.9), 0 0 20px rgba(255,106,61,0.6), 0 0 40px rgba(255,106,61,0.28);
+    }
+
+    .divider { width:1px; align-self:stretch; background:linear-gradient(180deg, transparent, rgba(255,255,255,0.14) 20%, rgba(255,255,255,0.14) 80%, transparent); }
+  </style>
+</helmet>
+<div style="width:1600px; height:640px; background: linear-gradient(135deg, #0a0e14 0%, #10141c 100%); font-family:'Barlow Condensed', system-ui, sans-serif; color:#f2f5fb; position:relative; overflow:hidden;">
+  <div style="position:absolute; inset:0; background-image:
+      radial-gradient(circle at 10% 0%, rgba(255,176,32,0.10), transparent 40%),
+      radial-gradient(circle at 90% 100%, rgba(62,194,217,0.10), transparent 40%);"></div>
+
+  <div style="position:relative; text-align:center; padding:26px 0 0 0;">
+    <div style="font-family:'Big Shoulders Display', sans-serif; font-weight:900; font-size:32px; letter-spacing:2px;">LETTER-DISPLAY TECHNIQUES</div>
+    <div style="font-size:16px; letter-spacing:3px; color:#8ea3c4; margin-top:4px;">THREE WAYS TO RENDER &ldquo;MERCURY&rdquo; ON THE BOARD</div>
+  </div>
+
+  <div style="position:relative; display:flex; margin-top:18px; height:490px;">
+
+    <div class="col">
+      <div class="col-label" style="color:#ffb020;">ANALOG &middot; SPLIT-FLAP</div>
+      <div class="flap-row">
+        <div class="flap-cell"><div class="letter">M</div></div>
+        <div class="flap-cell"><div class="letter">E</div></div>
+        <div class="flap-cell"><div class="letter">R</div></div>
+        <div class="flap-cell"><div class="letter">C</div></div>
+        <div class="flap-cell"><div class="letter">U</div></div>
+        <div class="flap-cell"><div class="letter">R</div></div>
+        <div class="flap-cell"><div class="letter">Y</div></div>
+      </div>
+      <div class="col-cap">Mechanical departures-board flaps. Warm and tactile, a physical clack sound cue on flip, reads as an homage / retro-analog choice. Needs a real per-tile flip animation (built into Combo A+B) to sell the mechanism.</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="col">
+      <div class="col-label" style="color:#4dfff0;">DIGITAL &middot; DOT-MATRIX</div>
+      <div class="dotmatrix-panel">
+        <div class="dotmatrix-text">MERCURY</div>
+      </div>
+      <div class="col-cap">LED signage grid. Crisp and legible at distance, cheap to animate (scroll, chase, flash), reads as modern scoreboard tech. Loses the tactile/mechanical charm of the flap board.</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="col">
+      <div class="col-label" style="color:#ff6a3d;">HYBRID &middot; SEGMENTED</div>
+      <div class="segment-panel">
+        <div class="segment-stack">
+          <div class="segment-ghost">8888888</div>
+          <div class="segment-lit">MERCURY</div>
+        </div>
+      </div>
+      <div class="col-cap">Alphanumeric LED look with unlit-segment &ldquo;ghosting&rdquo; behind the lit glyph, like an airport gate sign. Splits the difference &mdash; mechanical-display flavor with digital-display flexibility.</div>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+</body>
+</html>
