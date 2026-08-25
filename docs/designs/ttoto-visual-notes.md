@@ -13,12 +13,20 @@ omission.
 - [`reference-combo-screen.html`](reference-combo-screen.html) — committed. A standalone (no
   design-tool wrapper), verified-rendering HTML/CSS/JS implementation of the confirmed
   screen. Copy/adapt this directly; don't rebuild from the screenshots.
+- [`LetterStyles.dc.html`](LetterStyles.dc.html) — committed. Working source for all three
+  letter-display techniques (§4).
+- [`CrackVariants.dc.html`](CrackVariants.dc.html) — committed. Working source for all four
+  crack paths (§5).
 - [`ttoto-letterstyles-preview.png`](ttoto-letterstyles-preview.png) — committed. The three
   letter-display techniques rendering the same word side by side (§4).
-- `crackvariants-preview.png` — the four miss-state crack patterns (§5). **Not committed —
-  see §9.**
-- `crackrotation-preview.png` — rotation test for the crack overlay (§5). **Not committed —
-  see §9.**
+- [`crackvariants-preview.png`](crackvariants-preview.png) — committed. The four miss-state
+  crack patterns (§5).
+- [`crackrotation-preview.png`](crackrotation-preview.png) — committed. Rotation test for the
+  crack overlay (§5).
+- Logo assets — committed, transparent-background PNG (§1a):
+  [`ttoto-logo-mark.png`](ttoto-logo-mark.png),
+  [`ttoto-logo-lockup.png`](ttoto-logo-lockup.png),
+  [`ttoto-logo-lockup-tagline.png`](ttoto-logo-lockup-tagline.png).
 
 ---
 
@@ -50,6 +58,31 @@ needed):
 Panel corners use `clip-path: polygon(...)` chevron cuts (see `.ttoto-a-panel` /
 `.ttoto-a-tag` in the reference file) rather than plain rounded rectangles — this is a
 deliberate, repeated motif, not incidental styling.
+
+### 1a. Logo assets
+
+Three committed PNGs, all transparent background so they drop straight onto the dark base
+gradient:
+
+| Asset | Size | Use |
+|---|---|---|
+| `ttoto-logo-mark.png` | 290×288 | Mark alone — the three-color burst. For tight spots: host tablet header, favicon, corner bug. |
+| `ttoto-logo-lockup.png` | 1024×344 | Mark + "TToTO" wordmark, no tagline. The default header lockup in the reference screen. |
+| `ttoto-logo-lockup-tagline.png` | 1024×354 | Same lockup with the "THIS · THAT · OR THE OTHER" tagline beneath. For title/attract screens where there's vertical room to explain the name. |
+
+![Logo lockup with tagline](ttoto-logo-lockup-tagline.png)
+
+The wordmark's per-letter coloring is not decorative — it encodes the three answer channels,
+left to right: `T` in THIS-crimson `#e0625f`, `T` in THAT-amber `#ffb020`, then `o` `#c7d4ea`
+and `T` `#f2f5fb` as neutral connective type, closing on `O` in THE-OTHER-cyan `#3ec2d9`. The
+mark repeats the same crimson/amber/cyan trio as three rotated chevrons at 0°/120°/240°.
+Keep this mapping if the logo is ever redrawn or re-colored, and keep it consistent with the
+panel palette above.
+
+Note that `reference-combo-screen.html` currently draws the lockup inline (an SVG for the
+mark plus per-letter `<span>`s for the wordmark) rather than referencing these PNGs — either
+approach works; the inline version scales without asset loading, the PNGs are the source of
+truth if the logo art is refined further.
 
 ---
 
@@ -91,8 +124,9 @@ while the state labels/dot/crack layer on top.
 
 ## 4. Letter-Display Architecture
 
-Three techniques were prototyped side-by-side in `LetterStyles.dc.html` on the design
-canvas. **Decision: style is tied to round type, not all three used at once on screen.**
+Three techniques were prototyped side-by-side in
+[`LetterStyles.dc.html`](LetterStyles.dc.html), committed next to this file — take the CSS
+from there rather than re-deriving it from the prose below. **Decision: style is tied to round type, not all three used at once on screen.**
 Specific round-type → technique pairings are still open (§7) — what's locked in is the
 *mechanism* for each technique, all three achievable with zero per-character or per-word
 image assets.
@@ -118,7 +152,10 @@ per-letter sprites, no pre-rendered flip frames.
 
 CSS-only pixelation via `mask-image` (with `-webkit-mask-image` fallback): a repeating
 radial-gradient dot grid (6px cells) masks solid text (`'Share Tech Mono'` or similar
-monospace, bold, ~60px). This punches the glyph fill into a genuine grid of dots rather than
+monospace, bold, ~60px). The mask in the canvas file is
+`radial-gradient(circle, #000 42%, transparent 46%)` at `mask-size: 6px 6px; mask-repeat:
+repeat`, over a panel that also carries a faint `radial-gradient` dot texture at the same 6px
+pitch so the unlit grid stays visible around the glyphs. This punches the glyph fill into a genuine grid of dots rather than
 just adding a faint texture behind smooth text — the earlier attempt did the latter and read
 as "basically normal text," which is why it was rebuilt. No font changes needed beyond
 loading the monospace family.
@@ -185,8 +222,12 @@ inline SVG — a jagged multi-point polyline rendered twice (a wide blurred glow
 a crisp bright core stroke), plus 1–3 short branch paths off the main line for the branchier
 variants.
 
-**Four variants were mocked up for comparison** (`CrackVariants.dc.html` on the design
-canvas, screenshot in `crackvariants-preview.png`), rather than shipping one fixed shape:
+**Four variants were mocked up for comparison**
+([`CrackVariants.dc.html`](CrackVariants.dc.html), committed next to this file; screenshot
+committed as `crackvariants-preview.png`), rather than shipping one fixed shape. All four
+path sets are lifted straight from that file — copy them, don't redraw:
+
+![Crack variants](crackvariants-preview.png)
 
 | Variant | Shape | Suggested use |
 |---|---|---|
@@ -209,7 +250,8 @@ are the only thing that needs to swap between variants — same stroke styling, 
 container.
 
 **Also apply a random rotation on top of the random variant** — tested in
-`CrackRotation.dc.html` (screenshot `crackrotation-preview.png`) at 0°/30° on Fork and
+`CrackRotation.dc.html` (screenshot committed as `crackrotation-preview.png`) at 0°/30° on
+Fork and
 0°/−120° on Corner Shatter. This multiplies the effective variety from 4 fixed shapes to
 something close to unlimited, with zero new paths to draw: wrap the `<svg>` in the existing
 positioned container (already named `.crack-wrap` in the test file) and apply
@@ -220,6 +262,8 @@ a subtler jitter is preferred over a fully tumbled crack). Both the mild (30°) 
 contains whatever rotates outside the visible chevron shape, so an aggressive angle just
 clips at the edge rather than breaking anything, which itself reads fine (as if the crack ran
 off toward the frame). No other CSS changes needed.
+
+![Crack rotation check](crackrotation-preview.png)
 
 **Sizing (confirmed):** the SVG container spans nearly the full panel (`width: 88%`,
 `left: 6%` of the panel, height ~420px on a 900px-tall panel) — do not shrink this back down
@@ -300,18 +344,24 @@ path data for whichever of the four variants in §5 is selected per miss event.
 
 ---
 
-## 9. Missing Companion Files
+## 9. Source Files and the One Remaining Gap
 
-`reference-combo-screen.html` is committed next to this file — that's the piece that matters,
-since it holds the only working implementation of the flip mechanic (§4d) and is the starting
-point for §8.
+Every visual described here now has committed code, not just a screenshot:
 
-Still on the design canvas and **not in this repo**, worth exporting when convenient (all
-reference-only — nothing here blocks implementation):
+| Piece | Where the code lives |
+|---|---|
+| Confirmed screen + flip mechanic (§4a/§4d) | `reference-combo-screen.html` |
+| Dot-matrix (§4b), segmented (§4c), split-flap tile styling | `LetterStyles.dc.html` |
+| All four crack paths (§5) | `CrackVariants.dc.html` |
 
-- `crackvariants-preview.png`, `crackrotation-preview.png` (§5).
-- The working canvas files referenced in passing: `LetterStyles.dc.html`,
-  `CrackVariants.dc.html`, `CrackRotation.dc.html`. The dot-matrix (§4b) and segmented (§4c)
-  techniques have a committed screenshot but no committed code — unlike the split-flap style,
-  they are not implemented in the reference screen, so whoever builds them works from the
-  prose in §4b/§4c plus the preview image unless `LetterStyles.dc.html` is exported.
+**Only `CrackRotation.dc.html` is still canvas-only** — and it doesn't block anything, since
+§5 already specifies the whole technique (rotate the `.crack-wrap` container, pick the angle
+per miss event); `crackrotation-preview.png` is just the visual proof that mild and extreme
+angles both read correctly.
+
+The two `.dc.html` files came off the design canvas, so they carry a wrapper the repo has no
+use for: a `<script src="./support.js">` that doesn't exist here, plus `<x-dc>` and `<helmet>`
+elements. Both render correctly in a browser regardless (verified — the missing script 404s
+harmlessly and browsers apply `<style>`/`<link>` from anywhere in the document), so they're
+kept as-is rather than edited into standalone pages. When porting, drop the wrapper and lift
+the `<style>` block plus the markup.
