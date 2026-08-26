@@ -73,6 +73,45 @@ const GLOBAL_CSS = `
      the segmented display's equivalent of split-flap's tile cascade. */
   .ttoto-seg-char { transition: opacity 0.05s linear, filter 0.05s linear; }
   .ttoto-seg-flicker { opacity:0.32; filter:brightness(2.4); }
+
+  /* CRT glass treatment for the 3 answer panels (Phase A of the retro-mechanical pass —
+     see visual-notes). Baseline stays calm/subtle: a soft off-center sheen + edge vignette
+     fake convex glass without an actual 3D transform, plus a faint scanline texture. These
+     sit at z-index:-1 within the panel's own stacking context, which (given the panel's
+     other children are plain non-positioned flow elements) paints them above the panel's
+     own background but below the tag/text/letter-display content — no z-index needed on
+     the content itself. */
+  .ttoto-crt-vignette { position:absolute; inset:0; z-index:-1; pointer-events:none;
+    background: radial-gradient(ellipse 75% 70% at 50% 45%, transparent 55%, rgba(0,0,0,0.5) 100%); }
+  .ttoto-crt-scanlines { position:absolute; inset:0; z-index:-1; pointer-events:none; opacity:0.5; mix-blend-mode:multiply;
+    background-image: repeating-linear-gradient(0deg, rgba(0,0,0,0.18) 0px, rgba(0,0,0,0.18) 1px, transparent 1px, transparent 3px); }
+  .ttoto-crt-sheen { position:absolute; inset:0; z-index:-1; pointer-events:none;
+    background: radial-gradient(ellipse 55% 40% at 28% 20%, rgba(255,255,255,0.18), transparent 62%); }
+
+  /* Wrong-answer transition: a brief static/glitch burst plays once (React mounts this div
+     exactly when a panel first flips to "missed") before settling into the crack — the
+     crack reads as "the screen glitched and broke," not "a decal appeared." Positive
+     z-index so it briefly covers the panel's content, then fades to nothing and stays out
+     of the way (animation fill-mode: forwards). */
+  @keyframes ttotoCrtStatic { 0% { opacity:0.95; } 60% { opacity:0.55; } 100% { opacity:0; } }
+  .ttoto-crt-static-burst { position:absolute; inset:0; z-index:5; pointer-events:none; mix-blend-mode:screen;
+    animation: ttotoCrtStatic 380ms steps(5) forwards;
+    background-image:
+      repeating-linear-gradient(0deg, rgba(255,255,255,0.55) 0px, rgba(255,255,255,0.55) 1px, transparent 1px, transparent 2px),
+      repeating-linear-gradient(90deg, rgba(120,220,255,0.12) 0px, transparent 2px, transparent 7px); }
+
+  /* Phase B: gunmetal chassis for the header/score-plates/question-panel — the cabinet the
+     CRT screens (Phase A) are mounted into. Blackened metal fill + an inset shadow (reads as
+     recessed into the housing rather than a floating glass card) + a faint brushed-metal
+     texture, with a few restrained rivets rather than covering every seam. Team/choice
+     colors stay expressed via borders/accents, unchanged — only the fill material changes. */
+  .ttoto-gunmetal { background: linear-gradient(160deg, #3a4048 0%, #23272d 45%, #14171b 100%);
+    box-shadow: inset 0 2px 3px rgba(255,255,255,0.07), inset 0 -4px 8px rgba(0,0,0,0.6), inset 0 0 0 1px rgba(0,0,0,0.5); }
+  .ttoto-metal-brushed { position:absolute; inset:0; z-index:0; pointer-events:none; opacity:0.6;
+    background-image: repeating-linear-gradient(100deg, rgba(255,255,255,0.04) 0px, rgba(255,255,255,0.04) 1px, transparent 1px, transparent 3px); }
+  .ttoto-rivet { position:absolute; width:7px; height:7px; border-radius:50%; z-index:1;
+    background: radial-gradient(circle at 35% 30%, #dfe4e8, #767c83 55%, #202225 100%);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.7); }
 `;
 
 const multiplierForRound = (roundMultipliers: number[], roundIndex: number): number =>
@@ -291,6 +330,12 @@ function LetterRow({ letterStyle, choice, word, revealed, won }: {
 
 // ─── Round-intro card ────────────────────────────────────────────────────────
 
+/** A single restrained bit of "visible hardware" on the gunmetal chassis (Phase B) — used
+ * sparingly (a few per panel, not every corner) so it reads as real construction. */
+function Rivet({ top, left, right, bottom }: { top?: number; left?: number; right?: number; bottom?: number }) {
+  return <div className="ttoto-rivet" style={{ top, left, right, bottom }} />;
+}
+
 /** Only rendered when a round is worth more (or less) than the default ×1 — see multiplierForRound(). */
 function MultiplierBadge({ multiplier, fontSize = 16 }: { multiplier: number; fontSize?: number }) {
   return (
@@ -407,13 +452,18 @@ function ComboScreen({ state }: { state: TToTOState }) {
 
       {/* Header */}
       <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 32px 0 32px' }}>
-        <div className="ttoto-score-plate" style={{ background: `linear-gradient(160deg, ${darken(TTOTO_COLORS.team1, 0.75)}, ${darken(TTOTO_COLORS.team1, 0.88)})`, border: `2px solid ${TTOTO_COLORS.team1}`, boxShadow: `0 0 30px ${rgba(TTOTO_COLORS.team1, 0.28)}` }}>
-          <div style={{ fontSize: 16, letterSpacing: 3, color: lighten(TTOTO_COLORS.team1, 0.55) }}>{teams[0].name.toUpperCase()}</div>
-          <div style={{ fontFamily: "'Big Shoulders Display', sans-serif", fontWeight: 900, fontSize: 92, lineHeight: 0.95, color: '#fff', textShadow: `0 0 26px ${rgba(TTOTO_COLORS.team1, 0.6)}` }}>{teams[0].score}</div>
+        <div className="ttoto-score-plate ttoto-gunmetal" style={{ position: 'relative', border: `2px solid ${TTOTO_COLORS.team1}`, boxShadow: `0 0 30px ${rgba(TTOTO_COLORS.team1, 0.28)}` }}>
+          <div className="ttoto-metal-brushed" />
+          {/* .ttoto-score-plate's clip-path cuts only the top-left corner — rivets avoid it. */}
+          <Rivet top={8} right={10} /><Rivet bottom={8} right={10} />
+          <div style={{ position: 'relative', fontSize: 16, letterSpacing: 3, color: lighten(TTOTO_COLORS.team1, 0.55) }}>{teams[0].name.toUpperCase()}</div>
+          <div style={{ position: 'relative', fontFamily: "'Big Shoulders Display', sans-serif", fontWeight: 900, fontSize: 92, lineHeight: 0.95, color: '#fff', textShadow: `0 0 26px ${rgba(TTOTO_COLORS.team1, 0.6)}` }}>{teams[0].score}</div>
         </div>
 
-        <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+        <div className="ttoto-score-plate ttoto-gunmetal" style={{ position: 'relative', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, border: '1px solid #4a5058', padding: '18px 40px 16px 40px' }}>
+          <div className="ttoto-metal-brushed" />
+          <Rivet top={8} right={10} /><Rivet bottom={8} left={10} /><Rivet bottom={8} right={10} />
+          <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 14 }}>
             <svg width={52} height={52} viewBox="0 0 64 64" style={{ flex: 'none' }}>
               <g strokeWidth={7} strokeLinecap="round" fill="none">
                 <path d="M14 12 L34 32 L14 52" stroke={TTOTO_COLORS.this} transform="rotate(0 32 32)" />
@@ -431,36 +481,41 @@ function ComboScreen({ state }: { state: TToTOState }) {
               this card's height feeds directly into where the question/answer panels land
               in the fixed 1600x900 stage below, so an extra row here pushes them past the
               bottom edge instead of just growing the (non-existent) available space. */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 2 }}>
+          <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 8, marginTop: 2 }}>
             <div className="ttoto-a-tag" style={{ background: '#c7d4ea', color: '#0d1b2e', fontSize: 13, fontWeight: 700, letterSpacing: 3, padding: '5px 20px 5px 12px' }}>
               ROUND {round?.roundNumber ?? '—'}
             </div>
             {multiplier !== 1 && <MultiplierBadge multiplier={multiplier} fontSize={13} />}
           </div>
-          <div style={{ fontFamily: "'Big Shoulders Display', sans-serif", fontWeight: 900, fontSize: 32, letterSpacing: 1, color: '#fff', textShadow: '0 0 24px rgba(199,212,234,0.5)' }}>
+          <div style={{ position: 'relative', fontFamily: "'Big Shoulders Display', sans-serif", fontWeight: 900, fontSize: 32, letterSpacing: 1, color: '#fff', textShadow: '0 0 24px rgba(199,212,234,0.5)' }}>
             {round ? FLAVOR_LABELS[round.flavor].toUpperCase() : ''}
           </div>
         </div>
 
-        <div className="ttoto-score-plate" style={{ background: `linear-gradient(160deg, ${darken(TTOTO_COLORS.team2, 0.72)}, ${darken(TTOTO_COLORS.team2, 0.86)})`, border: `2px solid ${TTOTO_COLORS.team2}`, boxShadow: `0 0 30px ${rgba(TTOTO_COLORS.team2, 0.28)}`, textAlign: 'right' }}>
-          <div style={{ fontSize: 16, letterSpacing: 3, color: lighten(TTOTO_COLORS.team2, 0.45) }}>{teams[1].name.toUpperCase()}</div>
-          <div style={{ fontFamily: "'Big Shoulders Display', sans-serif", fontWeight: 900, fontSize: 92, lineHeight: 0.95, color: '#fff', textShadow: `0 0 26px ${rgba(TTOTO_COLORS.team2, 0.6)}` }}>{teams[1].score}</div>
+        <div className="ttoto-score-plate ttoto-gunmetal" style={{ position: 'relative', border: `2px solid ${TTOTO_COLORS.team2}`, boxShadow: `0 0 30px ${rgba(TTOTO_COLORS.team2, 0.28)}`, textAlign: 'right' }}>
+          <div className="ttoto-metal-brushed" />
+          <Rivet top={8} right={10} /><Rivet bottom={8} right={10} />
+          <div style={{ position: 'relative', fontSize: 16, letterSpacing: 3, color: lighten(TTOTO_COLORS.team2, 0.45) }}>{teams[1].name.toUpperCase()}</div>
+          <div style={{ position: 'relative', fontFamily: "'Big Shoulders Display', sans-serif", fontWeight: 900, fontSize: 92, lineHeight: 0.95, color: '#fff', textShadow: `0 0 26px ${rgba(TTOTO_COLORS.team2, 0.6)}` }}>{teams[1].score}</div>
         </div>
       </div>
 
       {/* Question panel */}
-      <div className="ttoto-a-panel" style={{
+      <div className="ttoto-a-panel ttoto-gunmetal" style={{
         position: 'relative', margin: '20px 32px 0 32px',
-        background: 'linear-gradient(125deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0) 32%), linear-gradient(90deg, #16324a, #1c2540)',
-        border: '1px solid #4a6a95', boxShadow: '0 0 26px rgba(120,170,230,0.2)', padding: '16px 28px 20px 28px',
+        border: '1px solid #4a5058', boxShadow: '0 0 26px rgba(120,170,230,0.12)', padding: '16px 28px 20px 28px',
       }}>
-        <div className="ttoto-a-tag" style={{ background: '#c7d4ea', color: '#0d1b2e', fontSize: 13, fontWeight: 800, letterSpacing: 3, padding: '5px 18px 5px 12px', display: 'inline-block', marginBottom: 10 }}>
+        <div className="ttoto-metal-brushed" />
+        {/* .ttoto-a-panel's clip-path cuts the top-left/bottom-right corners (same reason
+            the existing corner brackets only use tr/bl) — rivets go on the two intact corners. */}
+        <Rivet top={9} right={12} /><Rivet bottom={9} left={12} />
+        <div className="ttoto-a-tag" style={{ position: 'relative', background: '#c7d4ea', color: '#0d1b2e', fontSize: 13, fontWeight: 800, letterSpacing: 3, padding: '5px 18px 5px 12px', display: 'inline-block', marginBottom: 10 }}>
           QUESTION
         </div>
-        <div style={{ fontFamily: "'Big Shoulders Display', sans-serif", fontWeight: 800, fontSize: 32, letterSpacing: 0.5, textAlign: 'center', color: '#fff' }}>
+        <div style={{ position: 'relative', fontFamily: "'Big Shoulders Display', sans-serif", fontWeight: 800, fontSize: 32, letterSpacing: 0.5, textAlign: 'center', color: '#fff' }}>
           {question ? question.prompt.toUpperCase() : ''}
         </div>
-        <div style={{ textAlign: 'center', marginTop: 8, fontSize: 15, letterSpacing: 2, color: '#c7d4ea', minHeight: 20 }}>
+        <div style={{ position: 'relative', textAlign: 'center', marginTop: 8, fontSize: 15, letterSpacing: 2, color: '#c7d4ea', minHeight: 20 }}>
           {statusText}
         </div>
       </div>
@@ -497,10 +552,17 @@ function ComboScreen({ state }: { state: TToTOState }) {
                   : `linear-gradient(125deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0) 36%), linear-gradient(160deg, ${color}22, #0a1c28)`,
               border: `2px solid ${borderColor}`,
               boxShadow: correct ? `0 0 46px ${rgba(TTOTO_COLORS.correct, 0.45)}` : undefined,
-              filter: `drop-shadow(0 12px 0 rgba(0,0,0,0.4)) drop-shadow(0 0 24px ${borderColor}33)${recede ? ' brightness(0.55) saturate(0.6)' : ''}`,
+              // "Glowing correct screen, dimmer wrong screen": correct panels get a
+              // brightness lift on top of the green recolor; every other panel dims via
+              // `recede` once resolved (unchanged from before).
+              filter: `drop-shadow(0 12px 0 rgba(0,0,0,0.4)) drop-shadow(0 0 24px ${borderColor}33)${recede ? ' brightness(0.55) saturate(0.6)' : ''}${correct ? ' brightness(1.18)' : ''}`,
               opacity: recede ? 0.7 : 1,
               transition: 'filter 0.4s ease, opacity 0.4s ease, background 0.4s ease, border-color 0.4s ease',
             }}>
+              <div className="ttoto-crt-sheen" />
+              <div className="ttoto-crt-scanlines" />
+              <div className="ttoto-crt-vignette" />
+              {missed && <div className="ttoto-crt-static-burst" />}
               <div className="ttoto-a-bracket-tr" style={{ borderTop: `3px solid ${borderColor}`, borderRight: `3px solid ${borderColor}` }} />
               <div className="ttoto-a-bracket-bl" style={{ borderBottom: `3px solid ${borderColor}`, borderLeft: `3px solid ${borderColor}` }} />
               <div className="ttoto-a-tag" style={{
