@@ -10,6 +10,13 @@ import { TToTOGameIntro } from './TToTOGameIntro';
 import { TToTOStage } from './TToTOStage';
 import { TTOTO_COLORS, lighten, darken, rgba } from './colors';
 import { useGameEventOverlay, GameEventOverlay } from './GameOverlays';
+import { fitTextToWidth, fixedCharWidth } from './fitText';
+
+// Fixed content width all 3 answer panels share (see the answer-panel flex fix below) —
+// 1600 stage minus 64px outer margin minus 40px of inter-panel gap, split 3 ways, minus
+// each panel's own 22px×2 padding. The three letter-display techniques size themselves to
+// fit within this rather than the panel growing to fit them.
+const ANSWER_PANEL_CONTENT_WIDTH = 450;
 
 // ─── Global CSS (ported from docs/designs/reference-combo-screen.html + LetterStyles.dc.html) ──
 // Gradient/glow shades below are all *derived* from TTOTO_COLORS via lighten/darken/rgba —
@@ -79,48 +86,74 @@ const CHOICE_LABEL: Record<TToTOChoiceKey, string> = { this: 'THIS', that: 'THAT
 
 // ─── Split-flap row (imperative DOM cascade) ────────────────────────────────
 
+const FLAP_FULL_TILE = { width: 52, height: 86 }; // historical default = scale 1
+const FLAP_FULL_CHAR_WIDTH = FLAP_FULL_TILE.width + 6; // + the row's tile gap
+
 function SplitFlapRow({ variant, word, revealed, won }: { variant: LetterVariant; word: string; revealed: boolean; won: boolean }) {
-  const rowRef = useRef<HTMLDivElement | null>(null);
-  const builtLenRef = useRef<number>(-1);
+  const line1Ref = useRef<HTMLDivElement | null>(null);
+  const line2Ref = useRef<HTMLDivElement | null>(null);
+  const builtKeyRef = useRef<string>('');
   const prevRevealedRef = useRef<boolean>(false);
 
+  const upper = word.toUpperCase();
+  const fit = fitTextToWidth(upper, ANSWER_PANEL_CONTENT_WIDTH, fixedCharWidth(FLAP_FULL_CHAR_WIDTH));
+  const tileSize = { width: Math.round(FLAP_FULL_TILE.width * fit.scale), height: Math.round(FLAP_FULL_TILE.height * fit.scale) };
+  const buildKey = fit.lines.join('|');
+
   useEffect(() => {
-    const el = rowRef.current;
-    if (!el) return;
-    if (builtLenRef.current !== word.length) {
-      buildFlapRow(el, word.length, variant, { width: 52, height: 86 });
-      builtLenRef.current = word.length;
+    const el1 = line1Ref.current;
+    if (!el1) return;
+    if (builtKeyRef.current !== buildKey) {
+      buildFlapRow(el1, fit.lines[0].length, variant, tileSize);
+      if (fit.lines[1] !== undefined && line2Ref.current) buildFlapRow(line2Ref.current, fit.lines[1].length, variant, tileSize);
+      builtKeyRef.current = buildKey;
       prevRevealedRef.current = false;
     }
     if (revealed && !prevRevealedRef.current) {
-      cascadeFlapRow(el, word.toUpperCase());
+      cascadeFlapRow(el1, fit.lines[0]);
+      if (fit.lines[1] !== undefined && line2Ref.current) cascadeFlapRow(line2Ref.current, fit.lines[1]);
     } else if (!revealed) {
-      resetFlapRow(el);
+      resetFlapRow(el1);
+      if (line2Ref.current) resetFlapRow(line2Ref.current);
     }
     prevRevealedRef.current = revealed;
-  }, [word, revealed, variant]);
+    // fit/tileSize are derived deterministically from buildKey (same word -> same lines ->
+    // same scale), so gating the rebuild on buildKey alone is sufficient.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [buildKey, revealed, variant]);
 
-  return <div ref={rowRef} className={`ttoto-flap-row${won ? ' ttoto-win-correct' : ''}`} style={{ gap: 6 }} />;
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'center' }}>
+      <div ref={line1Ref} className={`ttoto-flap-row${won ? ' ttoto-win-correct' : ''}`} style={{ gap: 6 }} />
+      {fit.lines[1] !== undefined && (
+        <div ref={line2Ref} className={`ttoto-flap-row${won ? ' ttoto-win-correct' : ''}`} style={{ gap: 6 }} />
+      )}
+    </div>
+  );
 }
 
-function DotMatrixRow({ word, revealed, won }: { word: string; revealed: boolean; won: boolean }) {
+const DOT_FULL_CHAR_WIDTH = 50; // historical default = scale 1
+
+/** One line of dot-matrix (own canvas + settled-text overlay). DotMatrixRow renders 1 or 2. */
+function DotMatrixLine({ word, width, height, revealed, won }: {
+  word: string; width: number; height: number; revealed: boolean; won: boolean;
+}) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const handleRef = useRef<DotMatrixHandle | null>(null);
-  const builtLenRef = useRef<number>(-1);
+  const builtKeyRef = useRef<string>('');
   const prevRevealedRef = useRef<boolean>(false);
   const prevWonRef = useRef<boolean>(false);
   // The canvas plays the noise-then-approximate-resolve flourish; once it settles we cross-
   // fade to the crisp real-text layer underneath (see CSS) for the actual resting display.
   const [settled, setSettled] = useState(false);
-  const width = Math.max(word.length, 1) * 50;
-  const height = 84;
 
   useEffect(() => {
     const el = canvasRef.current;
     if (!el) return;
-    if (builtLenRef.current !== word.length) {
+    const buildKey = `${width}x${height}`;
+    if (builtKeyRef.current !== buildKey) {
       handleRef.current = setupDotMatrix(el);
-      builtLenRef.current = word.length;
+      builtKeyRef.current = buildKey;
       prevRevealedRef.current = false;
       prevWonRef.current = false;
     }
@@ -128,28 +161,76 @@ function DotMatrixRow({ word, revealed, won }: { word: string; revealed: boolean
     if (!handle) return;
     if (revealed && (!prevRevealedRef.current || (won && !prevWonRef.current))) {
       setSettled(false);
-      handle.cascade(word.toUpperCase(), won, () => setSettled(true));
+      handle.cascade(word, won, () => setSettled(true));
     } else if (!revealed) {
       setSettled(false);
       handle.reset();
     }
     prevRevealedRef.current = revealed;
     prevWonRef.current = won;
-  }, [word, revealed, won]);
+  }, [word, width, height, revealed, won]);
 
   return (
-    <div className="ttoto-dotmatrix-panel">
-      <div className="ttoto-dotmatrix-stack" style={{ width, height }}>
-        <canvas ref={canvasRef} className={`ttoto-dotmatrix-canvas${settled ? ' settled' : ''}`} style={{ width, height }} />
-        <div className={`ttoto-dotmatrix-text${settled ? ' settled' : ''}${won ? ' won' : ''}`} style={{ fontSize: Math.round(height * 0.5) }}>
-          {word.toUpperCase()}
-        </div>
+    <div className="ttoto-dotmatrix-stack" style={{ width, height }}>
+      <canvas ref={canvasRef} className={`ttoto-dotmatrix-canvas${settled ? ' settled' : ''}`} style={{ width, height }} />
+      <div className={`ttoto-dotmatrix-text${settled ? ' settled' : ''}${won ? ' won' : ''}`} style={{ fontSize: Math.round(height * 0.5) }}>
+        {word}
       </div>
     </div>
   );
 }
 
-function SegmentedRow({ word, revealed, won }: { word: string; revealed: boolean; won: boolean }) {
+function DotMatrixRow({ word, revealed, won }: { word: string; revealed: boolean; won: boolean }) {
+  const upper = word.toUpperCase();
+  const fit = fitTextToWidth(upper, ANSWER_PANEL_CONTENT_WIDTH, fixedCharWidth(DOT_FULL_CHAR_WIDTH));
+  const height = Math.round(84 * fit.scale);
+
+  return (
+    <div className="ttoto-dotmatrix-panel">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'center' }}>
+        <DotMatrixLine
+          word={fit.lines[0]} width={Math.round(Math.max(fit.lines[0].length, 1) * DOT_FULL_CHAR_WIDTH * fit.scale)}
+          height={height} revealed={revealed} won={won}
+        />
+        {fit.lines[1] !== undefined && (
+          <DotMatrixLine
+            word={fit.lines[1]} width={Math.round(Math.max(fit.lines[1].length, 1) * DOT_FULL_CHAR_WIDTH * fit.scale)}
+            height={height} revealed={revealed} won={won}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
+// The clamp()-based CSS font-size (see .ttoto-segment-ghost/.ttoto-segment-lit) is a
+// viewport-relative fallback; these constants are that same max size (38px font, 6px
+// letter-spacing), and the computed fontSize/letterSpacing below are passed inline (which
+// wins over the CSS clamp).
+const SEGMENTED_FULL_FONT_SIZE = 38;
+const SEGMENTED_FULL_LETTER_SPACING = 6;
+
+// Real text measurement rather than an assumed font-width-to-em ratio — Share Tech Mono
+// turned out to render noticeably wider than a guessed ratio accounted for, which silently
+// undershot the needed shrink/wrap and let long answers overflow instead.
+let segmentMeasureCanvas: HTMLCanvasElement | null = null;
+function measureSegmentedWidth(text: string): number {
+  if (!segmentMeasureCanvas) segmentMeasureCanvas = document.createElement('canvas');
+  const ctx = segmentMeasureCanvas.getContext('2d')!;
+  ctx.font = `${SEGMENTED_FULL_FONT_SIZE}px 'Share Tech Mono', monospace`;
+  // The lit row (segmentedBoard.ts) renders one <span> per character inside a flex
+  // container with `gap`, not plain text with letter-spacing — N-1 gaps between N
+  // characters, not N. Getting this wrong (treating it as letter-spacing / N gaps) was
+  // the actual bug: that fixed CSS `gap` doesn't shrink with our scale unless we override
+  // it inline too (done below in SegmentedLine), and mismodeling it here made long answers
+  // silently under-shrink/never wrap instead of just looking slightly off.
+  return ctx.measureText(text).width + SEGMENTED_FULL_LETTER_SPACING * Math.max(text.length - 1, 0);
+}
+
+/** One line of segmented display. SegmentedRow renders 1 or 2. */
+function SegmentedLine({ word, fontSize, letterSpacing, revealed, won }: {
+  word: string; fontSize: number; letterSpacing: number; revealed: boolean; won: boolean;
+}) {
   const rowRef = useRef<HTMLDivElement | null>(null);
   const builtLenRef = useRef<number>(-1);
   const prevRevealedRef = useRef<boolean>(false);
@@ -164,7 +245,7 @@ function SegmentedRow({ word, revealed, won }: { word: string; revealed: boolean
       prevRevealedRef.current = false;
     }
     if (revealed && !prevRevealedRef.current) {
-      cascadeSegmentedRow(el, word.toUpperCase());
+      cascadeSegmentedRow(el, word);
     } else if (!revealed) {
       resetSegmentedRow(el);
     }
@@ -172,10 +253,29 @@ function SegmentedRow({ word, revealed, won }: { word: string; revealed: boolean
   }, [word, revealed]);
 
   return (
+    <div className="ttoto-segment-stack">
+      <div className="ttoto-segment-ghost" style={{ fontSize, letterSpacing }}>{ghost}</div>
+      {/* .ttoto-segment-lit is display:inline-flex with a per-character `gap` (one <span>
+          per char, for the scramble animation) — that's the property that actually needs
+          to scale, not letter-spacing (which has no effect between separate flex children). */}
+      <div ref={rowRef} className={`ttoto-segment-lit${won ? ' won' : ''}`} style={{ fontSize, gap: letterSpacing }} />
+    </div>
+  );
+}
+
+function SegmentedRow({ word, revealed, won }: { word: string; revealed: boolean; won: boolean }) {
+  const upper = word.toUpperCase();
+  const fit = fitTextToWidth(upper, ANSWER_PANEL_CONTENT_WIDTH, measureSegmentedWidth);
+  const fontSize = Math.round(SEGMENTED_FULL_FONT_SIZE * fit.scale);
+  const letterSpacing = Math.round(SEGMENTED_FULL_LETTER_SPACING * fit.scale);
+
+  return (
     <div className="ttoto-segment-panel">
-      <div className="ttoto-segment-stack">
-        <div className="ttoto-segment-ghost">{ghost}</div>
-        <div ref={rowRef} className={`ttoto-segment-lit${won ? ' won' : ''}`} />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'center' }}>
+        <SegmentedLine word={fit.lines[0]} fontSize={fontSize} letterSpacing={letterSpacing} revealed={revealed} won={won} />
+        {fit.lines[1] !== undefined && (
+          <SegmentedLine word={fit.lines[1]} fontSize={fontSize} letterSpacing={letterSpacing} revealed={revealed} won={won} />
+        )}
       </div>
     </div>
   );
@@ -327,13 +427,19 @@ function ComboScreen({ state }: { state: TToTOState }) {
               <span style={{ color: '#f2f5fb' }}>T</span><span style={{ color: TTOTO_COLORS.the_other }}>O</span>
             </div>
           </div>
-          <div className="ttoto-a-tag" style={{ background: '#c7d4ea', color: '#0d1b2e', fontSize: 13, fontWeight: 700, letterSpacing: 3, padding: '5px 20px 5px 12px', marginTop: 2 }}>
-            ROUND {round?.roundNumber ?? '—'}
+          {/* Multiplier sits inline with the round tag rather than as its own stacked row —
+              this card's height feeds directly into where the question/answer panels land
+              in the fixed 1600x900 stage below, so an extra row here pushes them past the
+              bottom edge instead of just growing the (non-existent) available space. */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 2 }}>
+            <div className="ttoto-a-tag" style={{ background: '#c7d4ea', color: '#0d1b2e', fontSize: 13, fontWeight: 700, letterSpacing: 3, padding: '5px 20px 5px 12px' }}>
+              ROUND {round?.roundNumber ?? '—'}
+            </div>
+            {multiplier !== 1 && <MultiplierBadge multiplier={multiplier} fontSize={13} />}
           </div>
           <div style={{ fontFamily: "'Big Shoulders Display', sans-serif", fontWeight: 900, fontSize: 32, letterSpacing: 1, color: '#fff', textShadow: '0 0 24px rgba(199,212,234,0.5)' }}>
             {round ? FLAVOR_LABELS[round.flavor].toUpperCase() : ''}
           </div>
-          {multiplier !== 1 && <MultiplierBadge multiplier={multiplier} />}
         </div>
 
         <div className="ttoto-score-plate" style={{ background: `linear-gradient(160deg, ${darken(TTOTO_COLORS.team2, 0.72)}, ${darken(TTOTO_COLORS.team2, 0.86)})`, border: `2px solid ${TTOTO_COLORS.team2}`, boxShadow: `0 0 30px ${rgba(TTOTO_COLORS.team2, 0.28)}`, textAlign: 'right' }}>
@@ -376,7 +482,14 @@ function ComboScreen({ state }: { state: TToTOState }) {
 
           return (
             <div key={choice} className="ttoto-a-panel" style={{
-              flex: 1, position: 'relative', padding: 22, display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
+              // flex-basis:0 + minWidth:0 makes all 3 panels genuinely equal width — without
+              // minWidth:0, a flex item's default min-width is its content's intrinsic
+              // min-content size, so a long word (e.g. "VEGETABLE") would force its own
+              // panel wider than its siblings instead of the content fitting the panel (see
+              // ANSWER_PANEL_CONTENT_WIDTH / fitTextToWidth, which size the content the
+              // other way around).
+              flex: '1 1 0', minWidth: 0,
+              position: 'relative', padding: 22, display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
               background: correct
                 ? `linear-gradient(125deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0) 36%), linear-gradient(160deg, ${rgba(TTOTO_COLORS.correct, 0.22)}, #0a1c28)`
                 : missed
