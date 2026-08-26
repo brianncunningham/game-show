@@ -10,3 +10,4 @@ server/dist/
 apps-script/.clasprc.json
 active-mode.json
 game-state.json
+game-state-*.json

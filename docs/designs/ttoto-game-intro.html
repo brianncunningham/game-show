@@ -1,0 +1,147 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>TToTO — Game intro reference implementation</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=Barlow+Condensed:wght@500;600;700&display=swap">
+<style>
+  /* ===================================================================
+     TToTO — game-intro reference implementation.
+     User-supplied design mockup (GameIntro-html.zip, 2026-08-25), cleaned
+     of the design-canvas wrapper (<x-dc>/<helmet>/support.js) the same
+     way LetterStyles.dc.html / CrackVariants.dc.html were. Copy/adapt
+     this directly; don't rebuild from screenshots.
+
+     Sequence (~6.65s total, then settles into an idle glow loop):
+       1. "THIS" fades in, crimson T pulses.
+       2. "THAT" fades in, amber T pulses.
+       3. "OR THE OTHER" fades in, O/T/O pulse in sequence.
+       4. In sync with each pulse, a 3-blade pinwheel icon assembles
+          (same crimson/amber/cyan chevron-at-0/120/240deg motif as the
+          logo mark).
+       5. The "TToTO" wordmark assembles letter-by-letter, reusing the
+          exact per-letter color mapping from ttoto-visual-notes.md §1a.
+       6. Tagline fades up, gradient divider wipes in.
+       7. Settles into an infinite ambient glow pulse on the icon.
+     =================================================================== */
+
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+
+  .intro-bracket-tl { position:absolute; top:28px; left:28px; width:40px; height:40px; border-top:3px solid rgba(242,245,251,0.5); border-left:3px solid rgba(242,245,251,0.5); }
+  .intro-bracket-tr { position:absolute; top:28px; right:28px; width:40px; height:40px; border-top:3px solid rgba(242,245,251,0.5); border-right:3px solid rgba(242,245,251,0.5); }
+  .intro-bracket-bl { position:absolute; bottom:28px; left:28px; width:40px; height:40px; border-bottom:3px solid rgba(242,245,251,0.5); border-left:3px solid rgba(242,245,251,0.5); }
+  .intro-bracket-br { position:absolute; bottom:28px; right:28px; width:40px; height:40px; border-bottom:3px solid rgba(242,245,251,0.5); border-right:3px solid rgba(242,245,251,0.5); }
+
+  /* ---- the big word/phrase stage: one word visible at a time ---- */
+  .stage { position:absolute; top:150px; left:0; right:0; height:150px; text-align:center; font-family:'Big Shoulders Display', sans-serif; font-weight:900; color:#f2f5fb; }
+  .stage .word { position:absolute; inset:0; opacity:0; }
+  .stage .rest { transition:none; }
+
+  @keyframes wordFadeInOut {
+    0%   { opacity:0; transform:translateY(12px); }
+    10%  { opacity:1; transform:translateY(0); }
+    88%  { opacity:1; }
+    100% { opacity:0; }
+  }
+  .w-this  { font-size:108px; letter-spacing:2px; animation: wordFadeInOut 1550ms linear 100ms both; }
+  .w-that  { font-size:108px; letter-spacing:2px; animation: wordFadeInOut 1550ms linear 1700ms both; }
+  .w-p3    { font-size:66px;  letter-spacing:4px; color:#c7d4ea; animation: wordFadeInOut 2500ms linear 3300ms both; }
+
+  @keyframes keyPulse { 0% { transform:scale(1); } 45% { transform:scale(1.2); } 100% { transform:scale(1); } }
+  @keyframes dimRest   { 0% { opacity:1; } 100% { opacity:0.32; } }
+
+  .w-this .key { display:inline-block; color:#e0625f; animation: keyPulse 260ms ease-out 750ms both; }
+  .w-this .rest { display:inline-block; animation: dimRest 260ms ease-out 750ms forwards; }
+  .w-that .key { display:inline-block; color:#ffb020; animation: keyPulse 260ms ease-out 750ms both; }
+  .w-that .rest { display:inline-block; animation: dimRest 260ms ease-out 750ms forwards; }
+
+  .w-p3 .sub { display:inline-block; }
+  .w-p3 .key { display:inline-block; }
+  .k-or   { animation: keyPulse 220ms ease-out 600ms both; color:#c7d4ea; }
+  .r-or   { animation: dimRest 220ms ease-out 600ms forwards; }
+  .k-the  { animation: keyPulse 220ms ease-out 1100ms both; color:#f2f5fb; }
+  .r-the  { animation: dimRest 220ms ease-out 1100ms forwards; }
+  .k-other{ animation: keyPulse 220ms ease-out 1600ms both; color:#3ec2d9; }
+  .r-other{ animation: dimRest 220ms ease-out 1600ms forwards; }
+
+  /* ---- icon: 3 blades, each flies down from the stage the instant its word's letter pulses ---- */
+  .icon-wrap { position:absolute; top:340px; left:50%; transform:translateX(-50%); width:130px; height:130px; }
+  .icon-wrap.settled { animation: iconGlow 3400ms ease-in-out 6100ms infinite; }
+  @keyframes iconGlow {
+    0%, 100% { filter: drop-shadow(0 0 10px rgba(255,255,255,0.15)); }
+    50% { filter: drop-shadow(0 0 26px rgba(255,255,255,0.38)); }
+  }
+  .blade { transform-box: view-box; opacity:0; }
+  @keyframes dropIn { from { transform: translateY(-190px) scale(0.35); opacity:0; } 30% { opacity:1; } to { transform: translateY(0) scale(1); opacity:1; } }
+  .blade-1 { animation: dropIn 480ms cubic-bezier(.22,1.1,.3,1) 950ms forwards; }
+  .blade-2 { animation: dropIn 480ms cubic-bezier(.22,1.1,.3,1) 2550ms forwards; }
+  .blade-3 { animation: dropIn 480ms cubic-bezier(.22,1.1,.3,1) 4550ms forwards; }
+
+  /* ---- wordmark: 5 slots, each flies down independently the instant its letter pulses ---- */
+  .wordmark { position:absolute; top:520px; left:0; right:0; text-align:center; font-family:'Big Shoulders Display', sans-serif; font-weight:900; font-size:118px; letter-spacing:2px; line-height:1; }
+  .wm-letter { display:inline-block; opacity:0; }
+  @keyframes wmDropIn { from { transform: translateY(-330px) scale(0.6); opacity:0; } 35% { opacity:1; } to { transform: translateY(0) scale(1); opacity:1; } }
+  .wm-1 { color:#e0625f; animation: wmDropIn 500ms cubic-bezier(.22,1.05,.3,1) 950ms forwards; }
+  .wm-2 { color:#ffb020; animation: wmDropIn 500ms cubic-bezier(.22,1.05,.3,1) 2550ms forwards; }
+  .wm-3 { color:#c7d4ea; font-size:0.68em; animation: wmDropIn 500ms cubic-bezier(.22,1.05,.3,1) 3900ms forwards; }
+  .wm-4 { color:#f2f5fb; animation: wmDropIn 500ms cubic-bezier(.22,1.05,.3,1) 4400ms forwards; }
+  .wm-5 { color:#3ec2d9; animation: wmDropIn 500ms cubic-bezier(.22,1.05,.3,1) 4900ms forwards; }
+
+  .tagline { position:absolute; top:690px; left:0; right:0; text-align:center; font-family:'Barlow Condensed', sans-serif; font-size:26px; letter-spacing:9px; color:#8ea3c4; opacity:0; animation: fadeUp 600ms cubic-bezier(.2,.8,.3,1) 5900ms forwards; }
+  .divider { position:absolute; top:740px; left:50%; transform:translateX(-50%) scaleX(0); width:340px; height:4px; background:linear-gradient(90deg, #e0625f, #ffb020, #3ec2d9); border-radius:2px; opacity:0; animation: wipeIn 600ms cubic-bezier(.3,.8,.3,1) 6050ms forwards; }
+  @keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes wipeIn { to { transform:translateX(-50%) scaleX(1); opacity:1; } }
+</style>
+</head>
+<body>
+<div style="width:1600px; height:900px; background: linear-gradient(135deg, #0a3145 0%, #12233f 32%, #1c1030 68%, #12070f 100%); font-family:'Barlow Condensed', system-ui, sans-serif; color:#f2f5fb; position:relative; overflow:hidden;">
+
+  <div style="position:absolute; inset:0; background-image:
+      radial-gradient(circle at 10% 90%, rgba(224,98,95,0.22), transparent 46%),
+      radial-gradient(circle at 90% 10%, rgba(255,176,32,0.22), transparent 46%),
+      radial-gradient(circle at 92% 90%, rgba(62,194,217,0.20), transparent 42%),
+      repeating-linear-gradient(0deg, rgba(140,190,220,0.05) 0px, rgba(140,190,220,0.05) 1px, transparent 1px, transparent 64px),
+      repeating-linear-gradient(90deg, rgba(140,190,220,0.05) 0px, rgba(140,190,220,0.05) 1px, transparent 1px, transparent 64px);"></div>
+
+  <div style="position:absolute; top:0; left:0; right:0; height:10px; background:linear-gradient(90deg, #e0625f, #ffb020, #3ec2d9); box-shadow:0 0 22px rgba(255,176,32,0.35);"></div>
+  <div style="position:absolute; bottom:0; left:0; right:0; height:10px; background:linear-gradient(90deg, #3ec2d9, #ffb020, #e0625f); box-shadow:0 0 22px rgba(255,176,32,0.35);"></div>
+
+  <div class="intro-bracket-tl"></div>
+  <div class="intro-bracket-tr"></div>
+  <div class="intro-bracket-bl"></div>
+  <div class="intro-bracket-br"></div>
+
+  <!-- big word stage -->
+  <div class="stage">
+    <div class="word w-this"><span class="key">T</span><span class="rest">HIS</span></div>
+    <div class="word w-that"><span class="key">T</span><span class="rest">HAT</span></div>
+    <div class="word w-p3">
+      <span class="sub"><span class="key k-or">O</span><span class="rest r-or">R</span></span>&nbsp;
+      <span class="sub"><span class="key k-the">T</span><span class="rest r-the">HE</span></span>&nbsp;
+      <span class="sub"><span class="key k-other">O</span><span class="rest r-other">THER</span></span>
+    </div>
+  </div>
+
+  <!-- icon: assembles one blade per word -->
+  <div class="icon-wrap settled">
+    <svg width="130" height="130" viewBox="0 0 64 64">
+      <g stroke-width="7" stroke-linecap="round" fill="none">
+        <g class="blade blade-1"><path d="M14 12 L34 32 L14 52" stroke="#e0625f" transform="rotate(0 32 32)"/></g>
+        <g class="blade blade-2"><path d="M14 12 L34 32 L14 52" stroke="#ffb020" transform="rotate(120 32 32)"/></g>
+        <g class="blade blade-3"><path d="M14 12 L34 32 L14 52" stroke="#3ec2d9" transform="rotate(240 32 32)"/></g>
+      </g>
+    </svg>
+  </div>
+
+  <!-- wordmark: assembles one letter per word, spelling out TToTO -->
+  <div class="wordmark">
+    <span class="wm-letter wm-1">T</span><span class="wm-letter wm-2">T</span><span class="wm-letter wm-3">o</span><span class="wm-letter wm-4">T</span><span class="wm-letter wm-5">O</span>
+  </div>
+
+  <div class="tagline">THIS &middot; THAT &middot; OR THE OTHER</div>
+  <div class="divider"></div>
+
+</div>
+</body>
+</html>

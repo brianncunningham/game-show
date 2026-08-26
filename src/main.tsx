@@ -5,6 +5,7 @@ import { CssBaseline, ThemeProvider, createTheme } from '@mui/material';
 import { registerClientMode } from './shared/modeRegistry';
 import { nttClientMode } from './modes/nameThatTune/clientMode';
 import { surveySaysClientMode } from './modes/surveySays/clientMode';
+import { ttotoClientMode } from './modes/ttoto/clientMode';
 import './App.css';
 import GameAdminPage from './pages/GameAdminPage';
 import HostPage from './pages/HostPage';
@@ -13,6 +14,7 @@ import BuzzerDiagnosticsPage from './pages/BuzzerDiagnosticsPage';
 
 registerClientMode(nttClientMode);
 registerClientMode(surveySaysClientMode);
+registerClientMode(ttotoClientMode);
 
 const theme = createTheme({
   palette: {

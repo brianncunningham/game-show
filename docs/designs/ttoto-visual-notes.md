@@ -13,6 +13,11 @@ omission.
 - [`reference-combo-screen.html`](reference-combo-screen.html) — committed. A standalone (no
   design-tool wrapper), verified-rendering HTML/CSS/JS implementation of the confirmed
   screen. Copy/adapt this directly; don't rebuild from the screenshots.
+- [`ttoto-game-intro.html`](ttoto-game-intro.html) — committed. A standalone, code-driven
+  (~6.65s) game-intro animation: word-by-word reveal of THIS/THAT/OR THE OTHER, synced to a
+  3-blade logo-mark assembly and a letter-by-letter "TToTO" wordmark drop-in (reusing the
+  per-letter color mapping from §1a), settling into an idle glow loop. Supersedes the earlier
+  plan of reusing the static `ttoto-logo-lockup-tagline.png` for the show's intro screen.
 - [`LetterStyles.dc.html`](LetterStyles.dc.html) — committed. Working source for all three
   letter-display techniques (§4).
 - [`CrackVariants.dc.html`](CrackVariants.dc.html) — committed. Working source for all four

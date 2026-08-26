@@ -1,0 +1,607 @@
+import { useCallback, useEffect, useState } from 'react';
+import {
+  Alert, Box, Button, Card, CardContent, Chip, Divider, IconButton, MenuItem, Select, Stack, Tab, Tabs, TextField, Tooltip, Typography,
+} from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import DeleteIcon from '@mui/icons-material/Delete';
+import DownloadDoneIcon from '@mui/icons-material/DownloadDone';
+import SaveIcon from '@mui/icons-material/Save';
+import type { TToTOState, TToTORound, TToTOQuestion, TToTOFlavor, TToTOConfig } from './types';
+import { FLAVOR_LABELS } from './types';
+import {
+  getState, setRounds, updateConfig, setTeamName,
+  listSaves, createSave, loadSave as apiLoadSave, updateSave, deleteSave,
+} from './api';
+import type { TToTOSaveMeta } from './api';
+
+const TEAM_COLORS = ['#3ec2d9', '#ffb020'] as const;
+const sectionLabelSx = { fontWeight: 700, fontSize: '0.75rem', textTransform: 'uppercase' as const, letterSpacing: '0.1em', color: 'text.disabled', mb: 1 };
+const FLAVOR_OPTIONS = Object.keys(FLAVOR_LABELS) as TToTOFlavor[];
+
+const uid = () => Math.random().toString(36).slice(2, 10);
+
+const EXAMPLE_ROUNDS: TToTORound[] = [
+  {
+    id: 'round-1', roundNumber: 1, flavor: 'trivia',
+    questions: [
+      { id: 'q1', prompt: 'Which planet is closest to the sun?', choices: ['Mercury', 'Venus', 'Earth'] },
+      { id: 'q2', prompt: 'Which of these animals is NOT a mammal?', choices: ['Penguin', 'Dolphin', 'Bat'] },
+    ],
+  },
+];
+
+const emptyQuestion = (): TToTOQuestion => ({ id: uid(), prompt: '', choices: ['', '', ''] });
+const emptyRound = (roundNumber: number): TToTORound => ({ id: uid(), roundNumber, flavor: 'trivia', questions: [emptyQuestion()] });
+const cloneRounds = (rounds: TToTORound[]): TToTORound[] => rounds.map(r => ({ ...r, questions: r.questions.map(q => ({ ...q, choices: [...q.choices] as [string, string, string] })) }));
+
+// ─── Form-based round/question editor ────────────────────────────────────────
+
+function QuestionForm({ question, onChange, onRemove, canRemove }: {
+  question: TToTOQuestion; onChange: (q: TToTOQuestion) => void; onRemove: () => void; canRemove: boolean;
+}) {
+  return (
+    <Box sx={{ p: 1.5, border: '1px solid rgba(255,255,255,0.1)', borderRadius: 1, mb: 1.5 }}>
+      <Stack direction="row" spacing={1} alignItems="flex-start">
+        <TextField
+          fullWidth size="small" label="Prompt" value={question.prompt}
+          onChange={e => onChange({ ...question, prompt: e.target.value })}
+          sx={{ mb: 1.5 }}
+        />
+        <Tooltip title="Remove question">
+          <span>
+            <IconButton size="small" color="error" disabled={!canRemove} onClick={onRemove}>
+              <DeleteIcon fontSize="small" />
+            </IconButton>
+          </span>
+        </Tooltip>
+      </Stack>
+      <Stack spacing={1}>
+        {(['Correct answer', 'Wrong answer 1', 'Wrong answer 2'] as const).map((label, i) => (
+          <TextField
+            key={i} fullWidth size="small" label={label} value={question.choices[i]}
+            color={i === 0 ? 'success' : undefined}
+            focused={i === 0 && question.choices[0].length > 0 ? true : undefined}
+            onChange={e => {
+              const choices = [...question.choices] as [string, string, string];
+              choices[i] = e.target.value;
+              onChange({ ...question, choices });
+            }}
+          />
+        ))}
+      </Stack>
+      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+        The game randomizes which of This/That/The Other shows each answer — the "Correct answer" field is just for authoring.
+      </Typography>
+    </Box>
+  );
+}
+
+function RoundForm({ round, index, total, onChange, onRemove, onMove }: {
+  round: TToTORound; index: number; total: number;
+  onChange: (r: TToTORound) => void; onRemove: () => void; onMove: (dir: -1 | 1) => void;
+}) {
+  const updateQuestion = (qi: number, q: TToTOQuestion) => {
+    onChange({ ...round, questions: round.questions.map((existing, i) => (i === qi ? q : existing)) });
+  };
+  const removeQuestion = (qi: number) => {
+    onChange({ ...round, questions: round.questions.filter((_, i) => i !== qi) });
+  };
+  const addQuestion = () => {
+    onChange({ ...round, questions: [...round.questions, emptyQuestion()] });
+  };
+
+  return (
+    <Card variant="outlined">
+      <CardContent>
+        <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1.5 }}>
+          <Chip label={`Round ${round.roundNumber}`} size="small" color="primary" />
+          <Select
+            size="small" value={round.flavor}
+            onChange={e => onChange({ ...round, flavor: e.target.value as TToTOFlavor })}
+            sx={{ minWidth: 180, fontSize: '0.85rem' }}
+          >
+            {FLAVOR_OPTIONS.map(f => <MenuItem key={f} value={f}>{FLAVOR_LABELS[f]}</MenuItem>)}
+          </Select>
+          <Box sx={{ flex: 1 }} />
+          <Tooltip title="Move round up">
+            <span><IconButton size="small" disabled={index === 0} onClick={() => onMove(-1)}><ArrowUpwardIcon fontSize="small" /></IconButton></span>
+          </Tooltip>
+          <Tooltip title="Move round down">
+            <span><IconButton size="small" disabled={index === total - 1} onClick={() => onMove(1)}><ArrowDownwardIcon fontSize="small" /></IconButton></span>
+          </Tooltip>
+          <Tooltip title="Delete round">
+            <IconButton size="small" color="error" onClick={onRemove}><DeleteIcon fontSize="small" /></IconButton>
+          </Tooltip>
+        </Stack>
+
+        {round.questions.map((q, qi) => (
+          <QuestionForm key={q.id} question={q} canRemove={round.questions.length > 1}
+            onChange={(nq) => updateQuestion(qi, nq)} onRemove={() => removeQuestion(qi)} />
+        ))}
+        <Button size="small" startIcon={<AddIcon />} onClick={addQuestion}>Add Question</Button>
+      </CardContent>
+    </Card>
+  );
+}
+
+function RoundFormEditor({ state, onRefresh }: { state: TToTOState; onRefresh: () => Promise<void> }) {
+  const [draft, setDraft] = useState<TToTORound[]>(() => cloneRounds(state.rounds));
+  const [dirty, setDirty] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  // Re-sync from the server whenever it changes from elsewhere (e.g. JSON import, or
+  // after our own save completes) — but not while the user has unsaved local edits.
+  useEffect(() => {
+    if (!dirty) setDraft(cloneRounds(state.rounds));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.rounds]);
+
+  const updateRound = (ri: number, r: TToTORound) => {
+    setDraft(d => d.map((existing, i) => (i === ri ? r : existing)));
+    setDirty(true);
+  };
+  const removeRound = (ri: number) => {
+    setDraft(d => d.filter((_, i) => i !== ri).map((r, i) => ({ ...r, roundNumber: i + 1 })));
+    setDirty(true);
+  };
+  const addRound = () => {
+    setDraft(d => [...d, emptyRound(d.length + 1)]);
+    setDirty(true);
+  };
+  const moveRound = (ri: number, dir: -1 | 1) => {
+    setDraft(d => {
+      const next = [...d];
+      const target = ri + dir;
+      if (target < 0 || target >= next.length) return d;
+      [next[ri], next[target]] = [next[target], next[ri]];
+      return next.map((r, i) => ({ ...r, roundNumber: i + 1 }));
+    });
+    setDirty(true);
+  };
+
+  const validationError = (): string | null => {
+    for (const [ri, r] of draft.entries()) {
+      if (r.questions.length === 0) return `Round ${ri + 1}: needs at least one question.`;
+      for (const [qi, q] of r.questions.entries()) {
+        if (!q.prompt.trim()) return `Round ${ri + 1}, Q${qi + 1}: prompt required.`;
+        if (q.choices.some(c => !c.trim())) return `Round ${ri + 1}, Q${qi + 1}: all three answers required.`;
+      }
+    }
+    return null;
+  };
+  const error = validationError();
+
+  const handleSave = async () => {
+    if (error) return;
+    setSaving(true);
+    try {
+      await setRounds(draft);
+      await onRefresh();
+      setDirty(false);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Stack spacing={2}>
+      {draft.map((round, ri) => (
+        <RoundForm key={round.id} round={round} index={ri} total={draft.length}
+          onChange={(r) => updateRound(ri, r)} onRemove={() => removeRound(ri)} onMove={(dir) => moveRound(ri, dir)} />
+      ))}
+      <Button variant="outlined" startIcon={<AddIcon />} onClick={addRound}>Add Round</Button>
+      {error && <Alert severity="warning">{error}</Alert>}
+      <Button variant="contained" color="primary" startIcon={<SaveIcon />} disabled={saving || !!error || !dirty} onClick={() => void handleSave()}>
+        {dirty ? 'Save Changes' : 'Saved'}
+      </Button>
+    </Stack>
+  );
+}
+
+// ─── Content ──────────────────────────────────────────────────────────────────
+
+function BulkJsonImport({ onRefresh }: { onRefresh: () => Promise<void> }) {
+  const [open, setOpen] = useState(false);
+  const [jsonText, setJsonText] = useState('');
+  const [parseResult, setParseResult] = useState<TToTORound[] | null>(null);
+  const [parseError, setParseError] = useState('');
+  const [uploading, setUploading] = useState(false);
+
+  const validate = (data: unknown): TToTORound[] => {
+    if (!Array.isArray(data)) throw new Error('Expected a JSON array of rounds.');
+    return data.map((r, i) => {
+      if (!r || typeof r !== 'object') throw new Error(`Round ${i + 1}: not an object.`);
+      const round = r as Partial<TToTORound>;
+      if (!round.flavor || !(round.flavor in FLAVOR_LABELS)) throw new Error(`Round ${i + 1}: invalid or missing flavor. Valid values: ${FLAVOR_OPTIONS.join(', ')}.`);
+      if (!Array.isArray(round.questions) || round.questions.length === 0) throw new Error(`Round ${i + 1}: needs at least one question.`);
+      round.questions.forEach((q, qi) => {
+        if (!q.prompt?.trim()) throw new Error(`Round ${i + 1}, Q${qi + 1}: prompt required.`);
+        if (!Array.isArray(q.choices) || q.choices.length !== 3 || q.choices.some((c: unknown) => typeof c !== 'string' || !c.trim())) {
+          throw new Error(`Round ${i + 1}, Q${qi + 1}: choices must be an array of exactly 3 strings, first one correct.`);
+        }
+      });
+      return {
+        id: round.id ?? `round-${i + 1}-${uid()}`,
+        roundNumber: i + 1,
+        flavor: round.flavor,
+        questions: round.questions.map((q, qi) => ({
+          id: q.id ?? `q-${i + 1}-${qi + 1}-${uid()}`,
+          prompt: q.prompt,
+          choices: q.choices,
+          ...(q.mediaRef ? { mediaRef: q.mediaRef } : {}),
+        })),
+      } as TToTORound;
+    });
+  };
+
+  const handleParse = () => {
+    setParseError('');
+    try {
+      const data = JSON.parse(jsonText) as unknown;
+      setParseResult(validate(data));
+    } catch (e) {
+      setParseError(e instanceof Error ? e.message : String(e));
+      setParseResult(null);
+    }
+  };
+
+  const handleUpload = async () => {
+    if (!parseResult) return;
+    setUploading(true);
+    try {
+      await setRounds(parseResult);
+      await onRefresh();
+      setParseResult(null);
+      setJsonText('');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <Card variant="outlined">
+      <CardContent sx={{ pb: open ? undefined : '12px !important' }}>
+        <Stack direction="row" alignItems="center" justifyContent="space-between" onClick={() => setOpen(o => !o)} sx={{ cursor: 'pointer' }}>
+          <Typography sx={{ ...sectionLabelSx, mb: 0 }}>Advanced: Bulk JSON Import (replaces all rounds)</Typography>
+          <Button size="small">{open ? 'Hide' : 'Show'}</Button>
+        </Stack>
+        {open && (
+          <Box sx={{ mt: 1.5 }}>
+            <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
+              <Typography variant="caption" color="text.secondary">
+                Valid flavors: {FLAVOR_OPTIONS.join(', ')}. <code>choices</code> is an array of exactly 3 strings — the first is always correct; the game randomizes screen position.
+              </Typography>
+              <Button size="small" variant="outlined" onClick={() => setJsonText(JSON.stringify(EXAMPLE_ROUNDS, null, 2))}>
+                Load Example
+              </Button>
+            </Stack>
+            <TextField
+              fullWidth multiline minRows={6} maxRows={20}
+              placeholder="[ ... ]"
+              value={jsonText}
+              onChange={e => { setJsonText(e.target.value); setParseResult(null); setParseError(''); }}
+              sx={{ mb: 1 }}
+              inputProps={{ style: { fontFamily: 'monospace', fontSize: '0.8rem' } }}
+            />
+            {parseError && <Alert severity="error" sx={{ mb: 1 }}>{parseError}</Alert>}
+            {parseResult && (
+              <Alert severity="success" sx={{ mb: 1 }}>
+                Parsed {parseResult.length} round{parseResult.length !== 1 ? 's' : ''}, {parseResult.reduce((n, r) => n + r.questions.length, 0)} questions total. This will replace all currently loaded rounds.
+              </Alert>
+            )}
+            <Stack direction="row" spacing={1}>
+              <Button variant="outlined" onClick={handleParse} disabled={!jsonText.trim()}>Parse</Button>
+              {parseResult && (
+                <Button variant="contained" color="primary" startIcon={<DownloadDoneIcon />} disabled={uploading} onClick={() => void handleUpload()}>
+                  Replace with {parseResult.length} Round{parseResult.length !== 1 ? 's' : ''}
+                </Button>
+              )}
+            </Stack>
+          </Box>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function ContentManager({ state, onRefresh }: { state: TToTOState; onRefresh: () => Promise<void> }) {
+  return (
+    <Stack spacing={2}>
+      <RoundFormEditor state={state} onRefresh={onRefresh} />
+      <Divider />
+      <BulkJsonImport onRefresh={onRefresh} />
+    </Stack>
+  );
+}
+
+// ─── Settings ─────────────────────────────────────────────────────────────────
+
+function Settings({ state, onRefresh }: { state: TToTOState; onRefresh: () => Promise<void> }) {
+  const { config, teams } = state;
+  const [multText, setMultText] = useState(config.roundMultipliers.join(', '));
+
+  const handleConfigChange = async (patch: Partial<TToTOConfig>) => {
+    await updateConfig(patch);
+    await onRefresh();
+  };
+
+  const handleMultSave = async () => {
+    const parsed = multText.split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n));
+    if (parsed.length === 0) return;
+    await handleConfigChange({ roundMultipliers: parsed });
+  };
+
+  const handleTeamName = async (teamId: string, name: string) => {
+    if (!name.trim()) return;
+    await setTeamName(teamId, name);
+    await onRefresh();
+  };
+
+  return (
+    <Stack spacing={2}>
+      <Card>
+        <CardContent>
+          <Typography sx={sectionLabelSx}>Team Names</Typography>
+          <Stack spacing={1.5}>
+            {teams.map((t, i) => (
+              <Box key={t.id}>
+                <Typography variant="caption" sx={{ color: TEAM_COLORS[i], fontWeight: 700 }}>Team {i + 1}</Typography>
+                <TextField fullWidth size="small" defaultValue={t.name}
+                  onBlur={e => void handleTeamName(t.id, e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') void handleTeamName(t.id, (e.target as HTMLInputElement).value); }}
+                  sx={{ mt: 0.5 }} />
+              </Box>
+            ))}
+          </Stack>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent>
+          <Typography sx={sectionLabelSx}>Scoring</Typography>
+          <Stack spacing={2}>
+            <Box>
+              <Typography variant="body2" gutterBottom>Base Points (per question)</Typography>
+              <TextField size="small" type="number" defaultValue={config.basePoints}
+                onBlur={e => void handleConfigChange({ basePoints: parseInt(e.target.value, 10) })} />
+            </Box>
+            <Box>
+              <Typography variant="body2" gutterBottom>Round Multipliers (comma-separated, index = round)</Typography>
+              <Stack direction="row" spacing={1} alignItems="center">
+                <TextField size="small" value={multText} onChange={e => setMultText(e.target.value)} sx={{ width: 200 }} />
+                <Button size="small" variant="outlined" onClick={() => void handleMultSave()}>Save</Button>
+              </Stack>
+              <Typography variant="caption" color="text.secondary">e.g. 1, 1, 2, 2, 3 → R1=×1, R2=×1, R3=×2, R4=×2, R5=×3. A steal is worth the same as a first-guess correct answer.</Typography>
+            </Box>
+          </Stack>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent>
+          <Typography sx={sectionLabelSx}>Rules</Typography>
+          <Stack spacing={1.5}>
+            <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+              <Typography variant="caption" sx={{ color: 'text.secondary', mr: 0.5 }}>Reveal timing:</Typography>
+              {(['prompt_first', 'together'] as const).map(v => (
+                <Button key={v} size="small" variant={config.revealTiming === v ? 'contained' : 'outlined'} color="info"
+                  onClick={() => void handleConfigChange({ revealTiming: v })}>
+                  {v === 'prompt_first' ? 'Prompt first' : 'Together'}
+                </Button>
+              ))}
+            </Stack>
+            <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+              <Typography variant="caption" sx={{ color: 'text.secondary', mr: 0.5 }}>Early buzz:</Typography>
+              {(['ignore', 'lockout'] as const).map(v => (
+                <Button key={v} size="small" variant={config.earlyBuzzPenalty === v ? 'contained' : 'outlined'} color="warning"
+                  onClick={() => void handleConfigChange({ earlyBuzzPenalty: v })}>
+                  {v === 'ignore' ? 'Ignore' : 'Lockout (this window)'}
+                </Button>
+              ))}
+            </Stack>
+            <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+              <Typography variant="caption" sx={{ color: 'text.secondary', mr: 0.5 }}>Double miss:</Typography>
+              {(['no_score', 'half_points'] as const).map(v => (
+                <Button key={v} size="small" variant={config.doubleMissRule === v ? 'contained' : 'outlined'} color="secondary"
+                  onClick={() => void handleConfigChange({ doubleMissRule: v })}>
+                  {v === 'no_score' ? 'No score' : 'Half points'}
+                </Button>
+              ))}
+            </Stack>
+            <Typography variant="caption" color="text.secondary">
+              Phase 1 supports EXCLUSIVE steal + manual buzzer mode only. TIMED_WINDOW steal and hardware wands are Phase 2/3.
+            </Typography>
+          </Stack>
+        </CardContent>
+      </Card>
+    </Stack>
+  );
+}
+
+// ─── Save Manager ─────────────────────────────────────────────────────────────
+
+interface ActiveSave { id: string; name: string }
+
+function SaveManager({ activeSave, onActiveSaveChange, onRefreshGame }: {
+  activeSave: ActiveSave | null;
+  onActiveSaveChange: (save: ActiveSave | null) => void;
+  onRefreshGame: () => Promise<void>;
+}) {
+  const [saves, setSaves] = useState<TToTOSaveMeta[]>([]);
+  const [saveName, setSaveName] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const refresh = useCallback(async () => {
+    try { setSaves(await listSaves()); } catch { /* ignore */ }
+  }, []);
+
+  useEffect(() => { void refresh(); }, [refresh]);
+
+  const handleSave = async () => {
+    if (!saveName.trim()) return;
+    setLoading(true);
+    try {
+      const created = await createSave(saveName.trim());
+      setSaveName('');
+      await refresh();
+      onActiveSaveChange({ id: created.id, name: created.name });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLoad = async (s: TToTOSaveMeta) => {
+    setLoading(true);
+    try {
+      await apiLoadSave(s.id);
+      await onRefreshGame();
+      onActiveSaveChange({ id: s.id, name: s.name });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Overwrites this save with whatever rounds/config are currently live (i.e. whatever
+  // you just edited in the Content/Settings tabs) — this is the "re-save my edits" step.
+  const handleUpdate = async (s: TToTOSaveMeta) => {
+    setUpdatingId(s.id);
+    try {
+      await updateSave(s.id);
+      await refresh();
+      onActiveSaveChange({ id: s.id, name: s.name });
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    setDeletingId(id);
+    try {
+      await deleteSave(id);
+      await refresh();
+      if (activeSave?.id === id) onActiveSaveChange(null);
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  return (
+    <Stack spacing={2}>
+      <Alert severity="info">
+        <strong>Workflow:</strong> Load a save below to bring it into the live game (editable in the Content/Settings
+        tabs) → make your edits → come back here and click <strong>Update</strong> on that same save to write your
+        edits back to it. Editing Content/Settings always changes the live game immediately; it only reaches a named
+        save file once you click Update (or Save As New below).
+      </Alert>
+
+      <Card>
+        <CardContent>
+          <Typography sx={sectionLabelSx}>Save Current Game As New</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+            Creates a brand-new save from what's currently live. To update an existing save instead, use its Update button below.
+          </Typography>
+          <Stack direction="row" spacing={1}>
+            <TextField size="small" label="Save name" value={saveName} onChange={e => setSaveName(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') void handleSave(); }} sx={{ flex: 1 }} />
+            <Button variant="contained" startIcon={<SaveIcon />} disabled={!saveName.trim() || loading} onClick={() => void handleSave()}>
+              Save As New
+            </Button>
+          </Stack>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent>
+          <Typography sx={sectionLabelSx}>Saved Games ({saves.length})</Typography>
+          {saves.length === 0 ? (
+            <Typography variant="body2" color="text.secondary">No saves yet.</Typography>
+          ) : (
+            <Stack spacing={1} divider={<Divider />}>
+              {saves.map(s => (
+                <Stack key={s.id} direction="row" spacing={1} alignItems="center"
+                  sx={activeSave?.id === s.id ? { bgcolor: 'rgba(86,215,255,0.08)', borderRadius: 1, px: 1 } : undefined}>
+                  <Box sx={{ flex: 1 }}>
+                    <Stack direction="row" spacing={1} alignItems="center">
+                      <Typography variant="body2" sx={{ fontWeight: 600 }}>{s.name}</Typography>
+                      {activeSave?.id === s.id && <Chip label="Currently editing" size="small" color="info" />}
+                    </Stack>
+                    <Typography variant="caption" color="text.secondary">{new Date(s.savedAt).toLocaleString()}</Typography>
+                  </Box>
+                  <Tooltip title="Bring this save's rounds/config into the live game for editing">
+                    <Button size="small" variant="outlined" disabled={loading} onClick={() => void handleLoad(s)}>Load</Button>
+                  </Tooltip>
+                  <Tooltip title="Overwrite this save with the currently live rounds/config">
+                    <Button size="small" variant="outlined" color="warning" disabled={updatingId === s.id} onClick={() => void handleUpdate(s)}>
+                      Update
+                    </Button>
+                  </Tooltip>
+                  <Tooltip title="Delete save">
+                    <span>
+                      <IconButton size="small" color="error" disabled={deletingId === s.id} onClick={() => void handleDelete(s.id)}>
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </span>
+                  </Tooltip>
+                </Stack>
+              ))}
+            </Stack>
+          )}
+        </CardContent>
+      </Card>
+    </Stack>
+  );
+}
+
+// ─── Main component ───────────────────────────────────────────────────────────
+
+export const TToTOAdminComponent = () => {
+  const [state, setState] = useState<TToTOState | null>(null);
+  const [tab, setTab] = useState(0);
+  const [activeSave, setActiveSave] = useState<ActiveSave | null>(null);
+
+  const refresh = useCallback(async () => {
+    try { setState(await getState()); } catch { /* ignore */ }
+  }, []);
+
+  useEffect(() => { void refresh(); }, [refresh]);
+
+  if (!state) {
+    return (
+      <Box sx={{ p: 4, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Typography color="text.secondary">Loading…</Typography>
+      </Box>
+    );
+  }
+
+  return (
+    <Box sx={{ maxWidth: 760, mx: 'auto', p: 2 }}>
+      <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 2, flexWrap: 'wrap' }}>
+        <Typography variant="h6" sx={{ fontWeight: 700 }}>TToTO — Admin</Typography>
+        {state.rounds.length > 0
+          ? <Chip label={`${state.rounds.length} round${state.rounds.length !== 1 ? 's' : ''}`} size="small" color="primary" />
+          : <Chip label="No rounds" size="small" color="default" />}
+        <Chip
+          label={activeSave ? `📂 Loaded from: ${activeSave.name}` : 'No save loaded (live game only)'}
+          size="small" color={activeSave ? 'info' : 'default'} variant={activeSave ? 'filled' : 'outlined'}
+          title="Content/Settings edits change the live game immediately. This just tracks which save you last Loaded/Updated — click Update in the Saves tab to write your edits back to it."
+        />
+      </Stack>
+
+      <Tabs value={tab} onChange={(_, v: number) => setTab(v)} sx={{ mb: 2 }}>
+        <Tab label="Content" />
+        <Tab label="Settings" />
+        <Tab label="Saves" />
+      </Tabs>
+
+      {tab === 0 && <ContentManager state={state} onRefresh={refresh} />}
+      {tab === 1 && <Settings state={state} onRefresh={refresh} />}
+      {tab === 2 && <SaveManager activeSave={activeSave} onActiveSaveChange={setActiveSave} onRefreshGame={refresh} />}
+    </Box>
+  );
+};
+
+export default TToTOAdminComponent;
