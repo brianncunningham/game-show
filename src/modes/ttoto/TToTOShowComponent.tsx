@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
 import { getState } from './api';
 import type { TToTOState, TToTOChoiceKey, LetterStyle, TToTORound } from './types';
 import { FLAVOR_LABELS } from './types';
@@ -112,6 +112,100 @@ const GLOBAL_CSS = `
   .ttoto-rivet { position:absolute; width:7px; height:7px; border-radius:50%; z-index:1;
     background: radial-gradient(circle at 35% 30%, #dfe4e8, #767c83 55%, #202225 100%);
     box-shadow: 0 1px 2px rgba(0,0,0,0.7); }
+
+  /* Phase C: the filament-bulb celebration fixture (victory screen only) — a normally-
+     dormant warm theatrical subsystem, distinct from the cool electromechanical rig that
+     runs during play. Illumination is layered on top of the real edison-tube-base.png
+     artwork as 3 independently-timed pieces (ember, filament, environmental spill), never
+     baked into or replacing the photo. Each bulb: unlit -> faint ember -> hesitate/flicker
+     -> rapid tungsten warm-up -> steady ~2200K glow, then holds — no looping chase/twinkle
+     once lit. All 4 layers below share one timeline/duration so they read as one bulb
+     igniting rather than unrelated effects. */
+  .ttoto-bulb-spill, .ttoto-bulb-glass, .ttoto-bulb-ember, .ttoto-bulb-filament { position:absolute; pointer-events:none; }
+
+  @keyframes ttotoEmberFlicker {
+    0%   { opacity: 0; }
+    10%  { opacity: 0.5; }
+    18%  { opacity: 0.25; }
+    27%  { opacity: 0.45; }
+    42%  { opacity: 0.1; }
+    58%  { opacity: 0; }
+    100% { opacity: 0; }
+  }
+  .ttoto-bulb-ember {
+    border-radius: 50%; filter: blur(3px);
+    background: radial-gradient(ellipse 60% 100% at 50% 50%, rgba(210,75,20,0.95), rgba(150,45,10,0.45) 55%, transparent 76%);
+    animation: ttotoEmberFlicker 2200ms ease-out both;
+  }
+
+  @keyframes ttotoFilamentIgnite {
+    0%   { opacity: 0; }
+    20%  { opacity: 0; }
+    26%  { opacity: 0.4; }
+    32%  { opacity: 0.15; }
+    44%  { opacity: 0.8; }
+    52%  { opacity: 0.55; }
+    64%  { opacity: 0.97; }
+    76%  { opacity: 1; }
+    100% { opacity: 1; }
+  }
+  .ttoto-bulb-filament {
+    /* The brightest element of the bulb, by design — a hot near-white core (2200K reads
+       warm but is still the brightest point in the scene) falling off into amber. */
+    border-radius: 50%; filter: blur(1.6px);
+    background: radial-gradient(ellipse 60% 100% at 50% 50%, rgba(255,248,232,1) 0%, rgba(255,214,150,0.95) 30%, rgba(255,171,82,0.6) 55%, rgba(255,141,52,0.2) 75%, transparent 88%);
+    animation: ttotoFilamentIgnite 2200ms ease-out both;
+  }
+
+  @keyframes ttotoGlassWarm {
+    0%   { opacity: 0; }
+    62%  { opacity: 0; }
+    80%  { opacity: 0.32; }
+    100% { opacity: 0.32; }
+  }
+  .ttoto-bulb-glass {
+    /* Secondary to the filament — a restrained warm sheen on the glass, not a second
+       light source competing with it. */
+    border-radius: 50%;
+    background: radial-gradient(ellipse 55% 40% at 35% 24%, rgba(255,226,192,0.4), transparent 65%);
+    animation: ttotoGlassWarm 2200ms ease-out both;
+  }
+
+  @keyframes ttotoSpillBloom {
+    0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.7); }
+    62%  { opacity: 0; transform: translate(-50%, -50%) scale(0.7); }
+    78%  { opacity: 0.5; transform: translate(-50%, -50%) scale(0.92); }
+    100% { opacity: 0.85; transform: translate(-50%, -50%) scale(1); }
+  }
+  .ttoto-bulb-spill {
+    /* Broad/strong — restored to the first version's values. This is the "near the bulb"
+       halo; still tertiary to the filament/glass since it's a soft low-density gradient. */
+    border-radius: 50%; filter: blur(9px); z-index: 0;
+    background: radial-gradient(circle, rgba(255,171,82,0.4) 0%, rgba(255,141,62,0.16) 40%, transparent 72%);
+    animation: ttotoSpillBloom 2200ms ease-out both;
+  }
+
+  /* The "reach toward the center" layer — deliberately NOT one gradient centered behind the
+     winner. Each bulb gets one of these, centered on that bulb's own (offscreen/edge)
+     position with a large radius and a very low individual peak opacity. mix-blend-mode:
+     screen means overlapping fields brighten each other where they overlap — so any single
+     field is barely perceptible on its own, but where several overlap (naturally, toward
+     the middle of the canvas, since bulbs surround it) the cumulative warmth becomes
+     noticeable. That's what keeps the effect reading as "light cast from multiple fixtures"
+     rather than a single orange source, while still visibly warming the center. */
+  @keyframes ttotoReachBloom {
+    0%   { opacity: 0; }
+    58%  { opacity: 0; }
+    100% { opacity: 1; }
+  }
+  .ttoto-bulb-reach {
+    /* Tight falloff on purpose — "warm islands within a cool dark room," not a wash. Most
+       of the canvas between bulbs should show clearly visible cool navy/teal/purple; only
+       the handful of bulbs nearest the center should leave any (faint) trace there. */
+    position: absolute; border-radius: 50%; pointer-events: none; mix-blend-mode: screen;
+    background: radial-gradient(circle, rgba(255,158,74,0.15) 0%, rgba(255,140,66,0.06) 22%, rgba(255,130,60,0.02) 42%, rgba(255,120,55,0.006) 62%, transparent 85%);
+    animation: ttotoReachBloom 2400ms ease-out both;
+  }
 `;
 
 const multiplierForRound = (roundMultipliers: number[], roundIndex: number): number =>
@@ -370,34 +464,204 @@ function RoundIntroScreen({ round, multiplier }: { round: TToTORound | undefined
   );
 }
 
-// ─── Game-over screen ────────────────────────────────────────────────────────
+// ─── Game-over / victory screen ─────────────────────────────────────────────
+
+// Filament-bulb celebration fixture (replaces confetti) — a normally-dormant warm
+// theatrical subsystem, dormant during play, that only wakes up for the victory screen.
+// Uses the provided edison-tube-base.png artwork (real photographed bulb — glass envelope,
+// visible internal filament structure, blackened-metal/brass socket) rather than a drawn
+// icon; every instance below is the same image, just rotated/scaled/positioned. Illumination
+// is layered on top via separate CSS elements (never baked into or replacing the artwork).
+const BULB_ASSET_SRC = '/ttoto/decorations/edison-tube-base.png';
+const BULB_ASSET_ASPECT = 941 / 1672; // width/height of the source art
+
+// Fractional bounding boxes measured directly from the artwork's pixels (see the analysis
+// in the commit that added this), so the illumination overlays land on the actual glass/
+// filament regions of this specific image rather than a guessed position.
+const BULB_GLASS_BOX = { x0: 0.36, y0: 0.01, x1: 0.64, y1: 0.80 };
+const BULB_FILAMENT_BOX = { x0: 0.40, y0: 0.16, x1: 0.60, y1: 0.72 };
+// Where the bulb "plugs into" its mounting arm — partway down the socket body.
+const BULB_SOCKET_ANCHOR = { x: 0.5, y: 0.87 };
+
+function boxStyle(box: { x0: number; y0: number; x1: number; y1: number }): CSSProperties {
+  return {
+    position: 'absolute',
+    left: `${box.x0 * 100}%`, top: `${box.y0 * 100}%`,
+    width: `${(box.x1 - box.x0) * 100}%`, height: `${(box.y1 - box.y0) * 100}%`,
+  };
+}
+
+/** One physical bulb — independent, not connected to any other bulb or to a shared visible
+ * structure. Only a short stub of mounting hardware (past the artwork's own socket) implies
+ * it's actually mounted to something, then fades to nothing — it does not reach toward a
+ * center point. Pointed generally toward the victory content at `rotationDeg`, with its own
+ * staggered ignition. Illumination is 3 independently-timed layers over the same artwork: a
+ * small early "ember", the main filament glow (brightest), and a broad soft environmental
+ * spill (secondary/tertiary) — see the ttotoEmberFlicker/FilamentIgnite/SpillBloom
+ * keyframes. */
+function MountedFilamentBulb({ x, y, width, rotationDeg, delayMs }: {
+  x: number; y: number; width: number; rotationDeg: number; delayMs: number;
+}) {
+  const height = width / BULB_ASSET_ASPECT;
+  const stemLength = height * 0.22;
+  return (
+    <div style={{
+      position: 'absolute',
+      left: x - width * BULB_SOCKET_ANCHOR.x, top: y - height * BULB_SOCKET_ANCHOR.y,
+      width, height,
+      transformOrigin: `${BULB_SOCKET_ANCHOR.x * 100}% ${BULB_SOCKET_ANCHOR.y * 100}%`,
+      transform: `rotate(${rotationDeg}deg)`,
+    }}>
+      {/* Environmental spill — restored to the first version's broad/strong values; bulbs
+          now live at the edges, so this is what actually reaches the center. */}
+      <div className="ttoto-bulb-spill" style={{
+        position: 'absolute', left: '50%', top: `${(BULB_FILAMENT_BOX.y0 + BULB_FILAMENT_BOX.y1) / 2 * 100}%`,
+        width: width * 3.4, height: width * 3.4, transform: 'translate(-50%, -50%)',
+        animationDelay: `${delayMs}ms`,
+      }} />
+      {/* A short stub of blackened-metal/brass hardware past the socket, fading to nothing —
+          just enough to read as "mounted to something," not a rod reaching toward a center. */}
+      <div style={{
+        position: 'absolute', left: '50%', top: `${BULB_SOCKET_ANCHOR.y * 100}%`, width: width * 0.14, height: stemLength,
+        transform: 'translateX(-50%)',
+        background: 'linear-gradient(to bottom, #2a2b2d 0%, #1a1b1c 55%, transparent 100%)',
+      }} />
+      <img src={BULB_ASSET_SRC} alt="" draggable={false} style={{ position: 'relative', width: '100%', height: '100%', display: 'block' }} />
+      {/* Glass response — secondary to the filament, above the artwork. */}
+      <div className="ttoto-bulb-glass" style={{ ...boxStyle(BULB_GLASS_BOX), animationDelay: `${delayMs}ms` }} />
+      {/* Ember (early, fades out) + main filament emission (takes over, holds steady, and is
+          the brightest element of the bulb) — both confined to the artwork's actual
+          filament geometry. */}
+      <div className="ttoto-bulb-ember" style={{ ...boxStyle(BULB_FILAMENT_BOX), animationDelay: `${delayMs}ms` }} />
+      <div className="ttoto-bulb-filament" style={{ ...boxStyle(BULB_FILAMENT_BOX), animationDelay: `${delayMs}ms` }} />
+    </div>
+  );
+}
+
+// No shared visible structure at all (no hub, no ring, no spokes) — each bulb is
+// independent, living in the outer 30-40% of the 1600x900 canvas, oriented generally toward
+// CONTENT_CENTER (used only for aiming the bulbs and centering the ambient wash — nothing is
+// drawn there). Positions are hand-placed and deliberately irregular (varied distance/size/
+// angle) rather than derived from one angle+radius formula, so the arrangement doesn't read
+// as symmetric/clock-like. Several bulbs sit partly off-canvas for cropping/depth.
+const CONTENT_CENTER = { x: 800, y: 420 };
+const BULB_FIXTURE: Array<{ x: number; y: number; width: number; delay: number }> = [
+  { x: 40, y: -50, width: 145 },
+  { x: 1120, y: -70, width: 110 },
+  { x: 1660, y: 160, width: 135 },
+  { x: -60, y: 470, width: 190 },
+  { x: 1640, y: 560, width: 120 },
+  { x: 130, y: 970, width: 155 },
+  { x: 780, y: 1010, width: 100 },
+  { x: 1480, y: 950, width: 140 },
+  { x: 330, y: 60, width: 90 },
+].map((b, i) => ({ ...b, delay: [0, 220, 90, 380, 150, 300, 60, 260, 430][i] }));
+
+// Radius for each bulb's "reach toward center" field (see .ttoto-bulb-reach) — deliberately
+// small relative to the canvas: most bulb-to-bulb gaps (900+ px) stay clearly cool, only the
+// 2-3 bulbs nearest the content center (~590px away) leave any trace there, and even that is
+// deep in the gradient's faint tail. Nearby bulb pairs (e.g. the two top-left ones, ~310px
+// apart) still overlap into one richer corner glow, which is fine — "somewhat" overlapping,
+// not a full-screen merge.
+const REACH_RADIUS = 620;
+
+function FilamentBulbFixture() {
+  return (
+    <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
+      {/* One "reach" field per bulb, anchored at that bulb's own position — overlapping
+          light cast from multiple edge fixtures, not a single gradient behind the winner. */}
+      {BULB_FIXTURE.map((b, i) => (
+        <div key={i} className="ttoto-bulb-reach" style={{
+          left: b.x, top: b.y, width: REACH_RADIUS * 2, height: REACH_RADIUS * 2,
+          transform: 'translate(-50%, -50%)', animationDelay: `${b.delay}ms`,
+        }} />
+      ))}
+      {BULB_FIXTURE.map((b, i) => {
+        const angleToCenter = Math.atan2(CONTENT_CENTER.y - b.y, CONTENT_CENTER.x - b.x) * (180 / Math.PI);
+        return <MountedFilamentBulb key={i} x={b.x} y={b.y} width={b.width} rotationDeg={angleToCenter + 90} delayMs={b.delay} />;
+      })}
+    </div>
+  );
+}
+
+function TToTOLogoMark({ size = 64 }: { size?: number }) {
+  return (
+    <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 14 }}>
+      <svg width={size} height={size} viewBox="0 0 64 64">
+        <g strokeWidth={7} strokeLinecap="round" fill="none">
+          <path d="M14 12 L34 32 L14 52" stroke={TTOTO_COLORS.this} transform="rotate(0 32 32)" />
+          <path d="M14 12 L34 32 L14 52" stroke={TTOTO_COLORS.that} transform="rotate(120 32 32)" />
+          <path d="M14 12 L34 32 L14 52" stroke={TTOTO_COLORS.the_other} transform="rotate(240 32 32)" />
+        </g>
+      </svg>
+      <div style={{ fontFamily: "'Big Shoulders Display', sans-serif", fontWeight: 900, fontSize: size * 0.8, letterSpacing: 1, lineHeight: 1 }}>
+        <span style={{ color: TTOTO_COLORS.this }}>T</span><span style={{ color: TTOTO_COLORS.that }}>T</span>
+        <span style={{ color: '#c7d4ea', fontSize: '0.68em' }}>o</span>
+        <span style={{ color: '#f2f5fb' }}>T</span><span style={{ color: TTOTO_COLORS.the_other }}>O</span>
+      </div>
+    </div>
+  );
+}
 
 function GameOverScreen({ state }: { state: TToTOState }) {
   const [t1, t2] = state.teams;
   const winner = t1.score === t2.score ? null : (t1.score > t2.score ? t1 : t2);
+  const loser = winner ? state.teams.find(t => t.id !== winner.id) : null;
+
   return (
     <TToTOStage>
       <div style={{
-        width: 1600, height: 900,
-        background: 'linear-gradient(135deg, #0a3145 0%, #12233f 32%, #1c1030 68%, #12070f 100%)',
+        width: 1600, height: 900, position: 'relative', overflow: 'hidden',
+        background: `radial-gradient(ellipse 70% 60% at 50% 42%, ${rgba(TTOTO_COLORS.correct, 0.22)} 0%, transparent 70%), linear-gradient(135deg, #0a3145 0%, #12233f 32%, #1c1030 68%, #12070f 100%)`,
         fontFamily: "'Barlow Condensed', system-ui, sans-serif", color: '#f2f5fb',
-        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 24,
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20,
       }}>
-        <div style={{ fontFamily: "'Big Shoulders Display', sans-serif", fontWeight: 900, fontSize: 72, letterSpacing: 2, color: '#f2f5fb', textShadow: '0 0 30px rgba(242,245,251,0.4)' }}>
+        {winner && <FilamentBulbFixture />}
+
+        <div style={{ position: 'relative' }}><TToTOLogoMark size={56} /></div>
+
+        <div style={{ position: 'relative', fontSize: 20, fontWeight: 700, letterSpacing: 8, color: '#8ea3c4' }}>
           GAME OVER
         </div>
-        <div style={{ display: 'flex', gap: 60 }}>
-          {state.teams.map((t) => (
-            <div key={t.id} style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 22, letterSpacing: 3, color: winner?.id === t.id ? TTOTO_COLORS.correct : '#8ea3c4' }}>{t.name}</div>
-              <div style={{ fontFamily: "'Big Shoulders Display', sans-serif", fontWeight: 900, fontSize: 88 }}>{t.score}</div>
+
+        {winner ? (
+          <>
+            {/* "WINNER" showcased in dot-matrix — same technique used to reveal answers,
+                repurposed here as one last flourish for the letter-display tech. */}
+            <div style={{ position: 'relative', marginTop: 4 }}>
+              <DotMatrixRow word="WINNER" revealed won />
             </div>
-          ))}
-        </div>
-        {winner && (
-          <div style={{ fontFamily: "'Big Shoulders Display', sans-serif", fontWeight: 800, fontSize: 32, color: TTOTO_COLORS.correct, textShadow: `0 0 20px ${rgba(TTOTO_COLORS.correct, 0.5)}` }}>
-            {winner.name} WINS!
-          </div>
+
+            {/* Winning team's name in split-flap */}
+            <div style={{ position: 'relative' }}>
+              <SplitFlapRow variant="this" word={winner.name.toUpperCase()} revealed won />
+            </div>
+
+            {/* Score in segmented */}
+            <div style={{ position: 'relative', marginTop: 2 }}>
+              <SegmentedRow word={String(winner.score)} revealed won />
+            </div>
+
+            {loser && (
+              <div style={{ position: 'relative', marginTop: 10, fontSize: 16, letterSpacing: 2, color: '#8ea3c4' }}>
+                {winner.name.toUpperCase()} {winner.score} &mdash; {loser.name.toUpperCase()} {loser.score}
+              </div>
+            )}
+          </>
+        ) : (
+          <>
+            <div style={{ position: 'relative', fontFamily: "'Big Shoulders Display', sans-serif", fontWeight: 900, fontSize: 72, letterSpacing: 2, marginTop: 8 }}>
+              IT'S A TIE!
+            </div>
+            <div style={{ position: 'relative', display: 'flex', gap: 60, marginTop: 8 }}>
+              {state.teams.map((t) => (
+                <div key={t.id} style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: 20, letterSpacing: 3, color: '#8ea3c4' }}>{t.name.toUpperCase()}</div>
+                  <div style={{ fontFamily: "'Big Shoulders Display', sans-serif", fontWeight: 900, fontSize: 80 }}>{t.score}</div>
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </div>
     </TToTOStage>
