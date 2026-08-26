@@ -27,6 +27,10 @@ export interface TToTOQuestion {
   // AI-generated content to "correct answer + 2 wrong answers", no slot bookkeeping.
   choices: [string, string, string];
   mediaRef?: string;          // Spotify track ID or image URL (media_id flavor) — Phase 3
+  // Optional host-only context, e.g. "Tomato is technically a fruit; the other two are
+  // vegetables" for an odd-one-out question. Same state payload as everything else in this
+  // app (no per-client filtering), but only the /host UI renders it.
+  hostNote?: string;
 }
 
 export interface TToTORound {
@@ -38,6 +42,19 @@ export interface TToTORound {
   // stable across undo/revisits. Rotates per round, never repeating the previous
   // round's style (Q7 decision) — not tied to flavor.
   letterStyle?: LetterStyle;
+  // category_sort only: the 3 fixed category names for the round (e.g. "Animal",
+  // "Mineral", "Vegetable"). Each question's `choices` must be a permutation of these
+  // three strings (index 0 still = correct, same authoring convention as every other
+  // flavor) — the category *names* stay constant across the round, only which one is
+  // correct changes per item.
+  categoryOptions?: [string, string, string];
+  // category_sort only: which display slot each of categoryOptions ends up in (index-
+  // aligned with categoryOptions), assigned once — lazily, like letterStyle — the first
+  // time the round is entered, then held fixed for every question in the round. Without
+  // this, the normal per-question shuffle would make a category hop between This/That/
+  // TheOther every question even though it's the same label the whole round, which is
+  // confusing rather than fair.
+  categorySlots?: [TToTOChoiceKey, TToTOChoiceKey, TToTOChoiceKey];
 }
 
 // ─── Config ─────────────────────────────────────────────────────────────────

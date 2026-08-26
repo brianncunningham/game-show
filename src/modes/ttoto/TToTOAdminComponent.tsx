@@ -28,16 +28,37 @@ const EXAMPLE_ROUNDS: TToTORound[] = [
     id: 'round-1', roundNumber: 1, flavor: 'trivia',
     questions: [
       { id: 'q1', prompt: 'Which planet is closest to the sun?', choices: ['Mercury', 'Venus', 'Earth'] },
-      { id: 'q2', prompt: 'Which of these animals is NOT a mammal?', choices: ['Penguin', 'Dolphin', 'Bat'] },
+      {
+        id: 'q2', prompt: 'Which of these is NOT a mammal?', choices: ['Bat', 'Dolphin', 'Penguin'],
+        hostNote: 'Bats and dolphins are both mammals; penguins are birds.',
+      },
+    ],
+  },
+  {
+    // category_sort: categoryOptions is fixed for the whole round; each question's choices
+    // must be a permutation of it (index 0 = correct, same convention as every other flavor).
+    id: 'round-2', roundNumber: 2, flavor: 'category_sort',
+    categoryOptions: ['Animal', 'Mineral', 'Vegetable'],
+    questions: [
+      { id: 'q3', prompt: 'Tomato', choices: ['Vegetable', 'Animal', 'Mineral'] },
+      { id: 'q4', prompt: 'Granite', choices: ['Mineral', 'Animal', 'Vegetable'] },
+      { id: 'q5', prompt: 'Elephant', choices: ['Animal', 'Mineral', 'Vegetable'] },
     ],
   },
 ];
 
-const emptyQuestion = (): TToTOQuestion => ({ id: uid(), prompt: '', choices: ['', '', ''] });
+const emptyQuestion = (): TToTOQuestion => ({ id: uid(), prompt: '', choices: ['', '', ''], hostNote: '' });
 const emptyRound = (roundNumber: number): TToTORound => ({ id: uid(), roundNumber, flavor: 'trivia', questions: [emptyQuestion()] });
 const cloneRounds = (rounds: TToTORound[]): TToTORound[] => rounds.map(r => ({ ...r, questions: r.questions.map(q => ({ ...q, choices: [...q.choices] as [string, string, string] })) }));
 
 // ─── Form-based round/question editor ────────────────────────────────────────
+
+// category_sort: builds an authored `choices` triplet (index 0 = correct, as usual) from
+// the round's fixed category set plus which one is correct for this particular item.
+const buildCategoryChoices = (categoryOptions: [string, string, string], correctIndex: number): [string, string, string] => {
+  const rest = categoryOptions.filter((_, i) => i !== correctIndex);
+  return [categoryOptions[correctIndex], rest[0], rest[1]];
+};
 
 function QuestionForm({ question, onChange, onRemove, canRemove }: {
   question: TToTOQuestion; onChange: (q: TToTOQuestion) => void; onRemove: () => void; canRemove: boolean;
@@ -72,10 +93,54 @@ function QuestionForm({ question, onChange, onRemove, canRemove }: {
           />
         ))}
       </Stack>
-      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5, mb: 1 }}>
         The game randomizes which of This/That/The Other shows each answer — the "Correct answer" field is just for authoring.
       </Typography>
+      <TextField
+        fullWidth size="small" label="Host note (optional)" placeholder='e.g. "Tomato is technically a fruit; the other two are vegetables"'
+        value={question.hostNote ?? ''} multiline minRows={1} maxRows={3}
+        onChange={e => onChange({ ...question, hostNote: e.target.value })}
+      />
+      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+        Shown only on the host screen — never on the audience display.
+      </Typography>
     </Box>
+  );
+}
+
+// category_sort: a dense two-column row (item | correct category) instead of QuestionForm's
+// full card — this flavor is meant as a quick-fire round with many items, so no host note
+// field and minimal per-row chrome, to keep a long list scannable/editable at a glance.
+function CategorySortRow({ question, categoryOptions, onChange, onRemove, canRemove }: {
+  question: TToTOQuestion; categoryOptions: [string, string, string];
+  onChange: (q: TToTOQuestion) => void; onRemove: () => void; canRemove: boolean;
+}) {
+  const categoriesReady = categoryOptions.every(c => c.trim());
+  const selectedIndex = categoriesReady ? categoryOptions.indexOf(question.choices[0]) : -1;
+
+  return (
+    <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.75 }}>
+      <TextField
+        size="small" placeholder="Item to classify" value={question.prompt}
+        onChange={e => onChange({ ...question, prompt: e.target.value })}
+        sx={{ flex: 1 }}
+      />
+      <TextField
+        size="small" select placeholder="Correct category" value={selectedIndex >= 0 ? selectedIndex : ''}
+        disabled={!categoriesReady}
+        onChange={e => onChange({ ...question, choices: buildCategoryChoices(categoryOptions, Number(e.target.value)) })}
+        sx={{ flex: 1 }}
+      >
+        {categoryOptions.map((c, i) => <MenuItem key={i} value={i}>{c}</MenuItem>)}
+      </TextField>
+      <Tooltip title="Remove item">
+        <span>
+          <IconButton size="small" color="error" disabled={!canRemove} onClick={onRemove}>
+            <DeleteIcon fontSize="small" />
+          </IconButton>
+        </span>
+      </Tooltip>
+    </Stack>
   );
 }
 
@@ -92,6 +157,14 @@ function RoundForm({ round, index, total, onChange, onRemove, onMove }: {
   const addQuestion = () => {
     onChange({ ...round, questions: [...round.questions, emptyQuestion()] });
   };
+  const isCategorySort = round.flavor === 'category_sort';
+  const setCategoryOption = (i: number, value: string) => {
+    const options = [...(round.categoryOptions ?? ['', '', ''])] as [string, string, string];
+    options[i] = value;
+    // Clear any previously-assigned round-slot mapping — it was computed against the old
+    // category set and would no longer line up (see server store's ensureCategorySlots).
+    onChange({ ...round, categoryOptions: options, categorySlots: undefined });
+  };
 
   return (
     <Card variant="outlined">
@@ -100,7 +173,11 @@ function RoundForm({ round, index, total, onChange, onRemove, onMove }: {
           <Chip label={`Round ${round.roundNumber}`} size="small" color="primary" />
           <Select
             size="small" value={round.flavor}
-            onChange={e => onChange({ ...round, flavor: e.target.value as TToTOFlavor })}
+            onChange={e => {
+              const flavor = e.target.value as TToTOFlavor;
+              const categoryOptions = flavor === 'category_sort' ? (round.categoryOptions ?? ['', '', '']) : round.categoryOptions;
+              onChange({ ...round, flavor, categoryOptions });
+            }}
             sx={{ minWidth: 180, fontSize: '0.85rem' }}
           >
             {FLAVOR_OPTIONS.map(f => <MenuItem key={f} value={f}>{FLAVOR_LABELS[f]}</MenuItem>)}
@@ -117,11 +194,46 @@ function RoundForm({ round, index, total, onChange, onRemove, onMove }: {
           </Tooltip>
         </Stack>
 
-        {round.questions.map((q, qi) => (
-          <QuestionForm key={q.id} question={q} canRemove={round.questions.length > 1}
-            onChange={(nq) => updateQuestion(qi, nq)} onRemove={() => removeQuestion(qi)} />
-        ))}
-        <Button size="small" startIcon={<AddIcon />} onClick={addQuestion}>Add Question</Button>
+        {isCategorySort && (
+          <Box sx={{ mb: 1.5, p: 1.5, border: '1px dashed rgba(255,255,255,0.2)', borderRadius: 1 }}>
+            <Typography variant="caption" sx={{ display: 'block', mb: 1, color: 'text.secondary' }}>
+              Category options — fixed for the whole round (e.g. "Animal" / "Mineral" / "Vegetable"). The game randomly
+              assigns these three to This/That/The Other once, then holds that layout stable for every question below.
+            </Typography>
+            <Stack direction="row" spacing={1}>
+              {[0, 1, 2].map(i => (
+                <TextField
+                  key={i} fullWidth size="small" label={`Category ${i + 1}`} value={round.categoryOptions?.[i] ?? ''}
+                  onChange={e => setCategoryOption(i, e.target.value)}
+                />
+              ))}
+            </Stack>
+          </Box>
+        )}
+
+        {isCategorySort ? (
+          <>
+            <Stack direction="row" spacing={1} sx={{ mb: 0.5 }}>
+              <Typography variant="caption" sx={{ flex: 1, color: 'text.disabled' }}>ITEM</Typography>
+              <Typography variant="caption" sx={{ flex: 1, color: 'text.disabled' }}>CORRECT CATEGORY</Typography>
+              <Box sx={{ width: 34 }} />
+            </Stack>
+            {round.questions.map((q, qi) => (
+              <CategorySortRow key={q.id} question={q} canRemove={round.questions.length > 1}
+                categoryOptions={round.categoryOptions ?? ['', '', '']}
+                onChange={(nq) => updateQuestion(qi, nq)} onRemove={() => removeQuestion(qi)} />
+            ))}
+            <Button size="small" startIcon={<AddIcon />} onClick={addQuestion} sx={{ mt: 0.5 }}>Add Item</Button>
+          </>
+        ) : (
+          <>
+            {round.questions.map((q, qi) => (
+              <QuestionForm key={q.id} question={q} canRemove={round.questions.length > 1}
+                onChange={(nq) => updateQuestion(qi, nq)} onRemove={() => removeQuestion(qi)} />
+            ))}
+            <Button size="small" startIcon={<AddIcon />} onClick={addQuestion}>Add Question</Button>
+          </>
+        )}
       </CardContent>
     </Card>
   );
@@ -165,9 +277,20 @@ function RoundFormEditor({ state, onRefresh }: { state: TToTOState; onRefresh: (
   const validationError = (): string | null => {
     for (const [ri, r] of draft.entries()) {
       if (r.questions.length === 0) return `Round ${ri + 1}: needs at least one question.`;
+      if (r.flavor === 'category_sort') {
+        if (!r.categoryOptions || r.categoryOptions.some(c => !c.trim())) {
+          return `Round ${ri + 1}: all 3 category options required.`;
+        }
+      }
       for (const [qi, q] of r.questions.entries()) {
-        if (!q.prompt.trim()) return `Round ${ri + 1}, Q${qi + 1}: prompt required.`;
+        if (!q.prompt.trim()) return `Round ${ri + 1}, Q${qi + 1}: ${r.flavor === 'category_sort' ? 'item to classify' : 'prompt'} required.`;
         if (q.choices.some(c => !c.trim())) return `Round ${ri + 1}, Q${qi + 1}: all three answers required.`;
+        if (r.flavor === 'category_sort' && r.categoryOptions) {
+          const validSet = new Set(r.categoryOptions);
+          if (q.choices.length !== 3 || !q.choices.every(c => validSet.has(c)) || new Set(q.choices).size !== 3) {
+            return `Round ${ri + 1}, Q${qi + 1}: correct category not selected — pick one from the round's 3 categories.`;
+          }
+        }
       }
     }
     return null;
@@ -217,21 +340,33 @@ function BulkJsonImport({ onRefresh }: { onRefresh: () => Promise<void> }) {
       const round = r as Partial<TToTORound>;
       if (!round.flavor || !(round.flavor in FLAVOR_LABELS)) throw new Error(`Round ${i + 1}: invalid or missing flavor. Valid values: ${FLAVOR_OPTIONS.join(', ')}.`);
       if (!Array.isArray(round.questions) || round.questions.length === 0) throw new Error(`Round ${i + 1}: needs at least one question.`);
+      const isCategorySort = round.flavor === 'category_sort';
+      if (isCategorySort && (!Array.isArray(round.categoryOptions) || round.categoryOptions.length !== 3 || round.categoryOptions.some((c: unknown) => typeof c !== 'string' || !c.trim()))) {
+        throw new Error(`Round ${i + 1}: category_sort needs a "categoryOptions" array of exactly 3 strings.`);
+      }
       round.questions.forEach((q, qi) => {
         if (!q.prompt?.trim()) throw new Error(`Round ${i + 1}, Q${qi + 1}: prompt required.`);
         if (!Array.isArray(q.choices) || q.choices.length !== 3 || q.choices.some((c: unknown) => typeof c !== 'string' || !c.trim())) {
           throw new Error(`Round ${i + 1}, Q${qi + 1}: choices must be an array of exactly 3 strings, first one correct.`);
+        }
+        if (isCategorySort && round.categoryOptions) {
+          const validSet = new Set(round.categoryOptions);
+          if (!q.choices.every((c: string) => validSet.has(c)) || new Set(q.choices).size !== 3) {
+            throw new Error(`Round ${i + 1}, Q${qi + 1}: choices must be a permutation of the round's categoryOptions (${round.categoryOptions.join(', ')}).`);
+          }
         }
       });
       return {
         id: round.id ?? `round-${i + 1}-${uid()}`,
         roundNumber: i + 1,
         flavor: round.flavor,
+        ...(isCategorySort ? { categoryOptions: round.categoryOptions } : {}),
         questions: round.questions.map((q, qi) => ({
           id: q.id ?? `q-${i + 1}-${qi + 1}-${uid()}`,
           prompt: q.prompt,
           choices: q.choices,
           ...(q.mediaRef ? { mediaRef: q.mediaRef } : {}),
+          ...(q.hostNote ? { hostNote: q.hostNote } : {}),
         })),
       } as TToTORound;
     });
@@ -272,7 +407,7 @@ function BulkJsonImport({ onRefresh }: { onRefresh: () => Promise<void> }) {
           <Box sx={{ mt: 1.5 }}>
             <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
               <Typography variant="caption" color="text.secondary">
-                Valid flavors: {FLAVOR_OPTIONS.join(', ')}. <code>choices</code> is an array of exactly 3 strings — the first is always correct; the game randomizes screen position.
+                Valid flavors: {FLAVOR_OPTIONS.join(', ')}. <code>choices</code> is an array of exactly 3 strings — the first is always correct; the game randomizes screen position. Optional <code>hostNote</code> string shows only on /host. <code>category_sort</code> rounds also need a round-level <code>categoryOptions</code> array of exactly 3 strings (fixed for the round); every question's <code>choices</code> must be a permutation of it.
               </Typography>
               <Button size="small" variant="outlined" onClick={() => setJsonText(JSON.stringify(EXAMPLE_ROUNDS, null, 2))}>
                 Load Example
@@ -411,9 +546,14 @@ function Settings({ state, onRefresh }: { state: TToTOState; onRefresh: () => Pr
                 </Button>
               ))}
             </Stack>
-            <Typography variant="caption" color="text.secondary">
-              Phase 1 supports EXCLUSIVE steal + manual buzzer mode only. TIMED_WINDOW steal and hardware wands are Phase 2/3.
-            </Typography>
+            <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+              <Typography variant="caption" sx={{ color: 'text.secondary', mr: 0.5 }}>Steal mode:</Typography>
+              <Button size="small" variant="contained" color="secondary" disabled>EXCLUSIVE</Button>
+              <Button size="small" variant="outlined" disabled>TIMED_WINDOW ({config.stealWindowSecs}s)</Button>
+              <Typography variant="caption" color="text.secondary">
+                — TIMED_WINDOW needs hardware wands to enforce the open-steal buzz race, so it's Phase 2/3. The setting exists in config already; this toggle is disabled until then.
+              </Typography>
+            </Stack>
           </Stack>
         </CardContent>
       </Card>

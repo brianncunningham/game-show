@@ -20,6 +20,18 @@ const TEAM_COLORS = [TTOTO_COLORS.team1, TTOTO_COLORS.team2] as const;
 const CHOICE_ORDER: TToTOChoiceKey[] = ['this', 'that', 'the_other'];
 const CHOICE_COLORS: Record<TToTOChoiceKey, string> = { this: TTOTO_COLORS.this, that: TTOTO_COLORS.that, the_other: TTOTO_COLORS.the_other };
 
+/** Host-only context for a question, e.g. "Tomato is technically a fruit..." — never shown on /show. */
+function HostNote({ note }: { note?: string }) {
+  if (!note) return null;
+  return (
+    <Typography variant="body2" sx={{
+      mb: 1.5, p: 1, borderRadius: 1, bgcolor: 'rgba(255,224,71,0.1)', border: '1px solid rgba(255,224,71,0.35)', color: TTOTO_COLORS.warning,
+    }}>
+      💡 {note}
+    </Typography>
+  );
+}
+
 const sectionLabelSx = {
   fontWeight: 700, fontSize: { xs: '0.8rem', md: '0.85rem' }, letterSpacing: '0.12em',
   textTransform: 'uppercase' as const, color: 'text.secondary', mb: 1,
@@ -200,6 +212,7 @@ export const TToTOHostComponent = () => {
               <Typography variant="body1" sx={{ mb: 1.5, p: 1.25, borderRadius: 1, bgcolor: 'rgba(255,255,255,0.06)', fontStyle: 'italic' }}>
                 "{question.prompt}"
               </Typography>
+              <HostNote note={question.hostNote} />
               {correctChoice && (
                 <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>
                   Correct answer: <strong>{CHOICE_LABELS[correctChoice]}</strong> ({displayChoices?.[correctChoice]})
@@ -220,6 +233,7 @@ export const TToTOHostComponent = () => {
               <Typography variant="body1" sx={{ mb: 1.5, p: 1.25, borderRadius: 1, bgcolor: 'rgba(255,255,255,0.06)', fontStyle: 'italic' }}>
                 "{question.prompt}"
               </Typography>
+              <HostNote note={question.hostNote} />
               <Grid container spacing={1.5}>
                 {teams.map((t, i) => (
                   <Grid item xs={6} key={t.id}>
@@ -247,6 +261,7 @@ export const TToTOHostComponent = () => {
               <Typography variant="body1" sx={{ mb: 1.5, p: 1.25, borderRadius: 1, bgcolor: 'rgba(255,255,255,0.06)', fontStyle: 'italic' }}>
                 "{question.prompt}"
               </Typography>
+              <HostNote note={question.hostNote} />
               <Grid container spacing={1.5}>
                 {CHOICE_ORDER.map((choice) => {
                   const isCorrect = choice === correctChoice;
@@ -283,6 +298,7 @@ export const TToTOHostComponent = () => {
               <Typography sx={{ ...sectionLabelSx, mb: 1.5 }}>
                 {resolvedCorrectly ? `${answeringTeam?.name ?? ''} got it! ✓` : `Nobody got it — it was ${correctChoice ? CHOICE_LABELS[correctChoice] : ''}`}
               </Typography>
+              <HostNote note={question.hostNote} />
               <Button fullWidth variant="contained" color="primary" sx={bigBtnSx} onClick={act(() => next())}>
                 Next →
               </Button>

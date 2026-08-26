@@ -23,6 +23,9 @@ export interface TToTOQuestion {
   // loads (see TToTORoundState.displayChoices/correctChoice).
   choices: [string, string, string];
   mediaRef?: string;
+  // Optional host-only context, e.g. "Tomato is technically a fruit; the other two are
+  // vegetables" for an odd-one-out question. Only the /host UI renders this.
+  hostNote?: string;
 }
 
 export interface TToTORound {
@@ -31,6 +34,12 @@ export interface TToTORound {
   flavor: TToTOFlavor;
   questions: TToTOQuestion[];
   letterStyle?: LetterStyle;
+  // category_sort only: the 3 fixed category names for the round; each question's
+  // `choices` must be a permutation of these (index 0 = correct, as usual).
+  categoryOptions?: [string, string, string];
+  // category_sort only: which display slot each categoryOptions entry is in (index-
+  // aligned), assigned once per round and held fixed — see server types.ts for why.
+  categorySlots?: [TToTOChoiceKey, TToTOChoiceKey, TToTOChoiceKey];
 }
 
 export interface TToTOConfig {

@@ -63,7 +63,28 @@ const CHOICE_SLOTS: TToTOChoiceKey[] = ['this', 'that', 'the_other'];
 // Randomly assigns a question's 3 authored answers (index 0 = correct) to the
 // This/That/TheOther display slots. Called once per question load; the result is
 // held in roundState so it stays stable through the steal handoff and undo.
-const shuffleChoices = (question: TToTOQuestion): { displayChoices: Record<TToTOChoiceKey, string>; correctChoice: TToTOChoiceKey } => {
+//
+// `fixedSlots` is the category_sort exception: that flavor reuses the same round-wide
+// 3 category names for every question, so the category->slot mapping is pinned once per
+// round (see TToTORound.categoryOptions/categorySlots) instead of reshuffled per question
+// — otherwise the same label would hop between panels every question, which is confusing
+// rather than fair. If a question's choices don't actually match the round's declared
+// categories (bad data), this falls back to the normal random shuffle rather than drop
+// a choice silently.
+const shuffleChoices = (
+  question: TToTOQuestion,
+  fixedSlots?: { categoryOptions: [string, string, string]; categorySlots: [TToTOChoiceKey, TToTOChoiceKey, TToTOChoiceKey] },
+): { displayChoices: Record<TToTOChoiceKey, string>; correctChoice: TToTOChoiceKey } => {
+  if (fixedSlots) {
+    const categoryIndices = question.choices.map(c => fixedSlots.categoryOptions.indexOf(c));
+    if (categoryIndices.every(i => i >= 0)) {
+      const displayChoices = {} as Record<TToTOChoiceKey, string>;
+      question.choices.forEach((choiceText, qi) => {
+        displayChoices[fixedSlots.categorySlots[categoryIndices[qi]]] = choiceText;
+      });
+      return { displayChoices, correctChoice: fixedSlots.categorySlots[categoryIndices[0]] };
+    }
+  }
   const indices = [0, 1, 2];
   for (let i = indices.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -82,6 +103,17 @@ const shuffleChoices = (question: TToTOQuestion): { displayChoices: Record<TToTO
 const pickLetterStyle = (prev: LetterStyle | null): LetterStyle => {
   const options = prev ? ALL_LETTER_STYLES.filter(s => s !== prev) : ALL_LETTER_STYLES;
   return options[Math.floor(Math.random() * options.length)] ?? ALL_LETTER_STYLES[0];
+};
+
+// One-time-per-round random permutation of the 3 display slots, used to seed
+// TToTORound.categorySlots the first time a category_sort round is entered.
+const pickCategorySlots = (): [TToTOChoiceKey, TToTOChoiceKey, TToTOChoiceKey] => {
+  const slots = [...CHOICE_SLOTS];
+  for (let i = slots.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [slots[i], slots[j]] = [slots[j], slots[i]];
+  }
+  return slots as [TToTOChoiceKey, TToTOChoiceKey, TToTOChoiceKey];
 };
 
 // Pure random variant + random rotation angle per miss event (Q8 decision).
@@ -203,12 +235,30 @@ class TToTOStore {
     return this.state.rounds.map((r, i) => (i === roundIndex ? { ...r, letterStyle } : r));
   }
 
+  // category_sort only: assigns the category->slot mapping the first time the round is
+  // entered (lazy, stable across undo/revisits/every question in the round) — mirrors
+  // ensureLetterStyle above.
+  private ensureCategorySlots(rounds: TToTORound[], roundIndex: number): TToTORound[] {
+    const round = rounds[roundIndex];
+    if (!round || round.flavor !== 'category_sort' || !round.categoryOptions || round.categorySlots) return rounds;
+    const categorySlots = pickCategorySlots();
+    return rounds.map((r, i) => (i === roundIndex ? { ...r, categorySlots } : r));
+  }
+
+  // Builds the shuffleChoices() fixedSlots arg for a category_sort round, or undefined
+  // for every other flavor (in which case shuffleChoices falls back to its normal
+  // per-question random shuffle).
+  private fixedSlotsFor(round: TToTORound | undefined) {
+    if (!round || round.flavor !== 'category_sort' || !round.categoryOptions || !round.categorySlots) return undefined;
+    return { categoryOptions: round.categoryOptions, categorySlots: round.categorySlots };
+  }
+
   // idle -> round_intro (round 0), or resolved/round_intro -> round_intro (next round).
   // Also dismisses the game-intro screen: showIntro is checked before phase on /show, so
   // it has to clear here (not in beginRound()) or the round-type card is masked by the
   // intro right up until the same click that also advances past it to the question.
   private enterRoundIntro(roundIndex: number): TToTOState {
-    const rounds = this.ensureLetterStyle(roundIndex);
+    const rounds = this.ensureCategorySlots(this.ensureLetterStyle(roundIndex), roundIndex);
     return this.commit({
       ...this.state,
       rounds,
@@ -232,7 +282,7 @@ class TToTOStore {
   beginRound(): TToTOState {
     this.begin();
     const question = this.currentQuestion();
-    const shuffled = question ? shuffleChoices(question) : { displayChoices: null, correctChoice: null };
+    const shuffled = question ? shuffleChoices(question, this.fixedSlotsFor(this.currentRound())) : { displayChoices: null, correctChoice: null };
     return this.patchRound({
       phase: 'reading',
       answeringTeamId: null,
@@ -262,9 +312,12 @@ class TToTOStore {
     return other?.id ?? this.state.teams[0].id;
   }
 
+  private currentRound(): TToTORound | undefined {
+    return this.state.rounds[this.state.roundState.currentRoundIndex];
+  }
+
   private currentQuestion(): TToTOQuestion | null {
-    const round = this.state.rounds[this.state.roundState.currentRoundIndex];
-    return round?.questions[this.state.roundState.currentQuestionIndex] ?? null;
+    return this.currentRound()?.questions[this.state.roundState.currentQuestionIndex] ?? null;
   }
 
   private awardPoints(teamId: string): TToTOState {
@@ -329,7 +382,7 @@ class TToTOStore {
     const nextQuestionIndex = rs.currentQuestionIndex + 1;
 
     if (round && nextQuestionIndex < round.questions.length) {
-      const shuffled = shuffleChoices(round.questions[nextQuestionIndex]);
+      const shuffled = shuffleChoices(round.questions[nextQuestionIndex], this.fixedSlotsFor(round));
       return this.patchRound({
         phase: 'reading',
         currentQuestionIndex: nextQuestionIndex,

@@ -9,6 +9,7 @@ import { CrackOverlay } from './CrackOverlay';
 import { TToTOGameIntro } from './TToTOGameIntro';
 import { TToTOStage } from './TToTOStage';
 import { TTOTO_COLORS, lighten, darken, rgba } from './colors';
+import { useGameEventOverlay, GameEventOverlay } from './GameOverlays';
 
 // ─── Global CSS (ported from docs/designs/reference-combo-screen.html + LetterStyles.dc.html) ──
 // Gradient/glow shades below are all *derived* from TTOTO_COLORS via lighten/darken/rgba —
@@ -66,6 +67,9 @@ const GLOBAL_CSS = `
   .ttoto-seg-char { transition: opacity 0.05s linear, filter 0.05s linear; }
   .ttoto-seg-flicker { opacity:0.32; filter:brightness(2.4); }
 `;
+
+const multiplierForRound = (roundMultipliers: number[], roundIndex: number): number =>
+  roundMultipliers[roundIndex] ?? roundMultipliers[roundMultipliers.length - 1] ?? 1;
 
 const CHOICE_ORDER: TToTOChoiceKey[] = ['this', 'that', 'the_other'];
 const CHOICE_VARIANT: Record<TToTOChoiceKey, LetterVariant> = { this: 'this', that: 'that', the_other: 'other' };
@@ -187,7 +191,20 @@ function LetterRow({ letterStyle, choice, word, revealed, won }: {
 
 // ─── Round-intro card ────────────────────────────────────────────────────────
 
-function RoundIntroScreen({ round }: { round: TToTORound | undefined }) {
+/** Only rendered when a round is worth more (or less) than the default ×1 — see multiplierForRound(). */
+function MultiplierBadge({ multiplier, fontSize = 16 }: { multiplier: number; fontSize?: number }) {
+  return (
+    <div className="ttoto-a-tag" style={{
+      background: TTOTO_COLORS.warning, color: '#2e2200', fontSize, fontWeight: 800, letterSpacing: 3,
+      padding: `${Math.round(fontSize * 0.4)}px ${Math.round(fontSize * 1.4)}px ${Math.round(fontSize * 0.4)}px ${Math.round(fontSize * 0.9)}px`,
+      boxShadow: `0 0 18px ${rgba(TTOTO_COLORS.warning, 0.5)}`,
+    }}>
+      ×{multiplier} POINTS
+    </div>
+  );
+}
+
+function RoundIntroScreen({ round, multiplier }: { round: TToTORound | undefined; multiplier: number }) {
   return (
     <TToTOStage>
       <div style={{
@@ -202,6 +219,7 @@ function RoundIntroScreen({ round }: { round: TToTORound | undefined }) {
         <div style={{ fontFamily: "'Big Shoulders Display', sans-serif", fontWeight: 900, fontSize: 100, letterSpacing: 1, textShadow: '0 0 30px rgba(199,212,234,0.5)', textAlign: 'center' }}>
           {round ? FLAVOR_LABELS[round.flavor].toUpperCase() : ''}
         </div>
+        {multiplier !== 1 && <MultiplierBadge multiplier={multiplier} fontSize={22} />}
       </div>
     </TToTOStage>
   );
@@ -244,22 +262,26 @@ function GameOverScreen({ state }: { state: TToTOState }) {
 // ─── Main combo screen (header + question + 3 answer panels) ───────────────
 
 function ComboScreen({ state }: { state: TToTOState }) {
-  const { roundState, teams, rounds } = state;
+  const { roundState, teams, rounds, config } = state;
   const round = rounds[roundState.currentRoundIndex];
   const question = round?.questions[roundState.currentQuestionIndex];
   const letterStyle: LetterStyle = round?.letterStyle ?? 'split_flap';
+  const multiplier = multiplierForRound(config.roundMultipliers, roundState.currentRoundIndex);
 
   const choicesRevealed = roundState.phase === 'armed' || roundState.phase === 'answering'
     || roundState.phase === 'steal' || roundState.phase === 'resolved';
 
   const answeringTeam = teams.find(t => t.id === roundState.answeringTeamId);
+  const [overlayEvent, clearOverlayEvent] = useGameEventOverlay(
+    roundState.phase, roundState.resolvedCorrectly, roundState.answeringTeamId, teams,
+  );
 
-  // 'reading' shows no status text — the prompt alone (choices still hidden) is the whole
-  // cue; anything else here would be host-facing state leaking onto the audience screen.
+  // 'reading' and 'armed' show no status text — the prompt/choices alone are the whole cue.
+  // 'answering' also shows nothing: there's no clock/countdown for the initial answer (only
+  // the exclusive steal has a time-pressure concept), so avoid implying one with copy like
+  // "on the clock" — the buzz-in overlay already announced who's up.
   let statusText = '';
-  if (roundState.phase === 'armed') statusText = 'BUZZERS ARMED — WAITING FOR BUZZ';
-  else if (roundState.phase === 'answering') statusText = `${answeringTeam?.name ?? ''} — ON THE CLOCK`;
-  else if (roundState.phase === 'steal') statusText = `${answeringTeam?.name ?? ''} — STEALING`;
+  if (roundState.phase === 'steal') statusText = `${answeringTeam?.name ?? ''} — STEALING`;
   else if (roundState.phase === 'resolved') {
     statusText = roundState.resolvedCorrectly
       ? `${answeringTeam?.name ?? ''} GOT IT!`
@@ -311,6 +333,7 @@ function ComboScreen({ state }: { state: TToTOState }) {
           <div style={{ fontFamily: "'Big Shoulders Display', sans-serif", fontWeight: 900, fontSize: 32, letterSpacing: 1, color: '#fff', textShadow: '0 0 24px rgba(199,212,234,0.5)' }}>
             {round ? FLAVOR_LABELS[round.flavor].toUpperCase() : ''}
           </div>
+          {multiplier !== 1 && <MultiplierBadge multiplier={multiplier} />}
         </div>
 
         <div className="ttoto-score-plate" style={{ background: `linear-gradient(160deg, ${darken(TTOTO_COLORS.team2, 0.72)}, ${darken(TTOTO_COLORS.team2, 0.86)})`, border: `2px solid ${TTOTO_COLORS.team2}`, boxShadow: `0 0 30px ${rgba(TTOTO_COLORS.team2, 0.28)}`, textAlign: 'right' }}>
@@ -340,28 +363,45 @@ function ComboScreen({ state }: { state: TToTOState }) {
       <div style={{ position: 'relative', display: 'flex', gap: 20, margin: '18px 32px 0 32px', height: 460 }}>
         {CHOICE_ORDER.map((choice) => {
           const missed = roundState.eliminatedChoices.includes(choice);
-          const correct = roundState.phase === 'resolved' && roundState.correctChoice === choice;
+          const resolved = roundState.phase === 'resolved';
+          const correct = resolved && roundState.correctChoice === choice;
+          // Once resolved, every panel that isn't the correct one recedes — whether it was
+          // actively missed or simply never chosen — so the winner reads unambiguously at a
+          // glance instead of competing for attention with two still-bright panels.
+          const recede = resolved && !correct;
           const crack = roundState.choiceCracks[choice];
           const color = CHOICE_COLOR[choice];
           const word = roundState.displayChoices?.[choice] ?? '';
+          const borderColor = correct ? TTOTO_COLORS.correct : missed ? TTOTO_COLORS.incorrect : color;
 
           return (
             <div key={choice} className="ttoto-a-panel" style={{
               flex: 1, position: 'relative', padding: 22, display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
-              background: missed
-                ? 'linear-gradient(125deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0) 36%), linear-gradient(160deg, #4a1418, #2a0c10)'
-                : `linear-gradient(125deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0) 36%), linear-gradient(160deg, ${color}22, #0a1c28)`,
-              border: `2px solid ${missed ? TTOTO_COLORS.incorrect : color}`,
+              background: correct
+                ? `linear-gradient(125deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0) 36%), linear-gradient(160deg, ${rgba(TTOTO_COLORS.correct, 0.22)}, #0a1c28)`
+                : missed
+                  ? 'linear-gradient(125deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0) 36%), linear-gradient(160deg, #4a1418, #2a0c10)'
+                  : `linear-gradient(125deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0) 36%), linear-gradient(160deg, ${color}22, #0a1c28)`,
+              border: `2px solid ${borderColor}`,
               boxShadow: correct ? `0 0 46px ${rgba(TTOTO_COLORS.correct, 0.45)}` : undefined,
-              filter: `drop-shadow(0 12px 0 rgba(0,0,0,0.4)) drop-shadow(0 0 24px ${color}33)`,
+              filter: `drop-shadow(0 12px 0 rgba(0,0,0,0.4)) drop-shadow(0 0 24px ${borderColor}33)${recede ? ' brightness(0.55) saturate(0.6)' : ''}`,
+              opacity: recede ? 0.7 : 1,
+              transition: 'filter 0.4s ease, opacity 0.4s ease, background 0.4s ease, border-color 0.4s ease',
             }}>
-              <div className="ttoto-a-bracket-tr" style={{ borderTop: `3px solid ${color}`, borderRight: `3px solid ${color}` }} />
-              <div className="ttoto-a-bracket-bl" style={{ borderBottom: `3px solid ${color}`, borderLeft: `3px solid ${color}` }} />
-              <div className="ttoto-a-tag" style={{ background: CHOICE_TAG_BG[choice], color: '#f2f5fb', fontSize: 22, fontWeight: 700, letterSpacing: 3, padding: '10px 26px 10px 18px', alignSelf: 'flex-start' }}>
+              <div className="ttoto-a-bracket-tr" style={{ borderTop: `3px solid ${borderColor}`, borderRight: `3px solid ${borderColor}` }} />
+              <div className="ttoto-a-bracket-bl" style={{ borderBottom: `3px solid ${borderColor}`, borderLeft: `3px solid ${borderColor}` }} />
+              <div className="ttoto-a-tag" style={{
+                background: correct ? TTOTO_COLORS.correct : CHOICE_TAG_BG[choice], color: correct ? '#052e16' : '#f2f5fb',
+                fontSize: 22, fontWeight: 700, letterSpacing: 3, padding: '10px 26px 10px 18px', alignSelf: 'flex-start',
+              }}>
                 {CHOICE_LABEL[choice]}
               </div>
               {(missed || correct) && (
-                <div style={{ position: 'absolute', top: 16, right: 20, fontSize: 13, letterSpacing: 2, color: missed ? lighten(TTOTO_COLORS.incorrect, 0.3) : lighten(TTOTO_COLORS.correct, 0.3) }}>
+                <div style={{
+                  position: 'absolute', top: 16, right: 20, display: 'flex', alignItems: 'center', gap: 5,
+                  fontSize: 15, fontWeight: 700, letterSpacing: 2, color: missed ? lighten(TTOTO_COLORS.incorrect, 0.3) : TTOTO_COLORS.correct,
+                }}>
+                  {correct && <span style={{ fontSize: 18 }}>✓</span>}
                   {missed ? 'SIGNAL LOST' : 'CORRECT'}
                 </div>
               )}
@@ -382,6 +422,8 @@ function ComboScreen({ state }: { state: TToTOState }) {
           );
         })}
       </div>
+
+      {overlayEvent && <GameEventOverlay key={overlayEvent.key} event={overlayEvent} onDone={clearOverlayEvent} />}
     </div>
     </TToTOStage>
   );
@@ -416,7 +458,14 @@ export const TToTOShowComponent = () => {
       {(() => {
         if (state.showIntro) return <TToTOGameIntro />;
         if (state.roundState.phase === 'idle') return <TToTOGameIntro />;
-        if (state.roundState.phase === 'round_intro') return <RoundIntroScreen round={state.rounds[state.roundState.currentRoundIndex]} />;
+        if (state.roundState.phase === 'round_intro') {
+          return (
+            <RoundIntroScreen
+              round={state.rounds[state.roundState.currentRoundIndex]}
+              multiplier={multiplierForRound(state.config.roundMultipliers, state.roundState.currentRoundIndex)}
+            />
+          );
+        }
         if (state.roundState.phase === 'game_over') return <GameOverScreen state={state} />;
         return <ComboScreen state={state} />;
       })()}
