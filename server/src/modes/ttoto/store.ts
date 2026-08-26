@@ -403,6 +403,16 @@ class TToTOStore {
     return this.patchRound({ phase: 'game_over' });
   }
 
+  // Manually jump straight to the victory screen regardless of how far through the
+  // rounds/questions play currently is — a host control, not an automatic transition
+  // (mirrors Survey Says's/Name That Tune's manual "End Game" host button). Also clears
+  // showIntro: /show checks that before phase, so leaving it set (e.g. right after
+  // newGame()) would mask the victory screen with the game-intro animation instead.
+  endGame(): TToTOState {
+    this.begin();
+    return this.commit({ ...this.state, showIntro: false, roundState: { ...this.state.roundState, phase: 'game_over' } });
+  }
+
   newGame(): TToTOState {
     this.begin();
     return this.commit({

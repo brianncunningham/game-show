@@ -11,7 +11,7 @@ import type { TToTOState, TToTOChoiceKey } from './types';
 import { CHOICE_LABELS, FLAVOR_LABELS } from './types';
 import {
   getState, startGame, beginRound, revealChoices, recordBuzz, judge, next,
-  newGame, undo, showIntro, hideIntro, listSaves, loadSave,
+  newGame, endGame, undo, showIntro, hideIntro, listSaves, loadSave,
 } from './api';
 import type { TToTOSaveMeta } from './api';
 import { TTOTO_COLORS } from './colors';
@@ -155,6 +155,12 @@ export const TToTOHostComponent = () => {
                   <Button fullWidth variant={!state.showIntro ? 'contained' : 'outlined'} color="primary" sx={bigBtnSx}
                     onClick={act(() => hideIntro())}>
                     📺 Game Screen
+                  </Button>
+                </Grid>
+                <Grid item xs={12} sm={4}>
+                  <Button fullWidth variant="outlined" color="warning" sx={bigBtnSx}
+                    disabled={phase === 'idle' || phase === 'game_over'} onClick={act(() => endGame())}>
+                    🏆 End Game
                   </Button>
                 </Grid>
               </Grid>

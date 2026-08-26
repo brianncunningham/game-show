@@ -92,6 +92,10 @@ router.post('/game/new', (_req, res) => {
   res.json(ttotoStore.newGame());
 });
 
+router.post('/game/end', (_req, res) => {
+  res.json(ttotoStore.endGame());
+});
+
 // ─── Saves ───────────────────────────────────────────────────────────────────
 
 router.get('/saves', (_req, res) => {
