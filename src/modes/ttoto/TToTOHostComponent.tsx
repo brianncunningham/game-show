@@ -14,10 +14,11 @@ import {
   newGame, undo, showIntro, hideIntro, listSaves, loadSave,
 } from './api';
 import type { TToTOSaveMeta } from './api';
+import { TTOTO_COLORS } from './colors';
 
-const TEAM_COLORS = ['#3ec2d9', '#ffb020'] as const;
+const TEAM_COLORS = [TTOTO_COLORS.team1, TTOTO_COLORS.team2] as const;
 const CHOICE_ORDER: TToTOChoiceKey[] = ['this', 'that', 'the_other'];
-const CHOICE_COLORS: Record<TToTOChoiceKey, string> = { this: '#e0625f', that: '#ffb020', the_other: '#3ec2d9' };
+const CHOICE_COLORS: Record<TToTOChoiceKey, string> = { this: TTOTO_COLORS.this, that: TTOTO_COLORS.that, the_other: TTOTO_COLORS.the_other };
 
 const sectionLabelSx = {
   fontWeight: 700, fontSize: { xs: '0.8rem', md: '0.85rem' }, letterSpacing: '0.12em',
@@ -256,7 +257,7 @@ export const TToTOHostComponent = () => {
                         sx={{
                           ...bigBtnSx, flexDirection: 'column', gap: 0.5, textTransform: 'none',
                           borderColor: CHOICE_COLORS[choice],
-                          color: isCorrect ? '#141414' : eliminated ? undefined : CHOICE_COLORS[choice],
+                          color: isCorrect ? '#f2f5fb' : eliminated ? undefined : CHOICE_COLORS[choice],
                           bgcolor: isCorrect ? CHOICE_COLORS[choice] : undefined,
                           textDecoration: eliminated ? 'line-through' : undefined,
                         }}

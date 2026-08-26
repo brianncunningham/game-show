@@ -50,15 +50,36 @@ needed):
   numerals, panel tags.
 - `Barlow Condensed` (500/600/700) — body/label text, tile letters, captions.
 
-**Palette** (confirmed, in use in `reference-combo-screen.html`):
+**Palette, original design-phase version** (as authored in `reference-combo-screen.html` —
+see the superseding note directly below before using these hex values):
 
 | Role | Color |
 |---|---|
-| THIS (Team 1 / crimson) | border/tag `#e0625f`, ambient glow `rgba(224,98,95,…)` |
-| THAT (amber / active) | border/tag `#ffb020` |
-| THE OTHER (Team 2 / cyan) | border/tag `#3ec2d9`, ambient glow `rgba(62,194,217,…)` |
+| THIS (crimson) | border/tag `#e0625f`, ambient glow `rgba(224,98,95,…)` |
+| THAT (amber) | border/tag `#ffb020` |
+| THE OTHER (cyan) | border/tag `#3ec2d9`, ambient glow `rgba(62,194,217,…)` |
 | Base background | `linear-gradient(135deg, #0a3145, #12233f, #1c1030, #12070f)` |
 | Prompt/question panel | steel-blue, border `#4a6a95`, tag background `#c7d4ea` |
+
+> **Superseded during implementation.** The crimson/amber/cyan trio above conflicted with a
+> color-reservation system adopted once the mode was built: green/red/yellow are reserved
+> exclusively for correct/incorrect/warning (This-crimson read too close to "incorrect", the
+> win-state gold read too close to "warning", etc.). The live values are the single source of
+> truth: `src/modes/ttoto/colors.ts` (every gradient/glow shade elsewhere derives from these
+> via `lighten`/`darken`/`rgba` helpers, so changing a value there re-tints the whole mode).
+>
+> An intermediate revision also tried matching Survey Says/Name That Tune's exact
+> `TEAM_COLORS` (cyan=Team 1, orange=Team 2), reasoning that a family's color should carry
+> across game modes — but that used up the two widest-spread wheel positions and left
+> This/That/TheOther crammed into a 30-50°-apart indigo/purple/pink cluster that read as "not
+> that different" in practice. Cross-mode team consistency was judged not worth sacrificing
+> distinctiveness on the mechanic players actually see every question, so it was dropped.
+> Current mapping: **This = cyan `#22d3ee`**, **That = orange `#f97316`**, **The Other =
+> purple `#a855f7`** (spread across cyan/orange/purple — genuinely different color families,
+> not just different hues), **Team 1 = blue `#3b82f6`**, **Team 2 = magenta/pink `#ec4899`**
+> (not matched to other modes), **correct = green `#00ff88`**, **incorrect = red `#ff2020`**,
+> **warning = yellow `#ffe047`**. Background gradient, panel steel-blue, and the chevron-cut
+> panel/tag styling below are unaffected and still current.
 
 Panel corners use `clip-path: polygon(...)` chevron cuts (see `.ttoto-a-panel` /
 `.ttoto-a-tag` in the reference file) rather than plain rounded rectangles — this is a
@@ -77,12 +98,19 @@ gradient:
 
 ![Logo lockup with tagline](ttoto-logo-lockup-tagline.png)
 
-The wordmark's per-letter coloring is not decorative — it encodes the three answer channels,
-left to right: `T` in THIS-crimson `#e0625f`, `T` in THAT-amber `#ffb020`, then `o` `#c7d4ea`
-and `T` `#f2f5fb` as neutral connective type, closing on `O` in THE-OTHER-cyan `#3ec2d9`. The
-mark repeats the same crimson/amber/cyan trio as three rotated chevrons at 0°/120°/240°.
-Keep this mapping if the logo is ever redrawn or re-colored, and keep it consistent with the
-panel palette above.
+> **These three PNGs are now stale.** They're rendered in the original crimson/amber/cyan
+> trio, but the live app's code-rendered logo (header lockup + intro screen, both driven by
+> `src/modes/ttoto/colors.ts`) was recolored to cyan/orange/purple per the superseding note
+> in §1. Static raster images can't be recolored via code — regenerating these three PNGs in
+> the new palette is an open follow-up for whoever next has design-tool access.
+
+The wordmark's per-letter coloring is not decorative — it encodes the three answer channels.
+**Current (live) mapping**, left to right: `T` in THIS-cyan `#22d3ee`, `T` in THAT-orange
+`#f97316`, then `o` `#c7d4ea` and `T` `#f2f5fb` as neutral connective type, closing on `O` in
+THE-OTHER-purple `#a855f7`. The mark repeats the same trio as three rotated chevrons at
+0°/120°/240°. Keep this mapping if the logo is ever redrawn or re-colored, and keep it
+consistent with `colors.ts`. (The committed PNGs above still show the original
+crimson/amber/cyan mapping — see the stale-asset note.)
 
 Note that `reference-combo-screen.html` currently draws the lockup inline (an SVG for the
 mark plus per-letter `<span>`s for the wordmark) rather than referencing these PNGs — either
@@ -116,10 +144,14 @@ states — shown side-by-side in `reference-combo-screen.html`:
 
 | State | Visual signal |
 |---|---|
-| Standby / available | Cyan/neutral border, small solid dot, "AVAILABLE" label |
-| Active / on the clock | Amber border + stronger glow, pulsing dot (glow via `box-shadow`), "SIGNAL LOCKED" label |
-| Missed / wrong | Crimson border, crack graphic overlaid (§5), "X TEAM N — MISSED" label |
-| Correct | **Not yet mocked** as a distinct static frame — needs a "win" state designed, likely a green/gold flash and no crack, analogous to the miss state. |
+| Standby / available | Panel's own identity color border (no separate label — implemented without the "AVAILABLE" text, which read as unnecessary noise once actual gameplay showed it) |
+| Missed / wrong | Border switches to the reserved incorrect-red (`colors.ts`), crack graphic overlaid (§5) in matching red tones, "SIGNAL LOST" + "TEAM N — MISSED" label |
+| Correct | Implemented as a green flash/recolor (reserved correct-green, not gold — see the palette-supersession note in §1) replacing the panel's identity color, analogous to the miss state |
+
+(The "Active / on the clock" state described in early mockups — a single panel visually
+flagged while a team decides — was never implemented as designed: which of the three panels
+ends up correct isn't knowable until judged, so there's no panel-level "on the clock" state.
+Instead, who's currently answering is shown as text under the question, not on a panel.)
 
 The tile row itself (§4) is what actually reveals the letters. Panel border/tag colors are
 per-team (THIS = Team 1 color, THE OTHER = Team 2 color) and stay fixed regardless of state,

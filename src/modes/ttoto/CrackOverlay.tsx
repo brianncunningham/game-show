@@ -1,4 +1,12 @@
 import type { CrackVariant } from './types';
+import { TTOTO_COLORS, rgba } from './colors';
+
+// Glow color derives from the reserved "incorrect" red (colors.ts) rather than an
+// arbitrary pink, so a miss's crack visually ties back to the same red used everywhere
+// else "wrong answer" is signaled. The crisp core stays near-white for an "electrical
+// fault flash" look.
+const CRACK_GLOW = rgba(TTOTO_COLORS.incorrect, 0.32);
+const CRACK_CORE = '#fff3f2';
 
 // Path data lifted directly from docs/designs/CrackVariants.dc.html (visual-notes §5) —
 // don't redraw, copy. Each variant renders a blurred glow stroke behind a crisp core
@@ -35,20 +43,20 @@ export function CrackOverlay({ variant, rotationDeg }: { variant: CrackVariant; 
       <svg viewBox="0 0 300 460" preserveAspectRatio="none" style={{ width: '100%', height: '100%', overflow: 'visible', display: 'block' }}>
         {variant === 'C' ? (
           <>
-            <g fill="none" stroke="#ffb3b0" strokeWidth={6} strokeLinecap="round" strokeLinejoin="round" opacity={0.26} style={{ filter: 'blur(3px)' }}>
+            <g fill="none" stroke={CRACK_GLOW} strokeWidth={6} strokeLinecap="round" strokeLinejoin="round" style={{ filter: 'blur(3px)' }}>
               {SPIDER_RAYS.map((d, i) => <path key={i} d={d} />)}
             </g>
-            <g fill="none" stroke="#fff3f2" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" opacity={0.9}>
+            <g fill="none" stroke={CRACK_CORE} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" opacity={0.9}>
               {SPIDER_RAYS.map((d, i) => <path key={i} d={d} />)}
             </g>
-            <circle cx={150} cy={220} r={5} fill="#fff3f2" opacity={0.9} />
+            <circle cx={150} cy={220} r={5} fill={CRACK_CORE} opacity={0.9} />
           </>
         ) : (
           <>
-            <path d={SINGLE_PATH[variant].main} fill="none" stroke="#ffb3b0" strokeWidth={6} strokeLinecap="round" strokeLinejoin="round" opacity={0.28} style={{ filter: 'blur(3px)' }} />
-            <path d={SINGLE_PATH[variant].main} fill="none" stroke="#fff3f2" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" opacity={0.9} />
+            <path d={SINGLE_PATH[variant].main} fill="none" stroke={CRACK_GLOW} strokeWidth={6} strokeLinecap="round" strokeLinejoin="round" style={{ filter: 'blur(3px)' }} />
+            <path d={SINGLE_PATH[variant].main} fill="none" stroke={CRACK_CORE} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" opacity={0.9} />
             {SINGLE_PATH[variant].branches.map((d, i) => (
-              <path key={i} d={d} fill="none" stroke="#ffb3b0" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" opacity={0.75} />
+              <path key={i} d={d} fill="none" stroke={CRACK_GLOW} strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" opacity={0.75} />
             ))}
           </>
         )}

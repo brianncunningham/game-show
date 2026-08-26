@@ -203,12 +203,16 @@ class TToTOStore {
     return this.state.rounds.map((r, i) => (i === roundIndex ? { ...r, letterStyle } : r));
   }
 
-  // idle -> round_intro (round 0), or resolved/round_intro -> round_intro (next round)
+  // idle -> round_intro (round 0), or resolved/round_intro -> round_intro (next round).
+  // Also dismisses the game-intro screen: showIntro is checked before phase on /show, so
+  // it has to clear here (not in beginRound()) or the round-type card is masked by the
+  // intro right up until the same click that also advances past it to the question.
   private enterRoundIntro(roundIndex: number): TToTOState {
     const rounds = this.ensureLetterStyle(roundIndex);
     return this.commit({
       ...this.state,
       rounds,
+      showIntro: false,
       roundState: {
         ...initialRoundState(),
         phase: 'round_intro',

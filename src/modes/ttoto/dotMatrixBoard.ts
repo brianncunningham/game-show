@@ -5,6 +5,12 @@
 // canvas: several frames of random on/off pixel noise across the grid, then the canvas
 // locks onto the actual glyph's dot pattern (sampled from real rendered text), exactly
 // reproducing the same 6px dot pitch look as the CSS version.
+//
+// The base cyan is this technique's own "LED hardware" flavor color (all three panels
+// render the same cyan regardless of which choice they are, same as a real dot-matrix
+// sign doesn't change color per letter) — not tied to This/That/TheOther identity, so it's
+// intentionally not sourced from colors.ts. The win color IS semantic, so it is.
+import { TTOTO_COLORS, rgba } from './colors';
 
 const DOT_PITCH = 5;      // px per cell — close to the CSS version's mask-size (visual-notes §4b)
 const DOT_RADIUS = 1.7;
@@ -109,7 +115,7 @@ export function setupDotMatrix(canvas: HTMLCanvasElement): DotMatrixHandle {
     cascade(word, won = false, onSettled) {
       clearTimers();
       const grid = computeTargetGrid(word, width, height);
-      const color = won ? 'rgba(255,215,100,0.95)' : 'rgba(77,255,240,0.95)';
+      const color = won ? rgba(TTOTO_COLORS.correct, 0.95) : 'rgba(77,255,240,0.95)';
       const noiseFrames = 8 + Math.floor(Math.random() * 5); // 8-12, similar duration to the other two styles
       const frameMs = 60;
       for (let f = 0; f < noiseFrames; f++) {

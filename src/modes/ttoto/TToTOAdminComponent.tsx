@@ -15,8 +15,9 @@ import {
   listSaves, createSave, loadSave as apiLoadSave, updateSave, deleteSave,
 } from './api';
 import type { TToTOSaveMeta } from './api';
+import { TTOTO_COLORS } from './colors';
 
-const TEAM_COLORS = ['#3ec2d9', '#ffb020'] as const;
+const TEAM_COLORS = [TTOTO_COLORS.team1, TTOTO_COLORS.team2] as const;
 const sectionLabelSx = { fontWeight: 700, fontSize: '0.75rem', textTransform: 'uppercase' as const, letterSpacing: '0.1em', color: 'text.disabled', mb: 1 };
 const FLAVOR_OPTIONS = Object.keys(FLAVOR_LABELS) as TToTOFlavor[];
 

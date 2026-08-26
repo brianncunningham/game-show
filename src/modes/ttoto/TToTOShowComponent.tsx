@@ -8,8 +8,12 @@ import { setupDotMatrix, type DotMatrixHandle } from './dotMatrixBoard';
 import { CrackOverlay } from './CrackOverlay';
 import { TToTOGameIntro } from './TToTOGameIntro';
 import { TToTOStage } from './TToTOStage';
+import { TTOTO_COLORS, lighten, darken, rgba } from './colors';
 
 // ─── Global CSS (ported from docs/designs/reference-combo-screen.html + LetterStyles.dc.html) ──
+// Gradient/glow shades below are all *derived* from TTOTO_COLORS via lighten/darken/rgba —
+// changing a base hex in colors.ts is enough to re-tint the whole mode, nothing here is a
+// separately hand-picked shade.
 
 const GLOBAL_CSS = `
   .ttoto-a-panel { clip-path: polygon(24px 0, 100% 0, 100% calc(100% - 24px), calc(100% - 24px) 100%, 0 100%, 0 24px); }
@@ -25,10 +29,11 @@ const GLOBAL_CSS = `
   .ttoto-flap-cell .face { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-family:'Barlow Condensed', sans-serif; font-weight:700; font-size:32px; border-radius:3px; backface-visibility:hidden; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.4); }
   .ttoto-flap-cell .face.front { transform:rotateX(0deg); }
   .ttoto-flap-cell .face.back  { transform:rotateX(180deg); }
-  .ttoto-flap-cell .face-this  { background:linear-gradient(to bottom,#8a3a37 0 50%,#5c221f 50% 100%); color:#ffd8d6; }
-  .ttoto-flap-cell .face-that  { background:linear-gradient(to bottom,#f0ae4e 0 50%,#d38a26 50% 100%); color:#2a1a04; }
-  .ttoto-flap-cell .face-other { background:linear-gradient(to bottom,#4fb9cf 0 50%,#237e8f 50% 100%); color:#06222a; }
-  .ttoto-win-gold .face { background:linear-gradient(to bottom,#ffe08a 0 50%,#ffb020 50% 100%) !important; color:#2e1c06 !important; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.4), 0 0 22px 3px rgba(255,215,0,0.55) !important; }
+  .ttoto-flap-cell .face-this  { background:linear-gradient(to bottom,${lighten(TTOTO_COLORS.this, 0.35)} 0 50%,${darken(TTOTO_COLORS.this, 0.25)} 50% 100%); color:#f2f5fb; }
+  .ttoto-flap-cell .face-that  { background:linear-gradient(to bottom,${lighten(TTOTO_COLORS.that, 0.35)} 0 50%,${darken(TTOTO_COLORS.that, 0.15)} 50% 100%); color:#2a0a00; }
+  .ttoto-flap-cell .face-other { background:linear-gradient(to bottom,${lighten(TTOTO_COLORS.the_other, 0.35)} 0 50%,${darken(TTOTO_COLORS.the_other, 0.25)} 50% 100%); color:#f2f5fb; }
+  /* Win state: green (reserved for "correct") replaces the panel's own identity color. */
+  .ttoto-win-correct .face { background:linear-gradient(to bottom,${lighten(TTOTO_COLORS.correct, 0.4)} 0 50%,${darken(TTOTO_COLORS.correct, 0.35)} 50% 100%) !important; color:#052e16 !important; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.4), 0 0 22px 3px ${rgba(TTOTO_COLORS.correct, 0.55)} !important; }
 
   .ttoto-dotmatrix-panel { background:#04100e; border:1px solid #123028; padding:14px 18px; position:relative; display:inline-block;
     background-image: radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1.4px); background-size: 6px 6px;
@@ -47,7 +52,7 @@ const GLOBAL_CSS = `
     -webkit-mask-size: 5px 5px; mask-size: 5px 5px; -webkit-mask-repeat: repeat; mask-repeat: repeat;
     opacity: 0; transition: opacity 0.18s ease; white-space: nowrap; }
   .ttoto-dotmatrix-text.settled { opacity: 1; }
-  .ttoto-dotmatrix-text.won { color:#ffd76a; text-shadow: 0 0 6px rgba(255,215,100,0.95), 0 0 20px rgba(255,200,60,0.7); }
+  .ttoto-dotmatrix-text.won { color:${TTOTO_COLORS.correct}; text-shadow: 0 0 6px ${rgba(TTOTO_COLORS.correct, 0.95)}, 0 0 20px ${rgba(TTOTO_COLORS.correct, 0.7)}; }
 
   .ttoto-segment-panel { background:#170905; border:1px solid #3a1408; padding:14px 18px; position:relative; display:inline-block; }
   .ttoto-segment-stack { position:relative; display:inline-block; }
@@ -55,7 +60,7 @@ const GLOBAL_CSS = `
   .ttoto-segment-lit { font-family:'Share Tech Mono', monospace; font-size:clamp(20px, 3.2vw, 38px); color:#ff6a3d; position:relative;
     text-shadow: 0 0 6px rgba(255,106,61,0.9), 0 0 20px rgba(255,106,61,0.6), 0 0 40px rgba(255,106,61,0.28);
     white-space: nowrap; display:inline-flex; gap:6px; }
-  .ttoto-segment-lit.won { color:#ffd76a; text-shadow: 0 0 6px rgba(255,215,100,0.95), 0 0 20px rgba(255,200,60,0.7); }
+  .ttoto-segment-lit.won { color:${TTOTO_COLORS.correct}; text-shadow: 0 0 6px ${rgba(TTOTO_COLORS.correct, 0.95)}, 0 0 20px ${rgba(TTOTO_COLORS.correct, 0.7)}; }
   /* Fast per-character scramble-then-resolve (departure-board / terminal-decrypt style) —
      the segmented display's equivalent of split-flap's tile cascade. */
   .ttoto-seg-char { transition: opacity 0.05s linear, filter 0.05s linear; }
@@ -64,8 +69,8 @@ const GLOBAL_CSS = `
 
 const CHOICE_ORDER: TToTOChoiceKey[] = ['this', 'that', 'the_other'];
 const CHOICE_VARIANT: Record<TToTOChoiceKey, LetterVariant> = { this: 'this', that: 'that', the_other: 'other' };
-const CHOICE_COLOR: Record<TToTOChoiceKey, string> = { this: '#e0625f', that: '#ffb020', the_other: '#3ec2d9' };
-const CHOICE_TAG_BG: Record<TToTOChoiceKey, string> = { this: '#e0625f', that: '#ffb020', the_other: '#3ec2d9' };
+const CHOICE_COLOR: Record<TToTOChoiceKey, string> = { this: TTOTO_COLORS.this, that: TTOTO_COLORS.that, the_other: TTOTO_COLORS.the_other };
+const CHOICE_TAG_BG = CHOICE_COLOR;
 const CHOICE_LABEL: Record<TToTOChoiceKey, string> = { this: 'THIS', that: 'THAT', the_other: 'THE OTHER' };
 
 // ─── Split-flap row (imperative DOM cascade) ────────────────────────────────
@@ -91,7 +96,7 @@ function SplitFlapRow({ variant, word, revealed, won }: { variant: LetterVariant
     prevRevealedRef.current = revealed;
   }, [word, revealed, variant]);
 
-  return <div ref={rowRef} className={`ttoto-flap-row${won ? ' ttoto-win-gold' : ''}`} style={{ gap: 6 }} />;
+  return <div ref={rowRef} className={`ttoto-flap-row${won ? ' ttoto-win-correct' : ''}`} style={{ gap: 6 }} />;
 }
 
 function DotMatrixRow({ word, revealed, won }: { word: string; revealed: boolean; won: boolean }) {
@@ -191,10 +196,10 @@ function RoundIntroScreen({ round }: { round: TToTORound | undefined }) {
         fontFamily: "'Barlow Condensed', system-ui, sans-serif", color: '#f2f5fb',
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 18,
       }}>
-        <div className="ttoto-a-tag" style={{ background: '#ffb020', color: '#2e1c06', fontSize: 20, fontWeight: 700, letterSpacing: 4, padding: '8px 30px 8px 18px' }}>
+        <div className="ttoto-a-tag" style={{ background: '#c7d4ea', color: '#0d1b2e', fontSize: 20, fontWeight: 700, letterSpacing: 4, padding: '8px 30px 8px 18px' }}>
           ROUND {round?.roundNumber ?? '—'}
         </div>
-        <div style={{ fontFamily: "'Big Shoulders Display', sans-serif", fontWeight: 900, fontSize: 100, letterSpacing: 1, textShadow: '0 0 30px rgba(255,176,32,0.5)', textAlign: 'center' }}>
+        <div style={{ fontFamily: "'Big Shoulders Display', sans-serif", fontWeight: 900, fontSize: 100, letterSpacing: 1, textShadow: '0 0 30px rgba(199,212,234,0.5)', textAlign: 'center' }}>
           {round ? FLAVOR_LABELS[round.flavor].toUpperCase() : ''}
         </div>
       </div>
@@ -215,19 +220,19 @@ function GameOverScreen({ state }: { state: TToTOState }) {
         fontFamily: "'Barlow Condensed', system-ui, sans-serif", color: '#f2f5fb',
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 24,
       }}>
-        <div style={{ fontFamily: "'Big Shoulders Display', sans-serif", fontWeight: 900, fontSize: 72, letterSpacing: 2, color: '#ffb020', textShadow: '0 0 30px rgba(255,176,32,0.5)' }}>
+        <div style={{ fontFamily: "'Big Shoulders Display', sans-serif", fontWeight: 900, fontSize: 72, letterSpacing: 2, color: '#f2f5fb', textShadow: '0 0 30px rgba(242,245,251,0.4)' }}>
           GAME OVER
         </div>
         <div style={{ display: 'flex', gap: 60 }}>
           {state.teams.map((t) => (
             <div key={t.id} style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 22, letterSpacing: 3, color: winner?.id === t.id ? '#ffd98a' : '#8ea3c4' }}>{t.name}</div>
+              <div style={{ fontSize: 22, letterSpacing: 3, color: winner?.id === t.id ? TTOTO_COLORS.correct : '#8ea3c4' }}>{t.name}</div>
               <div style={{ fontFamily: "'Big Shoulders Display', sans-serif", fontWeight: 900, fontSize: 88 }}>{t.score}</div>
             </div>
           ))}
         </div>
         {winner && (
-          <div style={{ fontFamily: "'Big Shoulders Display', sans-serif", fontWeight: 800, fontSize: 32, color: '#fff', textShadow: '0 0 20px rgba(255,255,255,0.4)' }}>
+          <div style={{ fontFamily: "'Big Shoulders Display', sans-serif", fontWeight: 800, fontSize: 32, color: TTOTO_COLORS.correct, textShadow: `0 0 20px ${rgba(TTOTO_COLORS.correct, 0.5)}` }}>
             {winner.name} WINS!
           </div>
         )}
@@ -249,9 +254,10 @@ function ComboScreen({ state }: { state: TToTOState }) {
 
   const answeringTeam = teams.find(t => t.id === roundState.answeringTeamId);
 
+  // 'reading' shows no status text — the prompt alone (choices still hidden) is the whole
+  // cue; anything else here would be host-facing state leaking onto the audience screen.
   let statusText = '';
-  if (roundState.phase === 'reading') statusText = 'HOST READING…';
-  else if (roundState.phase === 'armed') statusText = 'BUZZERS ARMED — WAITING FOR BUZZ';
+  if (roundState.phase === 'armed') statusText = 'BUZZERS ARMED — WAITING FOR BUZZ';
   else if (roundState.phase === 'answering') statusText = `${answeringTeam?.name ?? ''} — ON THE CLOCK`;
   else if (roundState.phase === 'steal') statusText = `${answeringTeam?.name ?? ''} — STEALING`;
   else if (roundState.phase === 'resolved') {
@@ -269,47 +275,47 @@ function ComboScreen({ state }: { state: TToTOState }) {
     }}>
       <div style={{
         position: 'absolute', inset: 0, backgroundImage:
-          'radial-gradient(circle at 12% 90%, rgba(62,194,217,0.30), transparent 46%),' +
-          'radial-gradient(circle at 90% 8%, rgba(255,176,32,0.26), transparent 46%),' +
-          'radial-gradient(circle at 92% 90%, rgba(224,98,95,0.20), transparent 42%),' +
+          `radial-gradient(circle at 12% 90%, ${rgba(TTOTO_COLORS.this, 0.28)}, transparent 46%),` +
+          `radial-gradient(circle at 90% 8%, ${rgba(TTOTO_COLORS.that, 0.24)}, transparent 46%),` +
+          `radial-gradient(circle at 92% 90%, ${rgba(TTOTO_COLORS.the_other, 0.22)}, transparent 42%),` +
           'repeating-linear-gradient(0deg, rgba(140,190,220,0.07) 0px, rgba(140,190,220,0.07) 1px, transparent 1px, transparent 64px),' +
           'repeating-linear-gradient(90deg, rgba(140,190,220,0.07) 0px, rgba(140,190,220,0.07) 1px, transparent 1px, transparent 64px)',
       }} />
-      <div style={{ position: 'relative', height: 12, background: 'linear-gradient(90deg, #e0625f, #ffb020, #3ec2d9)', boxShadow: '0 0 22px rgba(255,176,32,0.35)' }} />
+      <div style={{ position: 'relative', height: 12, background: `linear-gradient(90deg, ${TTOTO_COLORS.this}, ${TTOTO_COLORS.that}, ${TTOTO_COLORS.the_other})`, boxShadow: `0 0 22px ${rgba(TTOTO_COLORS.that, 0.3)}` }} />
 
       {/* Header */}
       <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 32px 0 32px' }}>
-        <div className="ttoto-score-plate" style={{ background: 'linear-gradient(160deg, #1a4a44, #0c2622)', border: '2px solid #3ec2d9', boxShadow: '0 0 30px rgba(62,194,217,0.28)' }}>
-          <div style={{ fontSize: 16, letterSpacing: 3, color: '#8fe9dc' }}>{teams[0].name.toUpperCase()}</div>
-          <div style={{ fontFamily: "'Big Shoulders Display', sans-serif", fontWeight: 900, fontSize: 92, lineHeight: 0.95, color: '#fff', textShadow: '0 0 26px rgba(62,194,217,0.6)' }}>{teams[0].score}</div>
+        <div className="ttoto-score-plate" style={{ background: `linear-gradient(160deg, ${darken(TTOTO_COLORS.team1, 0.75)}, ${darken(TTOTO_COLORS.team1, 0.88)})`, border: `2px solid ${TTOTO_COLORS.team1}`, boxShadow: `0 0 30px ${rgba(TTOTO_COLORS.team1, 0.28)}` }}>
+          <div style={{ fontSize: 16, letterSpacing: 3, color: lighten(TTOTO_COLORS.team1, 0.55) }}>{teams[0].name.toUpperCase()}</div>
+          <div style={{ fontFamily: "'Big Shoulders Display', sans-serif", fontWeight: 900, fontSize: 92, lineHeight: 0.95, color: '#fff', textShadow: `0 0 26px ${rgba(TTOTO_COLORS.team1, 0.6)}` }}>{teams[0].score}</div>
         </div>
 
         <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
             <svg width={52} height={52} viewBox="0 0 64 64" style={{ flex: 'none' }}>
               <g strokeWidth={7} strokeLinecap="round" fill="none">
-                <path d="M14 12 L34 32 L14 52" stroke="#e0625f" transform="rotate(0 32 32)" />
-                <path d="M14 12 L34 32 L14 52" stroke="#ffb020" transform="rotate(120 32 32)" />
-                <path d="M14 12 L34 32 L14 52" stroke="#3ec2d9" transform="rotate(240 32 32)" />
+                <path d="M14 12 L34 32 L14 52" stroke={TTOTO_COLORS.this} transform="rotate(0 32 32)" />
+                <path d="M14 12 L34 32 L14 52" stroke={TTOTO_COLORS.that} transform="rotate(120 32 32)" />
+                <path d="M14 12 L34 32 L14 52" stroke={TTOTO_COLORS.the_other} transform="rotate(240 32 32)" />
               </g>
             </svg>
             <div style={{ fontFamily: "'Big Shoulders Display', sans-serif", fontWeight: 900, fontSize: 56, letterSpacing: 1, lineHeight: 1 }}>
-              <span style={{ color: '#e0625f' }}>T</span><span style={{ color: '#ffb020' }}>T</span>
+              <span style={{ color: TTOTO_COLORS.this }}>T</span><span style={{ color: TTOTO_COLORS.that }}>T</span>
               <span style={{ color: '#c7d4ea', fontSize: '0.68em' }}>o</span>
-              <span style={{ color: '#f2f5fb' }}>T</span><span style={{ color: '#3ec2d9' }}>O</span>
+              <span style={{ color: '#f2f5fb' }}>T</span><span style={{ color: TTOTO_COLORS.the_other }}>O</span>
             </div>
           </div>
-          <div className="ttoto-a-tag" style={{ background: '#ffb020', color: '#2e1c06', fontSize: 13, fontWeight: 700, letterSpacing: 3, padding: '5px 20px 5px 12px', marginTop: 2 }}>
+          <div className="ttoto-a-tag" style={{ background: '#c7d4ea', color: '#0d1b2e', fontSize: 13, fontWeight: 700, letterSpacing: 3, padding: '5px 20px 5px 12px', marginTop: 2 }}>
             ROUND {round?.roundNumber ?? '—'}
           </div>
-          <div style={{ fontFamily: "'Big Shoulders Display', sans-serif", fontWeight: 900, fontSize: 32, letterSpacing: 1, color: '#fff', textShadow: '0 0 24px rgba(255,176,32,0.5)' }}>
+          <div style={{ fontFamily: "'Big Shoulders Display', sans-serif", fontWeight: 900, fontSize: 32, letterSpacing: 1, color: '#fff', textShadow: '0 0 24px rgba(199,212,234,0.5)' }}>
             {round ? FLAVOR_LABELS[round.flavor].toUpperCase() : ''}
           </div>
         </div>
 
-        <div className="ttoto-score-plate" style={{ background: 'linear-gradient(160deg, #4a3410, #26190a)', border: '2px solid #ffb020', boxShadow: '0 0 30px rgba(255,176,32,0.28)', textAlign: 'right' }}>
-          <div style={{ fontSize: 16, letterSpacing: 3, color: '#ffd98a' }}>{teams[1].name.toUpperCase()}</div>
-          <div style={{ fontFamily: "'Big Shoulders Display', sans-serif", fontWeight: 900, fontSize: 92, lineHeight: 0.95, color: '#fff', textShadow: '0 0 26px rgba(255,176,32,0.6)' }}>{teams[1].score}</div>
+        <div className="ttoto-score-plate" style={{ background: `linear-gradient(160deg, ${darken(TTOTO_COLORS.team2, 0.72)}, ${darken(TTOTO_COLORS.team2, 0.86)})`, border: `2px solid ${TTOTO_COLORS.team2}`, boxShadow: `0 0 30px ${rgba(TTOTO_COLORS.team2, 0.28)}`, textAlign: 'right' }}>
+          <div style={{ fontSize: 16, letterSpacing: 3, color: lighten(TTOTO_COLORS.team2, 0.45) }}>{teams[1].name.toUpperCase()}</div>
+          <div style={{ fontFamily: "'Big Shoulders Display', sans-serif", fontWeight: 900, fontSize: 92, lineHeight: 0.95, color: '#fff', textShadow: `0 0 26px ${rgba(TTOTO_COLORS.team2, 0.6)}` }}>{teams[1].score}</div>
         </div>
       </div>
 
@@ -325,7 +331,7 @@ function ComboScreen({ state }: { state: TToTOState }) {
         <div style={{ fontFamily: "'Big Shoulders Display', sans-serif", fontWeight: 800, fontSize: 32, letterSpacing: 0.5, textAlign: 'center', color: '#fff' }}>
           {question ? question.prompt.toUpperCase() : ''}
         </div>
-        <div style={{ textAlign: 'center', marginTop: 8, fontSize: 15, letterSpacing: 2, color: '#ffd98a', minHeight: 20 }}>
+        <div style={{ textAlign: 'center', marginTop: 8, fontSize: 15, letterSpacing: 2, color: '#c7d4ea', minHeight: 20 }}>
           {statusText}
         </div>
       </div>
@@ -345,18 +351,20 @@ function ComboScreen({ state }: { state: TToTOState }) {
               background: missed
                 ? 'linear-gradient(125deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0) 36%), linear-gradient(160deg, #4a1418, #2a0c10)'
                 : `linear-gradient(125deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0) 36%), linear-gradient(160deg, ${color}22, #0a1c28)`,
-              border: `2px solid ${missed ? '#e0625f' : color}`,
-              boxShadow: correct ? '0 0 46px rgba(255,215,0,0.45)' : undefined,
+              border: `2px solid ${missed ? TTOTO_COLORS.incorrect : color}`,
+              boxShadow: correct ? `0 0 46px ${rgba(TTOTO_COLORS.correct, 0.45)}` : undefined,
               filter: `drop-shadow(0 12px 0 rgba(0,0,0,0.4)) drop-shadow(0 0 24px ${color}33)`,
             }}>
               <div className="ttoto-a-bracket-tr" style={{ borderTop: `3px solid ${color}`, borderRight: `3px solid ${color}` }} />
               <div className="ttoto-a-bracket-bl" style={{ borderBottom: `3px solid ${color}`, borderLeft: `3px solid ${color}` }} />
-              <div className="ttoto-a-tag" style={{ background: CHOICE_TAG_BG[choice], color: '#141414', fontSize: 16, fontWeight: 700, letterSpacing: 3, padding: '9px 24px 9px 16px', alignSelf: 'flex-start' }}>
+              <div className="ttoto-a-tag" style={{ background: CHOICE_TAG_BG[choice], color: '#f2f5fb', fontSize: 22, fontWeight: 700, letterSpacing: 3, padding: '10px 26px 10px 18px', alignSelf: 'flex-start' }}>
                 {CHOICE_LABEL[choice]}
               </div>
-              <div style={{ position: 'absolute', top: 16, right: 20, fontSize: 13, letterSpacing: 2, color: missed ? '#ffd0ce' : correct ? '#ffe9b0' : '#bdeef7' }}>
-                {missed ? 'SIGNAL LOST' : correct ? 'CORRECT' : 'AVAILABLE'}
-              </div>
+              {(missed || correct) && (
+                <div style={{ position: 'absolute', top: 16, right: 20, fontSize: 13, letterSpacing: 2, color: missed ? lighten(TTOTO_COLORS.incorrect, 0.3) : lighten(TTOTO_COLORS.correct, 0.3) }}>
+                  {missed ? 'SIGNAL LOST' : 'CORRECT'}
+                </div>
+              )}
 
               {missed && crack && <CrackOverlay variant={crack.variant} rotationDeg={crack.rotationDeg} />}
 
