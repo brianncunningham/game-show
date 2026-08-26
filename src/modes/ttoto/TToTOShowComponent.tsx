@@ -40,6 +40,8 @@ const GLOBAL_CSS = `
   .ttoto-flap-cell .face-this  { background:linear-gradient(to bottom,${lighten(TTOTO_COLORS.this, 0.35)} 0 50%,${darken(TTOTO_COLORS.this, 0.25)} 50% 100%); color:#f2f5fb; }
   .ttoto-flap-cell .face-that  { background:linear-gradient(to bottom,${lighten(TTOTO_COLORS.that, 0.35)} 0 50%,${darken(TTOTO_COLORS.that, 0.15)} 50% 100%); color:#2a0a00; }
   .ttoto-flap-cell .face-other { background:linear-gradient(to bottom,${lighten(TTOTO_COLORS.the_other, 0.35)} 0 50%,${darken(TTOTO_COLORS.the_other, 0.25)} 50% 100%); color:#f2f5fb; }
+  /* Gunmetal/silver, not tied to a choice color — used for the round-intro's flavor reveal. */
+  .ttoto-flap-cell .face-neutral { background:linear-gradient(to bottom,${lighten('#8a939e', 0.35)} 0 50%,${darken('#8a939e', 0.3)} 50% 100%); color:#0d1013; }
   /* Win state: green (reserved for "correct") replaces the panel's own identity color. */
   .ttoto-win-correct .face { background:linear-gradient(to bottom,${lighten(TTOTO_COLORS.correct, 0.4)} 0 50%,${darken(TTOTO_COLORS.correct, 0.35)} 50% 100%) !important; color:#052e16 !important; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.4), 0 0 22px 3px ${rgba(TTOTO_COLORS.correct, 0.55)} !important; }
 
@@ -222,14 +224,16 @@ const CHOICE_LABEL: Record<TToTOChoiceKey, string> = { this: 'THIS', that: 'THAT
 const FLAP_FULL_TILE = { width: 52, height: 86 }; // historical default = scale 1
 const FLAP_FULL_CHAR_WIDTH = FLAP_FULL_TILE.width + 6; // + the row's tile gap
 
-function SplitFlapRow({ variant, word, revealed, won }: { variant: LetterVariant; word: string; revealed: boolean; won: boolean }) {
+function SplitFlapRow({ variant, word, revealed, won, maxWidth = ANSWER_PANEL_CONTENT_WIDTH }: {
+  variant: LetterVariant; word: string; revealed: boolean; won: boolean; maxWidth?: number;
+}) {
   const line1Ref = useRef<HTMLDivElement | null>(null);
   const line2Ref = useRef<HTMLDivElement | null>(null);
   const builtKeyRef = useRef<string>('');
   const prevRevealedRef = useRef<boolean>(false);
 
   const upper = word.toUpperCase();
-  const fit = fitTextToWidth(upper, ANSWER_PANEL_CONTENT_WIDTH, fixedCharWidth(FLAP_FULL_CHAR_WIDTH));
+  const fit = fitTextToWidth(upper, maxWidth, fixedCharWidth(FLAP_FULL_CHAR_WIDTH));
   const tileSize = { width: Math.round(FLAP_FULL_TILE.width * fit.scale), height: Math.round(FLAP_FULL_TILE.height * fit.scale) };
   const buildKey = fit.lines.join('|');
 
@@ -313,9 +317,11 @@ function DotMatrixLine({ word, width, height, revealed, won }: {
   );
 }
 
-function DotMatrixRow({ word, revealed, won }: { word: string; revealed: boolean; won: boolean }) {
+function DotMatrixRow({ word, revealed, won, maxWidth = ANSWER_PANEL_CONTENT_WIDTH }: {
+  word: string; revealed: boolean; won: boolean; maxWidth?: number;
+}) {
   const upper = word.toUpperCase();
-  const fit = fitTextToWidth(upper, ANSWER_PANEL_CONTENT_WIDTH, fixedCharWidth(DOT_FULL_CHAR_WIDTH));
+  const fit = fitTextToWidth(upper, maxWidth, fixedCharWidth(DOT_FULL_CHAR_WIDTH));
   const height = Math.round(84 * fit.scale);
 
   return (
@@ -396,9 +402,11 @@ function SegmentedLine({ word, fontSize, letterSpacing, revealed, won }: {
   );
 }
 
-function SegmentedRow({ word, revealed, won }: { word: string; revealed: boolean; won: boolean }) {
+function SegmentedRow({ word, revealed, won, maxWidth = ANSWER_PANEL_CONTENT_WIDTH }: {
+  word: string; revealed: boolean; won: boolean; maxWidth?: number;
+}) {
   const upper = word.toUpperCase();
-  const fit = fitTextToWidth(upper, ANSWER_PANEL_CONTENT_WIDTH, measureSegmentedWidth);
+  const fit = fitTextToWidth(upper, maxWidth, measureSegmentedWidth);
   const fontSize = Math.round(SEGMENTED_FULL_FONT_SIZE * fit.scale);
   const letterSpacing = Math.round(SEGMENTED_FULL_LETTER_SPACING * fit.scale);
 
@@ -443,7 +451,23 @@ function MultiplierBadge({ multiplier, fontSize = 16 }: { multiplier: number; fo
   );
 }
 
+// Deliberately *not* the victory treatment: cool palette (no warm light), compact and
+// centered (not room-filling), a quick beat rather than a multi-second sequence, and no CRT
+// (this is a sign being displayed, not a screen surface). The one thing it does borrow is
+// the actual reveal *mechanism* — the round's own randomized letterStyle previews itself a
+// beat early on the flavor name, tying this screen into the same machine rather than just
+// reusing its materials.
 function RoundIntroScreen({ round, multiplier }: { round: TToTORound | undefined; multiplier: number }) {
+  const [revealed, setRevealed] = useState(false);
+  useEffect(() => {
+    setRevealed(false);
+    const t = setTimeout(() => setRevealed(true), 250);
+    return () => clearTimeout(t);
+  }, [round?.id]);
+
+  const word = round ? FLAVOR_LABELS[round.flavor].toUpperCase() : '';
+  const letterStyle = round?.letterStyle;
+
   return (
     <TToTOStage>
       <div style={{
@@ -452,13 +476,25 @@ function RoundIntroScreen({ round, multiplier }: { round: TToTORound | undefined
         fontFamily: "'Barlow Condensed', system-ui, sans-serif", color: '#f2f5fb',
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 18,
       }}>
-        <div className="ttoto-a-tag" style={{ background: '#c7d4ea', color: '#0d1b2e', fontSize: 20, fontWeight: 700, letterSpacing: 4, padding: '8px 30px 8px 18px' }}>
-          ROUND {round?.roundNumber ?? '—'}
+        {/* Gunmetal plate — same chassis material as the header/score-plates/question panel
+            (Phase B), so this reads as "a sign bolted onto the machine," not a new material. */}
+        <div className="ttoto-gunmetal" style={{
+          position: 'relative', padding: '44px 72px', border: '1px solid #4a5058',
+          boxShadow: '0 0 34px rgba(0,0,0,0.45), inset 0 2px 3px rgba(255,255,255,0.07)',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 22, minWidth: 640,
+        }}>
+          <div className="ttoto-metal-brushed" />
+          <Rivet top={12} left={16} /><Rivet top={12} right={16} /><Rivet bottom={12} left={16} /><Rivet bottom={12} right={16} />
+          <div className="ttoto-a-tag" style={{ position: 'relative', background: '#c7d4ea', color: '#0d1b2e', fontSize: 20, fontWeight: 700, letterSpacing: 4, padding: '8px 30px 8px 18px' }}>
+            ROUND {round?.roundNumber ?? '—'}
+          </div>
+          <div style={{ position: 'relative' }}>
+            {letterStyle === 'dot_matrix' && <DotMatrixRow word={word} revealed={revealed} won={false} maxWidth={1100} />}
+            {letterStyle === 'segmented' && <SegmentedRow word={word} revealed={revealed} won={false} maxWidth={1100} />}
+            {(letterStyle === 'split_flap' || !letterStyle) && <SplitFlapRow variant="neutral" word={word} revealed={revealed} won={false} maxWidth={1100} />}
+          </div>
+          {multiplier !== 1 && <div style={{ position: 'relative' }}><MultiplierBadge multiplier={multiplier} fontSize={22} /></div>}
         </div>
-        <div style={{ fontFamily: "'Big Shoulders Display', sans-serif", fontWeight: 900, fontSize: 100, letterSpacing: 1, textShadow: '0 0 30px rgba(199,212,234,0.5)', textAlign: 'center' }}>
-          {round ? FLAVOR_LABELS[round.flavor].toUpperCase() : ''}
-        </div>
-        {multiplier !== 1 && <MultiplierBadge multiplier={multiplier} fontSize={22} />}
       </div>
     </TToTOStage>
   );
@@ -538,7 +574,7 @@ function MountedFilamentBulb({ x, y, width, rotationDeg, delayMs }: {
   );
 }
 
-// No shared visible structure at all (no hub, no ring, no spokes) — each bulb is
+// No shared visible structure at all this time (no hub, no ring, no spokes) — each bulb is
 // independent, living in the outer 30-40% of the 1600x900 canvas, oriented generally toward
 // CONTENT_CENTER (used only for aiming the bulbs and centering the ambient wash — nothing is
 // drawn there). Positions are hand-placed and deliberately irregular (varied distance/size/

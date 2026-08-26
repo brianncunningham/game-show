@@ -5,7 +5,10 @@
 // independently-timed transitionend callbacks per tile — trying to model that as React
 // state would fight the reconciler for no benefit.
 
-export type LetterVariant = 'this' | 'that' | 'other';
+// 'neutral' is a gunmetal/silver face for contexts that aren't tied to a specific choice
+// (e.g. the round-intro screen revealing the round's flavor name) — using 'this'/'that'/
+// 'other' there would misleadingly imply a connection to that specific answer choice.
+export type LetterVariant = 'this' | 'that' | 'other' | 'neutral';
 
 export const CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
