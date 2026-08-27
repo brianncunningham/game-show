@@ -11,6 +11,7 @@ import type {
   TToTOQuestion,
   LetterStyle,
   CrackVariant,
+  ControllerAssignment,
 } from './types.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -20,7 +21,17 @@ const loadPersistedState = (): TToTOState | null => {
   try {
     if (existsSync(PERSIST_PATH)) {
       const raw = readFileSync(PERSIST_PATH, 'utf-8');
-      return JSON.parse(raw) as TToTOState;
+      const s = JSON.parse(raw) as TToTOState;
+      // Hydrate fields added after initial release, and migrate the retired
+      // 'hardware-team' buzzer mode to 'hardware-player'.
+      s.playerPool = s.playerPool ?? [];
+      s.controllerAssignments = s.controllerAssignments ?? [];
+      s.randomizerSeq = s.randomizerSeq ?? 0;
+      s.teams = s.teams.map(t => ({ ...t, players: t.players ?? [] })) as [TToTOTeam, TToTOTeam];
+      s.roundState.attemptedControllerIds = s.roundState.attemptedControllerIds ?? [];
+      s.roundState.answeringControllerId = s.roundState.answeringControllerId ?? null;
+      if ((s.config?.buzzerMode as string) === 'hardware-team') s.config.buzzerMode = 'hardware-player';
+      return s;
     }
   } catch (e) {
     console.warn('TToTO: could not load persisted state, using defaults.', e);
@@ -52,13 +63,46 @@ const DEFAULT_CONFIG: TToTOConfig = {
 };
 
 const DEFAULT_TEAMS: [TToTOTeam, TToTOTeam] = [
-  { id: 'team-1', name: 'Team 1', score: 0 },
-  { id: 'team-2', name: 'Team 2', score: 0 },
+  { id: 'team-1', name: 'Team 1', score: 0, players: [] },
+  { id: 'team-2', name: 'Team 2', score: 0, players: [] },
 ];
+
+// No fixed roster cap — variable size, limited in practice only by how many physical
+// wands exist (hardwareInput.ts enumerates up to 15 controllers for NTT's clock-vote
+// routing, so that's the practical ceiling here too).
+const MAX_POOL = 15;
 
 const ALL_LETTER_STYLES: LetterStyle[] = ['split_flap', 'dot_matrix', 'segmented'];
 const ALL_CRACK_VARIANTS: CrackVariant[] = ['A', 'B', 'C', 'D'];
 const CHOICE_SLOTS: TToTOChoiceKey[] = ['this', 'that', 'the_other'];
+
+/**
+ * Assign wand controller IDs to players, positionally: team[0]'s players get
+ * controllers '1'..'N', team[1]'s players get the next 'N+1'..'N+M'. Rebuilt wholesale
+ * whenever a roster changes (see setTeams/randomAssignPlayers) rather than trying to
+ * preserve prior numbering — simpler, and controller numbers aren't meaningful to
+ * players anyway (they just pick up whichever wand a host physically hands them).
+ */
+const buildControllerAssignments = (teams: [TToTOTeam, TToTOTeam]): ControllerAssignment[] => {
+  const assignments: ControllerAssignment[] = [];
+  let n = 1;
+  for (const team of teams) {
+    for (const playerName of team.players) {
+      assignments.push({ controllerId: String(n), teamId: team.id, playerName });
+      n += 1;
+    }
+  }
+  return assignments;
+};
+
+const shuffle = <T,>(items: T[]): T[] => {
+  const next = [...items];
+  for (let i = next.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [next[i], next[j]] = [next[j], next[i]];
+  }
+  return next;
+};
 
 // Randomly assigns a question's 3 authored answers (index 0 = correct) to the
 // This/That/TheOther display slots. Called once per question load; the result is
@@ -127,6 +171,8 @@ const initialRoundState = (): TToTORoundState => ({
   currentRoundIndex: 0,
   currentQuestionIndex: 0,
   answeringTeamId: null,
+  answeringControllerId: null,
+  attemptedControllerIds: [],
   eliminatedChoices: [],
   missedBy: [],
   resolvedCorrectly: null,
@@ -141,6 +187,9 @@ const createInitialState = (): TToTOState => ({
   rounds: [],
   roundState: initialRoundState(),
   showIntro: true,
+  playerPool: [],
+  controllerAssignments: [],
+  randomizerSeq: 0,
 });
 
 // ─── Store ────────────────────────────────────────────────────────────────────
@@ -197,6 +246,54 @@ class TToTOStore {
       teams: this.state.teams.map(t =>
         t.id === teamId ? { ...t, score: Math.max(0, t.score + delta) } : t
       ) as [TToTOTeam, TToTOTeam],
+    });
+  }
+
+  // ── Players & teams (hardware-player mode) ──────────────────────────────────
+
+  setPlayerPool(pool: string[]): TToTOState {
+    const cleaned = [...new Set(pool.map(p => p.trim()).filter(Boolean))].slice(0, MAX_POOL);
+    this.begin();
+    // Drop any assigned players no longer in the pool, then rebuild controller numbering.
+    const teams = this.state.teams.map(t => ({
+      ...t,
+      players: t.players.filter(p => cleaned.includes(p)),
+    })) as [TToTOTeam, TToTOTeam];
+    return this.commit({
+      ...this.state, playerPool: cleaned, teams,
+      controllerAssignments: buildControllerAssignments(teams),
+    });
+  }
+
+  setTeams(teams: TToTOTeam[]): TToTOState {
+    this.begin();
+    const next = this.state.teams.map((t, i) => {
+      const incoming = teams.find(x => x.id === t.id) ?? teams[i];
+      if (!incoming) return t;
+      return { ...t, name: incoming.name ?? t.name, players: incoming.players ?? t.players };
+    }) as [TToTOTeam, TToTOTeam];
+    return this.commit({
+      ...this.state, teams: next,
+      controllerAssignments: buildControllerAssignments(next),
+    });
+  }
+
+  // Shuffle the pool into the two teams (alternating, so team sizes stay within one of
+  // each other) and rebuild controller numbering. Mirrors Survey Says's family-sorting
+  // mechanic exactly, including bumping randomizerSeq to trigger the show-screen's
+  // team-sorting animation (see TToTOTeamRandomizer).
+  randomAssignPlayers(): TToTOState {
+    this.begin();
+    const pool = shuffle(this.state.playerPool.filter(Boolean));
+    const teams = [
+      { ...this.state.teams[0], players: [] as string[] },
+      { ...this.state.teams[1], players: [] as string[] },
+    ] as [TToTOTeam, TToTOTeam];
+    pool.forEach((player, i) => { teams[i % 2].players.push(player); });
+    return this.commit({
+      ...this.state, teams,
+      controllerAssignments: buildControllerAssignments(teams),
+      randomizerSeq: (this.state.randomizerSeq ?? 0) + 1,
     });
   }
 
@@ -300,11 +397,13 @@ class TToTOStore {
     return this.patchRound({ phase: 'armed' });
   }
 
-  // Manual buzz: host taps "Team X Buzzed". Only valid while armed.
-  recordBuzz(teamId: string): TToTOState {
+  // Buzz-in: host taps "Team X Buzzed" (manual, no controllerId — no per-player
+  // granularity to track) or routes.ts's hardware handler (controllerId set, from a real
+  // wand press) records it. Only valid while armed.
+  recordBuzz(teamId: string, controllerId: string | null = null): TToTOState {
     if (this.state.roundState.phase !== 'armed') return this.state;
     this.begin();
-    return this.patchRound({ phase: 'answering', answeringTeamId: teamId });
+    return this.patchRound({ phase: 'answering', answeringTeamId: teamId, answeringControllerId: controllerId });
   }
 
   private otherTeamId(teamId: string | null): string {
@@ -334,8 +433,9 @@ class TToTOStore {
   }
 
   // Host taps a choice (correct one always visible to the host). Handles both the
-  // initial answer (phase 'answering') and the EXCLUSIVE steal handoff (phase 'steal')
-  // identically — the same 3-choice UI, just with the answering team flipped.
+  // initial answer (phase 'answering') and the steal handoff (phase 'steal', after
+  // either EXCLUSIVE's direct handoff or TIMED_WINDOW's recordStealBuzz) identically —
+  // the same 3-choice UI, just with the answering team flipped.
   judge(choice: TToTOChoiceKey): TToTOState {
     const rs = this.state.roundState;
     if (rs.phase !== 'answering' && rs.phase !== 'steal') return this.state;
@@ -346,10 +446,15 @@ class TToTOStore {
       return this.awardPoints(rs.answeringTeamId);
     }
 
-    // Miss: eliminate the choice, record who missed it, assign a stable crack.
+    // Miss: eliminate the choice, record who missed it, assign a stable crack. If this
+    // was a hardware-player buzz, that specific wand is now locked out for the rest of
+    // this question — their team isn't out (a teammate can still try), but they are.
     const eliminatedChoices = [...rs.eliminatedChoices, choice];
     const missedBy = [...rs.missedBy, { choice, teamId: rs.answeringTeamId }];
     const choiceCracks = { ...rs.choiceCracks, [choice]: pickCrack() };
+    const attemptedControllerIds = rs.answeringControllerId
+      ? [...rs.attemptedControllerIds, rs.answeringControllerId]
+      : rs.attemptedControllerIds;
 
     if (eliminatedChoices.length >= 2) {
       // Double miss: the one remaining choice is known-correct by elimination but
@@ -358,19 +463,77 @@ class TToTOStore {
         eliminatedChoices,
         missedBy,
         choiceCracks,
+        attemptedControllerIds,
         phase: 'resolved',
         resolvedCorrectly: false,
+        answeringControllerId: null,
+        stealEligibleTeamId: null,
+        stealWindowOpen: false,
+        stealWindowExpiresAt: null,
       });
     }
 
-    // First miss, EXCLUSIVE steal: flip to the other team, no re-arm needed.
+    const otherTeamId = this.otherTeamId(rs.answeringTeamId);
+
+    if (this.state.config.stealMode === 'TIMED_WINDOW' && this.state.config.buzzerMode === 'hardware-player') {
+      // Buzzers go live for the steal: otherTeamId gets exclusive rights for
+      // stealWindowSecs, then (routes.ts's timer) it opens to both teams (minus whoever's
+      // in attemptedControllerIds, i.e. this teamId's missed wand can't re-buzz even once
+      // it's "open"). Nobody is "answering" yet — that only happens once recordStealBuzz() fires.
+      return this.patchRound({
+        eliminatedChoices,
+        missedBy,
+        choiceCracks,
+        attemptedControllerIds,
+        phase: 'steal_armed',
+        answeringTeamId: null,
+        answeringControllerId: null,
+        stealEligibleTeamId: otherTeamId,
+        stealWindowOpen: false,
+        stealWindowExpiresAt: Date.now() + this.state.config.stealWindowSecs * 1000,
+      });
+    }
+
+    // EXCLUSIVE (default), or TIMED_WINDOW configured without hardware to actually run
+    // an open buzz race — fall back to the simple direct handoff rather than getting
+    // stuck in steal_armed with no way to ever record a buzz.
     return this.patchRound({
       eliminatedChoices,
       missedBy,
       choiceCracks,
+      attemptedControllerIds,
       phase: 'steal',
-      answeringTeamId: this.otherTeamId(rs.answeringTeamId),
+      answeringTeamId: otherTeamId,
+      answeringControllerId: null,
+      stealEligibleTeamId: null,
+      stealWindowOpen: false,
+      stealWindowExpiresAt: null,
     });
+  }
+
+  // TIMED_WINDOW only — a team successfully buzzed in during the steal window (either
+  // stage: exclusive-only or opened-to-both). Hands off to the same judge UI as any
+  // other answer attempt.
+  recordStealBuzz(teamId: string, controllerId: string | null = null): TToTOState {
+    if (this.state.roundState.phase !== 'steal_armed') return this.state;
+    this.begin();
+    return this.patchRound({
+      phase: 'steal',
+      answeringTeamId: teamId,
+      answeringControllerId: controllerId,
+      stealEligibleTeamId: null,
+      stealWindowOpen: false,
+      stealWindowExpiresAt: null,
+    });
+  }
+
+  // TIMED_WINDOW only — the exclusive window expired with no buzz; open it to both teams.
+  // No further timeout after this — it's just a straight buzz race until someone presses.
+  expandStealWindow(): TToTOState {
+    const rs = this.state.roundState;
+    if (rs.phase !== 'steal_armed' || rs.stealWindowOpen) return this.state;
+    this.begin();
+    return this.patchRound({ stealEligibleTeamId: null, stealWindowOpen: true, stealWindowExpiresAt: null });
   }
 
   // Advance to the next question, or the next round, or game_over.
@@ -387,6 +550,8 @@ class TToTOStore {
         phase: 'reading',
         currentQuestionIndex: nextQuestionIndex,
         answeringTeamId: null,
+        answeringControllerId: null,
+        attemptedControllerIds: [],
         eliminatedChoices: [],
         missedBy: [],
         resolvedCorrectly: null,
@@ -411,6 +576,17 @@ class TToTOStore {
   endGame(): TToTOState {
     this.begin();
     return this.commit({ ...this.state, showIntro: false, roundState: { ...this.state.roundState, phase: 'game_over' } });
+  }
+
+  // ── Wand test (Phase 2 hardware) ─────────────────────────────────────────────
+  // Doesn't touch roundState/history — this is a diagnostic tool, not gameplay. The
+  // actual judge window open/close + LED wiring lives in routes.ts (mirrors Survey Says).
+  showWandTest(): TToTOState {
+    return this.commit({ ...this.state, wandTestSeq: (this.state.wandTestSeq ?? 0) + 1 });
+  }
+
+  hideWandTest(): TToTOState {
+    return this.commit({ ...this.state, wandTestSeq: 0 });
   }
 
   newGame(): TToTOState {

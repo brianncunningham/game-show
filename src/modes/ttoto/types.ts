@@ -60,6 +60,7 @@ export type TToTOPhase =
   | 'armed'
   | 'answering'
   | 'steal'
+  | 'steal_armed'      // TIMED_WINDOW only — buzzers live for the steal, nobody has buzzed in yet
   | 'resolved'
   | 'game_over';
 
@@ -78,18 +79,39 @@ export interface TToTORoundState {
   currentRoundIndex: number;
   currentQuestionIndex: number;
   answeringTeamId: string | null;
+  // The specific wand/controller on the clock — null for manual buzzes (no per-player
+  // granularity). See attemptedControllerIds for the per-player steal lockout this feeds.
+  answeringControllerId: string | null;
+  // Every controller that already buzzed in and was judged wrong THIS question — that
+  // specific person can't buzz in again (initial answer, exclusive steal, or open steal)
+  // until next(). Teammates and the other team are unaffected.
+  attemptedControllerIds: string[];
   eliminatedChoices: TToTOChoiceKey[];
   missedBy: MissRecord[];
   resolvedCorrectly: boolean | null;
   choiceCracks: Partial<Record<TToTOChoiceKey, CrackInfo>>;
   displayChoices: Record<TToTOChoiceKey, string> | null;
   correctChoice: TToTOChoiceKey | null;
+  // ── TIMED_WINDOW steal only (phase 'steal_armed') ────────────────────────────
+  stealEligibleTeamId?: string | null;
+  stealWindowOpen?: boolean;
+  stealWindowExpiresAt?: number | null;
 }
 
 export interface TToTOTeam {
   id: string;
   name: string;
   score: number;
+  // Roster for hardware-player mode — empty/unused in manual mode.
+  players: string[];
+}
+
+// controllerId -> team/player it's wired to. Rebuilt positionally whenever a roster
+// changes (see server store.ts's buildControllerAssignments).
+export interface ControllerAssignment {
+  controllerId: string;
+  teamId: string;
+  playerName: string;
 }
 
 export interface TToTOState {
@@ -98,6 +120,14 @@ export interface TToTOState {
   rounds: TToTORound[];
   roundState: TToTORoundState;
   showIntro: boolean;
+  // Incremented each time the host starts a wand test (see api.ts showWandTest) — 0/
+  // undefined means no wand test is currently running.
+  wandTestSeq?: number;
+  playerPool: string[];
+  controllerAssignments: ControllerAssignment[];
+  // Incremented each time randomAssignPlayers() runs — the show screen watches this to
+  // play the team-sorting animation (see TToTOTeamRandomizer).
+  randomizerSeq?: number;
 }
 
 export const CHOICE_LABELS: Record<TToTOChoiceKey, string> = {

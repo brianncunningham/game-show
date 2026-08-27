@@ -5,6 +5,7 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import CasinoIcon from '@mui/icons-material/Casino';
 import DeleteIcon from '@mui/icons-material/Delete';
 import DownloadDoneIcon from '@mui/icons-material/DownloadDone';
 import SaveIcon from '@mui/icons-material/Save';
@@ -12,8 +13,10 @@ import type { TToTOState, TToTORound, TToTOQuestion, TToTOFlavor, TToTOConfig } 
 import { FLAVOR_LABELS } from './types';
 import {
   getState, setRounds, updateConfig, setTeamName,
+  setPlayerPool, setTeamRosters, randomAssignPlayers,
   listSaves, createSave, loadSave as apiLoadSave, updateSave, deleteSave,
 } from './api';
+import { TToTOPlayerRosterModal } from './TToTOPlayerRosterModal';
 import type { TToTOSaveMeta } from './api';
 import { TTOTO_COLORS } from './colors';
 
@@ -452,6 +455,112 @@ function ContentManager({ state, onRefresh }: { state: TToTOState; onRefresh: ()
   );
 }
 
+// ─── Players & Rosters (hardware-player mode) ──────────────────────────────────
+// Mirrors Survey Says's player-pool + per-team roster pattern exactly, including the
+// shared cross-mode "known players" pool modal (TToTOPlayerRosterModal) — a host who
+// already typed names into NTT/Survey Says this session shouldn't have to retype them.
+// Controller numbering (server buildControllerAssignments) is rebuilt automatically
+// whenever a roster changes.
+
+function PlayersSetup({ state, onRefresh }: { state: TToTOState; onRefresh: () => Promise<void> }) {
+  const { teams, playerPool } = state;
+  const [busy, setBusy] = useState(false);
+  const [rosterModalOpen, setRosterModalOpen] = useState(false);
+
+  const run = async (fn: () => Promise<unknown>) => {
+    setBusy(true);
+    try { await fn(); await onRefresh(); } finally { setBusy(false); }
+  };
+
+  const unassignedFor = (teamId: string) => {
+    const taken = new Set(teams.flatMap(t => t.players));
+    return playerPool.filter(p => !taken.has(p) || teams.find(t => t.id === teamId)?.players.includes(p));
+  };
+
+  const teamsPayload = () => teams.map(t => ({ id: t.id, name: t.name, players: t.players }));
+
+  const addPlayer = (teamId: string, name: string) => {
+    const next = teamsPayload().map(t => (t.id === teamId ? { ...t, players: [...t.players, name] } : t));
+    void run(() => setTeamRosters(next));
+  };
+  const removePlayer = (teamId: string, name: string) => {
+    const next = teamsPayload().map(t => (t.id === teamId ? { ...t, players: t.players.filter(p => p !== name) } : t));
+    void run(() => setTeamRosters(next));
+  };
+
+  return (
+    <Card>
+      <CardContent>
+        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1.5 }} flexWrap="wrap" gap={1}>
+          <Typography sx={sectionLabelSx} style={{ marginBottom: 0 }}>Players ({playerPool.length}) — hardware-player mode</Typography>
+          <Stack direction="row" spacing={1}>
+            <Button size="small" variant="outlined" onClick={() => setRosterModalOpen(true)}>
+              Manage players
+            </Button>
+            <Button size="small" variant="contained" color="secondary" startIcon={<CasinoIcon />}
+              disabled={busy || playerPool.length === 0}
+              onClick={() => void run(() => randomAssignPlayers())}>
+              Random assign
+            </Button>
+          </Stack>
+        </Stack>
+        {playerPool.length === 0 ? (
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            No players in the pool. Add some via "Manage players".
+          </Typography>
+        ) : (
+          <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap sx={{ mb: 2 }}>
+            {playerPool.map(p => <Chip key={p} label={p} size="small" />)}
+          </Stack>
+        )}
+        <TToTOPlayerRosterModal
+          open={rosterModalOpen}
+          currentPool={playerPool}
+          onClose={() => setRosterModalOpen(false)}
+          onApply={pool => void run(() => setPlayerPool(pool))}
+        />
+
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+          {teams.map((team, i) => {
+            const options = unassignedFor(team.id).filter(p => !team.players.includes(p));
+            return (
+              <Box key={team.id} sx={{ flex: 1, border: '1px solid rgba(255,255,255,0.12)', borderRadius: 1, p: 1.5 }}>
+                <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+                  <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: TEAM_COLORS[i] }} />
+                  <Typography variant="body2" sx={{ fontWeight: 700 }}>{team.name}</Typography>
+                  <Chip size="small" label={team.players.length} sx={{ color: TEAM_COLORS[i], border: `1px solid ${TEAM_COLORS[i]}55` }} variant="outlined" />
+                </Stack>
+                <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap sx={{ mb: 1 }}>
+                  {team.players.length === 0 && (
+                    <Typography variant="body2" color="text.secondary">No players assigned.</Typography>
+                  )}
+                  {team.players.map((p, pi) => (
+                    <Chip key={p} label={`${pi + 1}. ${p}`} size="small"
+                      onDelete={() => removePlayer(team.id, p)}
+                      sx={{ borderColor: `${TEAM_COLORS[i]}66` }} variant="outlined" />
+                  ))}
+                </Stack>
+                <Select
+                  size="small" displayEmpty value="" disabled={busy || options.length === 0}
+                  onChange={e => { if (e.target.value) addPlayer(team.id, e.target.value as string); }}
+                  sx={{ minWidth: 170, fontSize: '0.85rem' }}
+                  renderValue={() => <em>Add player…</em>}
+                >
+                  {options.map(p => <MenuItem key={p} value={p}>{p}</MenuItem>)}
+                </Select>
+              </Box>
+            );
+          })}
+        </Stack>
+        <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+          Controllers are assigned positionally (Team 1's players get the first wands, Team 2's the next)
+          whenever a roster changes — see Buzzer mode below to actually go live with hardware.
+        </Typography>
+      </CardContent>
+    </Card>
+  );
+}
+
 // ─── Settings ─────────────────────────────────────────────────────────────────
 
 function Settings({ state, onRefresh }: { state: TToTOState; onRefresh: () => Promise<void> }) {
@@ -493,6 +602,8 @@ function Settings({ state, onRefresh }: { state: TToTOState; onRefresh: () => Pr
           </Stack>
         </CardContent>
       </Card>
+
+      <PlayersSetup state={state} onRefresh={onRefresh} />
 
       <Card>
         <CardContent>
@@ -547,11 +658,34 @@ function Settings({ state, onRefresh }: { state: TToTOState; onRefresh: () => Pr
               ))}
             </Stack>
             <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+              <Typography variant="caption" sx={{ color: 'text.secondary', mr: 0.5 }}>Buzzer:</Typography>
+              {(['manual', 'hardware-player'] as const).map(mode => (
+                <Button key={mode} size="small" variant={config.buzzerMode === mode ? 'contained' : 'outlined'} color="info"
+                  onClick={() => void handleConfigChange({ buzzerMode: mode })}>
+                  {mode === 'manual' ? 'Manual' : 'Player HW (assign rosters below)'}
+                </Button>
+              ))}
+            </Stack>
+            <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
               <Typography variant="caption" sx={{ color: 'text.secondary', mr: 0.5 }}>Steal mode:</Typography>
-              <Button size="small" variant="contained" color="secondary" disabled>EXCLUSIVE</Button>
-              <Button size="small" variant="outlined" disabled>TIMED_WINDOW ({config.stealWindowSecs}s)</Button>
+              <Button size="small" variant={config.stealMode === 'EXCLUSIVE' ? 'contained' : 'outlined'} color="secondary"
+                onClick={() => void handleConfigChange({ stealMode: 'EXCLUSIVE' })}>
+                EXCLUSIVE
+              </Button>
+              <Button size="small" variant={config.stealMode === 'TIMED_WINDOW' ? 'contained' : 'outlined'} color="secondary"
+                disabled={config.buzzerMode !== 'hardware-player'}
+                onClick={() => void handleConfigChange({ stealMode: 'TIMED_WINDOW' })}>
+                TIMED_WINDOW
+              </Button>
+              {config.stealMode === 'TIMED_WINDOW' && (
+                <TextField size="small" type="number" label="Exclusive window (s)" sx={{ width: 150 }}
+                  defaultValue={config.stealWindowSecs}
+                  onBlur={e => void handleConfigChange({ stealWindowSecs: parseInt(e.target.value, 10) })} />
+              )}
               <Typography variant="caption" color="text.secondary">
-                — TIMED_WINDOW needs hardware wands to enforce the open-steal buzz race, so it's Phase 2/3. The setting exists in config already; this toggle is disabled until then.
+                {config.buzzerMode !== 'hardware-player'
+                  ? '— TIMED_WINDOW needs "Player HW" buzzer mode (above) to actually run an open buzz race; a human host can\'t referee a countdown on behalf of physical wands.'
+                  : "— the other team's remaining players get exclusive buzz-in rights for the window above, then it opens to both teams' remaining players (whoever just missed personally stays locked out until the next question, but their teammates and the other team aren't affected)."}
               </Typography>
             </Stack>
           </Stack>

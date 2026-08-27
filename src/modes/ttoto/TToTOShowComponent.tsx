@@ -1,16 +1,18 @@
-import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { getState } from './api';
-import type { TToTOState, TToTOChoiceKey, LetterStyle, TToTORound } from './types';
+import type { TToTOState, TToTOChoiceKey, LetterStyle, TToTORound, TToTOTeam, ControllerAssignment } from './types';
 import { FLAVOR_LABELS } from './types';
 import { buildFlapRow, cascadeFlapRow, resetFlapRow, type LetterVariant } from './letterBoard';
 import { buildSegmentedRow, cascadeSegmentedRow, resetSegmentedRow } from './segmentedBoard';
 import { setupDotMatrix, type DotMatrixHandle } from './dotMatrixBoard';
 import { CrackOverlay } from './CrackOverlay';
 import { TToTOGameIntro } from './TToTOGameIntro';
+import { TToTOTeamRandomizer } from './TToTOTeamRandomizer';
 import { TToTOStage } from './TToTOStage';
 import { TTOTO_COLORS, lighten, darken, rgba } from './colors';
 import { useGameEventOverlay, GameEventOverlay } from './GameOverlays';
 import { fitTextToWidth, fixedCharWidth } from './fitText';
+import { playMissSound, playRevealSound, playCorrectSound, playVictorySound, playBuzzSound } from './sounds';
 
 // Fixed content width all 3 answer panels share (see the answer-panel flex fix below) —
 // 1600 stage minus 64px outer margin minus 40px of inter-panel gap, split 3 ways, minus
@@ -459,14 +461,17 @@ function MultiplierBadge({ multiplier, fontSize = 16 }: { multiplier: number; fo
 // reusing its materials.
 function RoundIntroScreen({ round, multiplier }: { round: TToTORound | undefined; multiplier: number }) {
   const [revealed, setRevealed] = useState(false);
+  const letterStyle = round?.letterStyle;
   useEffect(() => {
     setRevealed(false);
-    const t = setTimeout(() => setRevealed(true), 250);
+    const t = setTimeout(() => {
+      setRevealed(true);
+      if (letterStyle) playRevealSound(letterStyle);
+    }, 250);
     return () => clearTimeout(t);
-  }, [round?.id]);
+  }, [round?.id, letterStyle]);
 
   const word = round ? FLAVOR_LABELS[round.flavor].toUpperCase() : '';
-  const letterStyle = round?.letterStyle;
 
   return (
     <TToTOStage>
@@ -644,6 +649,14 @@ function GameOverScreen({ state }: { state: TToTOState }) {
   const winner = t1.score === t2.score ? null : (t1.score > t2.score ? t1 : t2);
   const loser = winner ? state.teams.find(t => t.id !== winner.id) : null;
 
+  // GameOverScreen stays mounted for as long as phase === 'game_over' (across every poll
+  // until newGame()/endGame() moves on), so an empty-deps effect fires exactly once —
+  // right when the game actually ends, not on every 800ms poll.
+  useEffect(() => {
+    if (winner) playVictorySound();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <TToTOStage>
       <div style={{
@@ -704,6 +717,21 @@ function GameOverScreen({ state }: { state: TToTOState }) {
   );
 }
 
+// TIMED_WINDOW steal only — ticks down the exclusive-stage display from the server-provided
+// deadline. Purely cosmetic (the actual hardware window transition is timed server-side in
+// routes.ts); a little client/server clock drift here just means the displayed number and
+// the real cutoff might be off by a fraction of a second, which is fine for a countdown.
+function useCountdownSeconds(deadlineMs: number | null | undefined): number | null {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (!deadlineMs) return;
+    const id = setInterval(() => setNow(Date.now()), 200);
+    return () => clearInterval(id);
+  }, [deadlineMs]);
+  if (!deadlineMs) return null;
+  return Math.max(0, Math.ceil((deadlineMs - now) / 1000));
+}
+
 // ─── Main combo screen (header + question + 3 answer panels) ───────────────
 
 function ComboScreen({ state }: { state: TToTOState }) {
@@ -714,20 +742,49 @@ function ComboScreen({ state }: { state: TToTOState }) {
   const multiplier = multiplierForRound(config.roundMultipliers, roundState.currentRoundIndex);
 
   const choicesRevealed = roundState.phase === 'armed' || roundState.phase === 'answering'
-    || roundState.phase === 'steal' || roundState.phase === 'resolved';
+    || roundState.phase === 'steal' || roundState.phase === 'steal_armed' || roundState.phase === 'resolved';
 
   const answeringTeam = teams.find(t => t.id === roundState.answeringTeamId);
+  const stealEligibleTeam = teams.find(t => t.id === roundState.stealEligibleTeamId);
+  const stealCountdown = useCountdownSeconds(
+    roundState.phase === 'steal_armed' && !roundState.stealWindowOpen ? roundState.stealWindowExpiresAt : null,
+  );
   const [overlayEvent, clearOverlayEvent] = useGameEventOverlay(
     roundState.phase, roundState.resolvedCorrectly, roundState.answeringTeamId, teams,
   );
 
+  // ── Sound effects ── transition-detected against refs (state arrives via 800ms poll,
+  // not events — see Survey Says's SSShowComponent.tsx for the same pattern) so each
+  // trigger fires exactly once per real transition, not once per poll.
+  const prevPhaseForSoundRef = useRef<string | null>(null);
+  const prevEliminatedLenRef = useRef<number>(0);
+  useEffect(() => {
+    const prevPhase = prevPhaseForSoundRef.current;
+    const phase = roundState.phase;
+    if (phase === 'armed' && prevPhase === 'reading') playRevealSound(letterStyle);
+    // Only real buzz-ins play the buzz sound — 'answering' -> 'steal' (EXCLUSIVE's
+    // automatic handoff after a miss) is not a buzz, nobody pressed anything for it.
+    if (phase === 'answering' && prevPhase === 'armed') playBuzzSound();
+    if (phase === 'steal' && prevPhase === 'steal_armed') playBuzzSound();
+    if (phase === 'resolved' && roundState.resolvedCorrectly) playCorrectSound();
+    prevPhaseForSoundRef.current = phase;
+  }, [roundState.phase, roundState.resolvedCorrectly, letterStyle]);
+  useEffect(() => {
+    if (roundState.eliminatedChoices.length > prevEliminatedLenRef.current) playMissSound();
+    prevEliminatedLenRef.current = roundState.eliminatedChoices.length;
+  }, [roundState.eliminatedChoices.length]);
+
   // 'reading' and 'armed' show no status text — the prompt/choices alone are the whole cue.
   // 'answering' also shows nothing: there's no clock/countdown for the initial answer (only
-  // the exclusive steal has a time-pressure concept), so avoid implying one with copy like
-  // "on the clock" — the buzz-in overlay already announced who's up.
+  // TIMED_WINDOW's steal has a real time-pressure concept), so avoid implying one with copy
+  // like "on the clock" — the buzz-in overlay already announced who's up.
   let statusText = '';
   if (roundState.phase === 'steal') statusText = `${answeringTeam?.name ?? ''} — STEALING`;
-  else if (roundState.phase === 'resolved') {
+  else if (roundState.phase === 'steal_armed') {
+    statusText = roundState.stealWindowOpen
+      ? 'STEAL OPEN TO BOTH TEAMS'
+      : `${stealEligibleTeam?.name ?? ''} HAS ${stealCountdown ?? 0}s TO STEAL`;
+  } else if (roundState.phase === 'resolved') {
     statusText = roundState.resolvedCorrectly
       ? `${answeringTeam?.name ?? ''} GOT IT!`
       : `NOBODY GOT IT — it was ${roundState.correctChoice ? CHOICE_LABEL[roundState.correctChoice] : ''}`;
@@ -904,6 +961,163 @@ function ComboScreen({ state }: { state: TToTOState }) {
   );
 }
 
+// ─── Wand Test Overlay ───────────────────────────────────────────────────────
+// Straight port of Survey Says's SSWandTestOverlay: listens to the buzzer WebSocket
+// directly (not the 800ms state poll — a wand press needs to flash immediately, not up
+// to 800ms late) and lights up whichever player pressed. Without this, "Wand Test" opens
+// a real judge window server-side (and would flash real hardware LEDs) but gives zero
+// on-screen confirmation that anything happened — which is why it looked broken. TToTO
+// only ever has 'hardware-player' mode (no SS-style 'hardware-team' fixed 2-wand case),
+// so this drops that branch entirely and always renders per-player.
+
+const WAND_FLASH_MS = 1200;
+
+const getBuzzerWsUrl = () => {
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const host = window.location.port === '4174'
+    ? `${window.location.hostname}:3001`
+    : window.location.host;
+  return `${protocol}//${host}/ws/buzzer`;
+};
+
+function TToTOWandTestOverlay({ teams, controllerAssignments }: {
+  teams: [TToTOTeam, TToTOTeam]; controllerAssignments: ControllerAssignment[];
+}) {
+  const [activeWands, setActiveWands] = useState<Set<string>>(new Set());
+  const timersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  const soundDebounceRef = useRef<Map<string, number>>(new Map());
+
+  const eligibleIds = useMemo(() => new Set(controllerAssignments.map(a => a.controllerId)), [controllerAssignments]);
+  // Ref so the stable WS effect always reads the latest set without re-opening the socket
+  // (parent polls state every 800ms -> new array reference -> new Set identity -> would
+  // cancel active timers if eligibleIds were in the effect deps).
+  const eligibleIdsRef = useRef(eligibleIds);
+  eligibleIdsRef.current = eligibleIds;
+
+  useEffect(() => {
+    const ws = new WebSocket(getBuzzerWsUrl());
+    ws.onmessage = (ev) => {
+      try {
+        const msg = JSON.parse(ev.data as string) as { type: string; payload: Record<string, unknown> };
+        if (msg.type === 'BUZZ_RECEIVED') {
+          const cid = String(msg.payload.controllerId ?? '');
+          if (!cid || !eligibleIdsRef.current.has(cid)) return;
+          // Debounce: ignore repeated events within 400ms (Pico GPIO bounce)
+          const now = Date.now();
+          if (now - (soundDebounceRef.current.get(cid) ?? 0) < 400) return;
+          soundDebounceRef.current.set(cid, now);
+          const audio = new Audio('/buzz.mp3');
+          void audio.play().catch(() => {});
+          setActiveWands(prev => { const s = new Set(prev); s.add(cid); return s; });
+          const existing = timersRef.current.get(cid);
+          if (existing) clearTimeout(existing);
+          const t = setTimeout(() => {
+            setActiveWands(prev => { const s = new Set(prev); s.delete(cid); return s; });
+            timersRef.current.delete(cid);
+          }, WAND_FLASH_MS);
+          timersRef.current.set(cid, t);
+        }
+      } catch { /* ignore */ }
+    };
+    return () => {
+      ws.close();
+      timersRef.current.forEach(t => clearTimeout(t));
+      timersRef.current.clear();
+    };
+  }, []);
+
+  return (
+    <div style={{
+      height: '100vh', width: '100vw',
+      background: 'radial-gradient(ellipse at 50% 15%, #1a1030 0%, #05070f 60%)',
+      fontFamily: "'Barlow Condensed', system-ui, sans-serif",
+      display: 'flex', flexDirection: 'column', alignItems: 'center',
+    }}>
+      <div style={{ paddingTop: '3vh', paddingBottom: '2vh', textAlign: 'center' }}>
+        <div style={{
+          fontWeight: 900, fontSize: 'clamp(1.8rem, 4vw, 3rem)',
+          color: TTOTO_COLORS.warning, letterSpacing: '0.2em', textTransform: 'uppercase',
+          textShadow: `0 0 20px ${rgba(TTOTO_COLORS.warning, 0.55)}`,
+        }}>
+          Teams &amp; Controllers
+        </div>
+        <div style={{ fontSize: 'clamp(0.75rem, 1.2vw, 1rem)', color: 'rgba(255,255,255,0.25)', letterSpacing: '0.2em', textTransform: 'uppercase', marginTop: 4 }}>
+          Press your wand to test it
+        </div>
+      </div>
+
+      <div style={{ flex: 1, width: '100%', display: 'flex', gap: '3vw', padding: '0 4vw 4vh 4vw' }}>
+        {teams.map((team, ti) => {
+          const color = ti === 0 ? TTOTO_COLORS.team1 : TTOTO_COLORS.team2;
+          const teamAssignments = controllerAssignments
+            .filter(a => a.teamId === team.id)
+            .sort((a, b) => Number(a.controllerId) - Number(b.controllerId));
+
+          return (
+            <div key={team.id} style={{
+              flex: 1, borderRadius: 16,
+              background: `radial-gradient(ellipse at 50% 0%, ${rgba(color, 0.13)} 0%, rgba(5,10,25,0.97) 60%)`,
+              border: `3px solid ${color}`, boxShadow: `0 0 30px ${rgba(color, 0.27)}`,
+              display: 'flex', flexDirection: 'column', alignItems: 'center',
+              paddingTop: '3vh', paddingBottom: '3vh',
+            }}>
+              <div style={{
+                fontWeight: 900, fontSize: 'clamp(1.4rem, 2.8vw, 3.5rem)',
+                textTransform: 'uppercase', letterSpacing: '0.1em', color,
+                textShadow: `0 0 16px ${rgba(color, 0.53)}`, marginBottom: '2vh',
+              }}>
+                {team.name}
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2vh', width: '100%', padding: '0 8%' }}>
+                {teamAssignments.length === 0 && (
+                  <div style={{ fontSize: '1.1rem', color: 'rgba(255,255,255,0.3)', fontStyle: 'italic', textAlign: 'center' }}>
+                    No players assigned — set rosters in /gameadmin.
+                  </div>
+                )}
+                {teamAssignments.map(a => {
+                  const isActive = activeWands.has(a.controllerId);
+                  return (
+                    <div key={a.controllerId} style={{
+                      display: 'flex', alignItems: 'center', gap: 16,
+                      borderRadius: 10, border: `2px solid ${isActive ? TTOTO_COLORS.correct : rgba(color, 0.27)}`,
+                      background: isActive ? rgba(TTOTO_COLORS.correct, 0.1) : rgba(color, 0.04),
+                      boxShadow: isActive ? `0 0 20px ${rgba(TTOTO_COLORS.correct, 0.5)}` : 'none',
+                      padding: '10px 16px', transition: 'all 0.08s ease',
+                    }}>
+                      <div style={{
+                        minWidth: 44, height: 44, borderRadius: '50%',
+                        border: `2px solid ${isActive ? TTOTO_COLORS.correct : color}`,
+                        background: isActive ? rgba(TTOTO_COLORS.correct, 0.2) : rgba(color, 0.13),
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                      }}>
+                        <div style={{ fontWeight: 900, fontSize: 'clamp(1rem, 1.8vw, 1.8rem)', color: isActive ? TTOTO_COLORS.correct : color, lineHeight: 1 }}>
+                          {a.controllerId}
+                        </div>
+                      </div>
+                      <div style={{
+                        fontWeight: 700, fontSize: 'clamp(1rem, 2vw, 2.2rem)',
+                        color: isActive ? '#fff' : 'rgba(255,255,255,0.85)', letterSpacing: '0.04em', flex: 1,
+                      }}>
+                        {a.playerName}
+                      </div>
+                      {isActive && (
+                        <div style={{ fontWeight: 900, fontSize: 'clamp(0.8rem, 1.4vw, 1.4rem)', color: TTOTO_COLORS.correct, letterSpacing: '0.1em' }}>
+                          BUZZ!
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 // ─── Main export ─────────────────────────────────────────────────────────────
 
 export const TToTOShowComponent = () => {
@@ -919,11 +1133,65 @@ export const TToTOShowComponent = () => {
     return () => clearInterval(id);
   }, [refresh]);
 
+  // Team-sorting animation (ported from Survey Says's randomizerSeq pattern): plays
+  // whenever randomAssignPlayers() bumps the seq, and stays up until the host navigates
+  // away from wherever they were when it started (showIntro/phase snapshot) — same
+  // "stays until host moves on" behavior as SS, not a fixed auto-dismiss timer.
+  const [randomizing, setRandomizing] = useState(false);
+  const randomizerSeededRef = useRef(false);
+  const prevSeqRef = useRef<number | null>(null);
+  const randomizerSnapshotRef = useRef<{ showIntro: boolean; phase: string } | null>(null);
+
+  useEffect(() => {
+    if (!state) return;
+    const seq = state.randomizerSeq ?? 0;
+    if (!randomizerSeededRef.current) {
+      prevSeqRef.current = seq;
+      randomizerSeededRef.current = true;
+      return;
+    }
+    if (seq > 0 && prevSeqRef.current !== null && seq > prevSeqRef.current) {
+      randomizerSnapshotRef.current = { showIntro: state.showIntro, phase: state.roundState.phase };
+      setRandomizing(true);
+    }
+    if (prevSeqRef.current === null || seq >= prevSeqRef.current) prevSeqRef.current = seq;
+  }, [state?.randomizerSeq]);
+
+  useEffect(() => {
+    if (!randomizing || !randomizerSnapshotRef.current || !state) return;
+    const snap = randomizerSnapshotRef.current;
+    if (state.showIntro !== snap.showIntro) { setRandomizing(false); return; }
+    if (state.roundState.phase !== snap.phase) { setRandomizing(false); return; }
+  }, [randomizing, state?.showIntro, state?.roundState.phase]);
+
+  // Wand test overlay — see TToTOWandTestOverlay above for why this exists at all.
+  const [showingWandTest, setShowingWandTest] = useState(false);
+  useEffect(() => {
+    if (!state) return;
+    setShowingWandTest((state.wandTestSeq ?? 0) > 0);
+  }, [state?.wandTestSeq]);
+
   if (!state) {
     return (
       <div style={{ height: '100vh', width: '100vw', background: '#0a1420', color: '#8ea3c4', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         Connecting…
       </div>
+    );
+  }
+
+  if (showingWandTest) {
+    return <TToTOWandTestOverlay teams={state.teams} controllerAssignments={state.controllerAssignments} />;
+  }
+
+  if (randomizing) {
+    return (
+      <TToTOTeamRandomizer
+        teams={state.teams}
+        playerPool={state.playerPool}
+        controllerAssignments={state.controllerAssignments}
+        buzzerMode={state.config.buzzerMode}
+        onDone={() => { /* stays until host navigates away */ }}
+      />
     );
   }
 

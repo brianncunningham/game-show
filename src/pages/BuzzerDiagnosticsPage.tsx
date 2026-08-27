@@ -15,6 +15,8 @@ import {
 } from '@mui/material';
 import { openWindow, armWindow, closeWindow, resetJudge, simulateBuzz, ledTest, ledPixel, ledEffect } from '../features/buzzer/buzzerApi';
 import { useGameShowState } from '../modes/nameThatTune/useGameShowState';
+import { getState as getTToTOState } from '../modes/ttoto/api';
+import type { TToTOState } from '../modes/ttoto/types';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -94,6 +96,42 @@ const Badge = ({ label, color = '#56d7ff' }: { label: string; color?: string }) 
 
 export const BuzzerDiagnosticsPage = () => {
   const { state: gameState } = useGameShowState();
+
+  // Controller/team resolution below was originally NTT-only (via gameState above). This
+  // page is shared across modes at a single fixed route, so it needs to know which mode is
+  // actually active to resolve controller -> team/player correctly. Polled, not fetched
+  // once, in case a host switches modes while diagnostics is open.
+  const [activeModeId, setActiveModeId] = useState<string | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    const poll = async () => {
+      try {
+        const res = await fetch('/api/mode');
+        const data = await res.json() as { activeModeId?: string };
+        if (!cancelled) setActiveModeId(data.activeModeId ?? null);
+      } catch { /* ignore */ }
+    };
+    void poll();
+    const id = setInterval(poll, 3000);
+    return () => { cancelled = true; clearInterval(id); };
+  }, []);
+  const isTtoto = activeModeId === 'ttoto';
+
+  // Only polled while TToTO is the active mode.
+  const [ttotoState, setTtotoState] = useState<TToTOState | null>(null);
+  useEffect(() => {
+    if (!isTtoto) return;
+    let cancelled = false;
+    const poll = async () => {
+      try {
+        const s = await getTToTOState();
+        if (!cancelled) setTtotoState(s);
+      } catch { /* ignore */ }
+    };
+    void poll();
+    const id = setInterval(poll, 800);
+    return () => { cancelled = true; clearInterval(id); };
+  }, [isTtoto]);
 
   // Judge window state (from WINDOW_STATE events)
   const [windowState,          setWindowState]          = useState<WindowState>('IDLE');
@@ -199,8 +237,8 @@ export const BuzzerDiagnosticsPage = () => {
   // Derived values
   // ---------------------------------------------------------------------------
 
-  const assignments = gameState?.controllerAssignments ?? [];
-  const teams       = gameState?.teams ?? [];
+  const assignments = isTtoto ? (ttotoState?.controllerAssignments ?? []) : (gameState?.controllerAssignments ?? []);
+  const teams = isTtoto ? (ttotoState?.teams ?? []) : (gameState?.teams ?? []);
 
   const resolveController = (cid: string) => {
     const a = assignments.find(x => x.controllerId === cid);
@@ -209,8 +247,10 @@ export const BuzzerDiagnosticsPage = () => {
     return { player: a.playerName, team: t?.name ?? a.teamId, teamId: a.teamId };
   };
 
-  // Song-level failed teams (from roundState.attemptedTeamIds, only meaningful post-buzz)
-  const failedTeamIds: string[] = (() => {
+  // Song-level failed teams (from roundState.attemptedTeamIds, only meaningful post-buzz).
+  // TToTO has no direct equivalent (its steal handoff is automatic, not a re-opened buzz
+  // race, until TIMED_WINDOW steal mode exists) — no "team failed" highlighting for it yet.
+  const failedTeamIds: string[] = isTtoto ? [] : (() => {
     const rs = gameState?.roundState;
     if (!rs || rs.answerState !== 'wrong') return [];
     return rs.attemptedTeamIds;
@@ -387,11 +427,50 @@ export const BuzzerDiagnosticsPage = () => {
             </Stack>
           </Box>
 
-          {/* ---- App: Song Context ---- */}
+          {/* ---- App: Song Context (NTT) / Round Context (TToTO) ---- */}
           <Box flex={1} sx={{ border: '1px solid #ffffff18', borderRadius: 1, p: 2 }}>
-            <Typography variant="overline" color="text.secondary">App — Song Context</Typography>
+            <Typography variant="overline" color="text.secondary">
+              App — {isTtoto ? 'Round Context' : 'Song Context'}
+            </Typography>
 
-            {!gameState || !gameState.roundState.selectedQuestionId ? (
+            {isTtoto ? (
+              !ttotoState || ttotoState.roundState.phase === 'idle' ? (
+                <Typography variant="caption" color="text.disabled" display="block" sx={{ mt: 1 }}>
+                  No active round. Start a game on the host page.
+                </Typography>
+              ) : (() => {
+                const rs = ttotoState.roundState;
+                const round = ttotoState.rounds[rs.currentRoundIndex];
+                const question = round?.questions[rs.currentQuestionIndex];
+                const answeringTeam = rs.answeringTeamId ? teams.find(t => t.id === rs.answeringTeamId) : null;
+                return (
+                  <Stack spacing={0.75} sx={{ mt: 1 }}>
+                    <Typography variant="caption" sx={{ color: '#aaa' }}>
+                      <span style={{ color: '#666' }}>Round: </span>{round?.roundNumber ?? '—'}
+                      {question && <span style={{ color: '#666' }}> · Prompt: </span>}
+                      {question && <span>{question.prompt}</span>}
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: '#aaa' }}>
+                      <span style={{ color: '#666' }}>Phase: </span>
+                      <span style={{ color: rs.phase === 'armed' ? '#56d7ff' : rs.phase === 'resolved' ? '#4cff91' : '#555' }}>
+                        {rs.phase}
+                      </span>
+                    </Typography>
+                    {answeringTeam && (
+                      <Typography variant="caption" sx={{ color: '#4cff91' }}>
+                        On the clock: {answeringTeam.name}
+                      </Typography>
+                    )}
+                    <Typography variant="caption" sx={{ color: '#666' }}>
+                      Buzzer mode:{' '}
+                      <span style={{ color: ttotoState.config.buzzerMode === 'manual' ? '#555' : '#56d7ff' }}>
+                        {ttotoState.config.buzzerMode}
+                      </span>
+                    </Typography>
+                  </Stack>
+                );
+              })()
+            ) : !gameState || !gameState.roundState.selectedQuestionId ? (
               <Typography variant="caption" color="text.disabled" display="block" sx={{ mt: 1 }}>
                 No active song round. Select a question and song on the host page.
               </Typography>

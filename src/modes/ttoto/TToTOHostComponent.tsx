@@ -12,6 +12,7 @@ import { CHOICE_LABELS, FLAVOR_LABELS } from './types';
 import {
   getState, startGame, beginRound, revealChoices, recordBuzz, judge, next,
   newGame, endGame, undo, showIntro, hideIntro, listSaves, loadSave,
+  showWandTest, hideWandTest, randomAssignPlayers,
 } from './api';
 import type { TToTOSaveMeta } from './api';
 import { TTOTO_COLORS } from './colors';
@@ -64,9 +65,21 @@ export const TToTOHostComponent = () => {
     try { setState(await fn()); } catch (e) { console.error(e); }
   }, []);
 
+  // Wraps a navigation action (Game Screen, Next, etc.) so it always dismisses an active
+  // wand test first. Without this, the /show screen's wand-test overlay renders ahead of
+  // every other phase check (see TToTOShowComponent.tsx) and never goes away just because
+  // the game moved on underneath it — wandTestSeq only changes via an explicit hide.
+  const navAct = (fn: () => Promise<TToTOState>) => act(async () => {
+    if ((state?.wandTestSeq ?? 0) > 0) await hideWandTest();
+    return fn();
+  });
+
   const handleLoadSave = async (id: string) => {
     setLoadingSaveId(id);
-    try { setState(await loadSave(id)); } finally { setLoadingSaveId(null); }
+    try {
+      if ((state?.wandTestSeq ?? 0) > 0) await hideWandTest();
+      setState(await loadSave(id));
+    } finally { setLoadingSaveId(null); }
   };
 
   if (!state) {
@@ -78,11 +91,15 @@ export const TToTOHostComponent = () => {
   }
 
   const { roundState, teams, rounds, config } = state;
-  const { phase, currentRoundIndex, currentQuestionIndex, eliminatedChoices, answeringTeamId, resolvedCorrectly, displayChoices, correctChoice } = roundState;
+  const {
+    phase, currentRoundIndex, currentQuestionIndex, eliminatedChoices, answeringTeamId, resolvedCorrectly,
+    displayChoices, correctChoice, stealEligibleTeamId, stealWindowOpen,
+  } = roundState;
   const round = rounds[currentRoundIndex];
   const question = round?.questions[currentQuestionIndex];
   const mult = config.roundMultipliers[currentRoundIndex] ?? config.roundMultipliers[config.roundMultipliers.length - 1] ?? 1;
   const answeringTeam = teams.find(t => t.id === answeringTeamId);
+  const stealEligibleTeam = teams.find(t => t.id === stealEligibleTeamId);
 
   return (
     <Box sx={{ p: { xs: 1.5, md: 2 }, maxWidth: 860, mx: 'auto' }}>
@@ -90,7 +107,7 @@ export const TToTOHostComponent = () => {
       <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 2, flexWrap: 'wrap' }}>
         {round && <Chip label={`Round ${round.roundNumber}`} color="primary" size="small" />}
         <Chip label={phase.replace(/_/g, ' ').toUpperCase()} size="small"
-          color={phase === 'answering' ? 'warning' : phase === 'steal' ? 'error' : phase === 'armed' ? 'info' : 'default'} />
+          color={phase === 'answering' ? 'warning' : phase === 'steal' || phase === 'steal_armed' ? 'error' : phase === 'armed' ? 'info' : 'default'} />
         {mult > 1 && <Chip label={`×${mult}`} size="small" sx={{ background: '#f5c51822', color: '#f5c518', border: '1px solid #f5c51844' }} />}
         <Box sx={{ flex: 1 }} />
         <Button size="small" variant="outlined" color="inherit" startIcon={<UndoIcon fontSize="small" />}
@@ -143,27 +160,48 @@ export const TToTOHostComponent = () => {
             <Collapse in={gameOpen}>
               <Grid container spacing={1.5} sx={{ mt: 0.5 }}>
                 <Grid item xs={6} sm={4}>
-                  <Button fullWidth variant="contained" sx={bigBtnSx} onClick={act(() => newGame())}>New Game</Button>
+                  <Button fullWidth variant="contained" sx={bigBtnSx} onClick={navAct(() => newGame())}>New Game</Button>
                 </Grid>
                 <Grid item xs={6} sm={4}>
                   <Button fullWidth variant={state.showIntro ? 'contained' : 'outlined'} color="secondary" sx={bigBtnSx}
-                    onClick={act(() => showIntro())}>
+                    onClick={navAct(() => showIntro())}>
                     🎬 Intro Screen
                   </Button>
                 </Grid>
                 <Grid item xs={6} sm={4}>
                   <Button fullWidth variant={!state.showIntro ? 'contained' : 'outlined'} color="primary" sx={bigBtnSx}
-                    onClick={act(() => hideIntro())}>
+                    onClick={navAct(() => hideIntro())}>
                     📺 Game Screen
                   </Button>
                 </Grid>
                 <Grid item xs={12} sm={4}>
                   <Button fullWidth variant="outlined" color="warning" sx={bigBtnSx}
-                    disabled={phase === 'idle' || phase === 'game_over'} onClick={act(() => endGame())}>
+                    disabled={phase === 'idle' || phase === 'game_over'} onClick={navAct(() => endGame())}>
                     🏆 End Game
                   </Button>
                 </Grid>
+                {config.buzzerMode !== 'manual' && (
+                  <Grid item xs={12} sm={4}>
+                    <Button fullWidth variant="contained" color="secondary" sx={bigBtnSx}
+                      disabled={state.playerPool.length === 0}
+                      onClick={act(() => randomAssignPlayers())}>
+                      🎲 Randomize Teams {state.playerPool.length === 0 ? '(add players in /gameadmin)' : ''}
+                    </Button>
+                  </Grid>
+                )}
+                {config.buzzerMode !== 'manual' && (
+                  <Grid item xs={12} sm={4}>
+                    <Button fullWidth variant="outlined" color="info" sx={bigBtnSx} onClick={act(() => showWandTest())}>
+                      🪄 Wand Test
+                    </Button>
+                  </Grid>
+                )}
               </Grid>
+              {config.buzzerMode !== 'manual' && (state.wandTestSeq ?? 0) > 0 && (
+                <Button size="small" variant="text" color="warning" sx={{ mt: 1 }} onClick={act(() => hideWandTest())}>
+                  ✕ Stop Wand Test
+                </Button>
+              )}
             </Collapse>
           </CardContent>
         </Card>
@@ -203,7 +241,7 @@ export const TToTOHostComponent = () => {
               <Typography sx={{ ...sectionLabelSx, mb: 1.5 }}>
                 Round {round.roundNumber} — {FLAVOR_LABELS[round.flavor]}
               </Typography>
-              <Button fullWidth variant="contained" color="info" sx={bigBtnSx} onClick={act(() => beginRound())}>
+              <Button fullWidth variant="contained" color="info" sx={bigBtnSx} onClick={navAct(() => beginRound())}>
                 Begin Round →
               </Button>
             </CardContent>
@@ -224,7 +262,7 @@ export const TToTOHostComponent = () => {
                   Correct answer: <strong>{CHOICE_LABELS[correctChoice]}</strong> ({displayChoices?.[correctChoice]})
                 </Typography>
               )}
-              <Button fullWidth variant="contained" color="info" sx={bigBtnSx} onClick={act(() => revealChoices())}>
+              <Button fullWidth variant="contained" color="info" sx={bigBtnSx} onClick={navAct(() => revealChoices())}>
                 Reveal Choices →
               </Button>
             </CardContent>
@@ -249,6 +287,41 @@ export const TToTOHostComponent = () => {
                     </Button>
                   </Grid>
                 ))}
+              </Grid>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* TIMED_WINDOW steal window: the countdown/eligibility runs for real on the wands,
+            but the host can still manually call it (hardware misbehaving, or just prefers
+            to run it by ear) — /buzz/:teamId is phase-aware server-side and dispatches to
+            the same recordStealBuzz() a real wand press would. Buttons respect the same
+            exclusivity the wands do: only the currently-eligible team's button is enabled
+            during the exclusive stage, both once it's open to both. */}
+        {phase === 'steal_armed' && question && (
+          <Card sx={{ border: '2px solid', borderColor: 'error.main' }}>
+            <CardContent>
+              <Typography sx={{ ...sectionLabelSx, mb: 1 }}>
+                🪄 {stealWindowOpen ? 'Steal Open to Both Teams' : `Waiting for ${stealEligibleTeam?.name ?? ''} to Steal`}
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+                {stealWindowOpen
+                  ? 'Either team can buzz in now — pick whoever actually buzzed, or let the wands call it.'
+                  : `Exclusive window is live on the wands — only ${stealEligibleTeam?.name ?? 'the other team'} can buzz until it opens.`}
+              </Typography>
+              <Grid container spacing={1.5}>
+                {teams.map((t, i) => {
+                  const eligible = stealWindowOpen || t.id === stealEligibleTeamId;
+                  return (
+                    <Grid item xs={6} key={t.id}>
+                      <Button fullWidth variant="outlined" disabled={!eligible}
+                        sx={{ ...bigBtnSx, borderColor: TEAM_COLORS[i], color: TEAM_COLORS[i] }}
+                        onClick={act(() => recordBuzz(t.id))}>
+                        {t.name} Buzzed
+                      </Button>
+                    </Grid>
+                  );
+                })}
               </Grid>
             </CardContent>
           </Card>
@@ -305,7 +378,7 @@ export const TToTOHostComponent = () => {
                 {resolvedCorrectly ? `${answeringTeam?.name ?? ''} got it! ✓` : `Nobody got it — it was ${correctChoice ? CHOICE_LABELS[correctChoice] : ''}`}
               </Typography>
               <HostNote note={question.hostNote} />
-              <Button fullWidth variant="contained" color="primary" sx={bigBtnSx} onClick={act(() => next())}>
+              <Button fullWidth variant="contained" color="primary" sx={bigBtnSx} onClick={navAct(() => next())}>
                 Next →
               </Button>
             </CardContent>

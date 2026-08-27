@@ -1,4 +1,4 @@
-import type { TToTOState, TToTOConfig, TToTORound, TToTOChoiceKey } from './types';
+import type { TToTOState, TToTOConfig, TToTORound, TToTOChoiceKey, TToTOTeam } from './types';
 
 const API_BASE = '/api/ttoto';
 
@@ -35,6 +35,34 @@ export const updateConfig = (config: Partial<TToTOConfig>) => patch('/config', c
 export const setTeamName = (teamId: string, name: string) => patch(`/teams/${teamId}/name`, { name });
 export const adjustScore = (teamId: string, delta: number) => post(`/teams/${teamId}/score/adjust`, { delta });
 
+// ── Players (hardware-player mode rosters) ──────────────────────────────────
+export const setPlayerPool = (pool: string[]) => patch('/player-pool', { pool });
+export const setTeamRosters = (teams: Pick<TToTOTeam, 'id' | 'name' | 'players'>[]) => patch('/teams/rosters', { teams });
+export const randomAssignPlayers = () => post('/teams/random-assign');
+
+// Shared cross-mode name pool (same known-players.json NTT/Survey Says use).
+export const listKnownPlayers = async (): Promise<string[]> => {
+  const res = await fetch(`${API_BASE}/known-players`, { credentials: 'include' });
+  if (!res.ok) throw new Error('TToTO: failed to list known players');
+  return res.json();
+};
+export const addKnownPlayers = async (names: string[]): Promise<string[]> => {
+  const res = await fetch(`${API_BASE}/known-players`, {
+    method: 'POST', credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ names }),
+  });
+  if (!res.ok) throw new Error('TToTO: failed to add known players');
+  return res.json();
+};
+export const deleteKnownPlayer = async (name: string): Promise<string[]> => {
+  const res = await fetch(`${API_BASE}/known-players/${encodeURIComponent(name)}`, {
+    method: 'DELETE', credentials: 'include',
+  });
+  if (!res.ok) throw new Error('TToTO: failed to delete known player');
+  return res.json();
+};
+
 // ── Content ────────────────────────────────────────────────────────────────────
 export const setRounds = (rounds: TToTORound[]) => post('/rounds', { rounds });
 
@@ -52,6 +80,10 @@ export const next = () => post('/next');
 export const newGame = () => post('/game/new');
 export const endGame = () => post('/game/end');
 export const undo = () => post('/undo');
+
+// ── Wand test (Phase 2 hardware) ────────────────────────────────────────────
+export const showWandTest = () => post('/wand-test/show');
+export const hideWandTest = () => post('/wand-test/hide');
 
 // ── Saves ─────────────────────────────────────────────────────────────────────
 export interface TToTOSaveMeta {

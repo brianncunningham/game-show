@@ -1,3 +1,8 @@
+// 'hardware-team' (one wand per team) has been retired in favor of 'hardware-player' (one
+// wand per person) — real hardware wands are inherently per-person, and the per-player
+// steal-lockout rule (see TToTORoundState.attemptedControllerIds) needs that granularity
+// to mean anything. Kept as a type member so old persisted state/saves still typecheck;
+// the store migrates it to 'hardware-player' on load (see store.ts loadPersistedState).
 export type BuzzerMode = 'manual' | 'hardware-player' | 'hardware-team';
 
 export type TToTOFlavor =
@@ -78,7 +83,8 @@ export type TToTOPhase =
   | 'reading'         // prompt visible, choices hidden (revealTiming: prompt_first)
   | 'armed'           // choices revealed, buzzers "armed" (manual buzz buttons live)
   | 'answering'       // a team is on the clock
-  | 'steal'           // first team missed; opposing team is on the clock (EXCLUSIVE)
+  | 'steal'           // opposing team (or, once open, either team) is on the clock with a choice picked
+  | 'steal_armed'      // TIMED_WINDOW only — buzzers live for the steal, nobody has buzzed in yet
   | 'resolved'        // correct given or double miss; scores applied; reveal shown
   | 'game_over';
 
@@ -97,6 +103,17 @@ export interface TToTORoundState {
   currentRoundIndex: number;      // 0-based index into rounds[]
   currentQuestionIndex: number;   // 0-based index into rounds[currentRoundIndex].questions
   answeringTeamId: string | null; // team currently on the clock
+  // The specific wand/controller currently on the clock — only set for hardware-player
+  // buzzes (manual host-clicked "Team X Buzzed" has no per-player granularity, so this
+  // stays null then, and the per-player lockout below simply has nothing to exclude).
+  answeringControllerId: string | null;
+  // Every controller that has already buzzed in and been judged wrong on the CURRENT
+  // question — reset on next(). That specific person is excluded from every subsequent
+  // buzz-in opportunity this question (initial answer, exclusive steal, open steal),
+  // even though their teammates and the other team remain eligible. This is what makes
+  // "open to both teams" in TIMED_WINDOW steal mean "both teams' *remaining* players",
+  // not literally anyone including the player who just missed.
+  attemptedControllerIds: string[];
   eliminatedChoices: TToTOChoiceKey[];
   missedBy: MissRecord[];
   resolvedCorrectly: boolean | null;
@@ -108,6 +125,18 @@ export interface TToTORoundState {
   // (beginRound / next) and held stable through the steal handoff and undo.
   displayChoices: Record<TToTOChoiceKey, string> | null;
   correctChoice: TToTOChoiceKey | null;
+
+  // ── TIMED_WINDOW steal only (phase 'steal_armed') ────────────────────────────
+  // Which team has exclusive buzz-in rights during the first stealWindowSecs seconds.
+  // Cleared once the window opens to both, or once someone buzzes in.
+  stealEligibleTeamId?: string | null;
+  // False = still in the exclusive-team stage; true = opened to both teams (no further
+  // timeout — it's just a straight buzz race at that point).
+  stealWindowOpen?: boolean;
+  // Epoch ms when the exclusive stage ends — purely for the show screen's countdown
+  // display; the actual hardware window transition is driven by a server-side timer
+  // (routes.ts), not by clients polling this value.
+  stealWindowExpiresAt?: number | null;
 }
 
 // ─── Team ────────────────────────────────────────────────────────────────────
@@ -116,6 +145,18 @@ export interface TToTOTeam {
   id: string;
   name: string;
   score: number;
+  // Roster for hardware-player mode (see controllerAssignments) — empty/unused in manual
+  // mode. Variable size, no fixed cap beyond the practical number of physical wands.
+  players: string[];
+}
+
+// controllerId -> which team/player it's wired to. Rebuilt wholesale (buildControllerAssignments)
+// whenever the roster changes, positionally: team[0]'s players get the first N controller
+// IDs, team[1]'s players get the next M — see store.ts for the exact numbering.
+export interface ControllerAssignment {
+  controllerId: string;
+  teamId: string;
+  playerName: string;
 }
 
 // ─── Top-level State ─────────────────────────────────────────────────────────
@@ -126,4 +167,16 @@ export interface TToTOState {
   rounds: TToTORound[];
   roundState: TToTORoundState;
   showIntro: boolean;
+  // Incremented each time the host starts a wand test (see routes.ts /wand-test/show) —
+  // mirrors Survey Says's state.wandTestSeq, used client-side purely to know whether a
+  // wand test is currently active (0/undefined = not running).
+  wandTestSeq?: number;
+  // Pool of player names available to sort into teams (see store.ts randomAssignPlayers) —
+  // mirrors Survey Says's playerPool/team-sorting model.
+  playerPool: string[];
+  controllerAssignments: ControllerAssignment[];
+  // Incremented each time randomAssignPlayers() runs — the show screen watches this to
+  // know when to play the team-sorting animation (see TToTOTeamRandomizer / Survey Says's
+  // randomizerSeq, ported straight across).
+  randomizerSeq?: number;
 }
