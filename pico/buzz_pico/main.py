@@ -736,7 +736,14 @@ def handle_event(obj):
         _failed_controllers = set(str(c) for c in failed)
         print("FAILED:", _failed_controllers, "STATE:", state)
         if state == "ARMED":
-            game_armed()
+            window_id = str(merged.get("windowId", ""))
+            if window_id.startswith("ttoto-"):
+                # TToTO specifically doesn't want the "flashing blue when armed" cue —
+                # stay dark instead. Scoped to this mode's windowId prefix only; NTT and
+                # Survey Says keep the existing blue pulse unchanged.
+                game_idle()
+            else:
+                game_armed()
         elif state == "IDLE":
             pass  # dark by default; piLed drives all active states
         elif state == "LOCKED":
