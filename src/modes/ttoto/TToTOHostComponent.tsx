@@ -16,6 +16,7 @@ import {
 } from './api';
 import type { TToTOSaveMeta } from './api';
 import { TTOTO_COLORS } from './colors';
+import { ledEffect } from '../../features/buzzer/buzzerApi';
 
 const TEAM_COLORS = [TTOTO_COLORS.team1, TTOTO_COLORS.team2] as const;
 const CHOICE_ORDER: TToTOChoiceKey[] = ['this', 'that', 'the_other'];
@@ -193,6 +194,14 @@ export const TToTOHostComponent = () => {
                   <Grid item xs={12} sm={4}>
                     <Button fullWidth variant="outlined" color="info" sx={bigBtnSx} onClick={act(() => showWandTest())}>
                       🪄 Wand Test
+                    </Button>
+                  </Grid>
+                )}
+                {config.buzzerMode !== 'manual' && (
+                  <Grid item xs={12} sm={4}>
+                    <Button fullWidth variant="outlined" color="inherit" sx={{ ...bigBtnSx, opacity: 0.55 }}
+                      onClick={() => { void ledEffect('off'); }}>
+                      💡 Clear LEDs
                     </Button>
                   </Grid>
                 )}
