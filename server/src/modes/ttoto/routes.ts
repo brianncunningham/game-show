@@ -196,12 +196,26 @@ function handleWandTestBuzz(controllerId: string): void {
   judgeController.armWindow(WAND_TEST_WINDOW_ID);
 }
 
+/**
+ * Single entry point for a BUZZ_ACCEPTED event, regardless of source:
+ *  - Local/simulated (no JUDGE_URL): the judgeController.onEvent() listener below calls
+ *    this directly, since the judge runs in this same process.
+ *  - Real deployed hardware (Pi + VPS split, JUDGE_URL set): the Pi only relays raw
+ *    buzzes — it doesn't run game logic (see IS_PI below) — so the VPS's "PiSniffer"
+ *    (server/src/index.ts) imports and calls this exported function directly with the
+ *    event it received over the Pi's /ws/buzzer socket. Mirrors Survey Says's exported
+ *    handlePiBuzzAccepted for the same reason.
+ */
+export function handlePiBuzzAccepted(windowId: string | null, controllerId: string): void {
+  if (windowId === WAND_TEST_WINDOW_ID) handleWandTestBuzz(controllerId);
+  else if (windowId === ARMED_WINDOW_ID) handleArmedBuzz(controllerId);
+}
+
 judgeController.onEvent((event) => {
   if (IS_PI) return; // Pi is a dumb relay — VPS sniffer handles game logic
   if (event.type !== 'BUZZ_ACCEPTED') return;
   const { windowId, controllerId } = event.payload as { windowId: string | null; controllerId: string };
-  if (windowId === WAND_TEST_WINDOW_ID) handleWandTestBuzz(controllerId);
-  else if (windowId === ARMED_WINDOW_ID) handleArmedBuzz(controllerId);
+  handlePiBuzzAccepted(windowId, controllerId);
 });
 
 // ─── State ───────────────────────────────────────────────────────────────────

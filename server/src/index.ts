@@ -18,7 +18,7 @@ import { nameThatTuneMode } from './modes/nameThatTune/index.js';
 import { surveySaysMode } from './modes/surveySays/index.js';
 import ssRoutes, { handlePiBuzzAccepted, handlePiWandTestBuzz } from './modes/surveySays/routes.js';
 import { ttotoMode } from './modes/ttoto/index.js';
-import ttotoRoutes from './modes/ttoto/routes.js';
+import ttotoRoutes, { handlePiBuzzAccepted as ttotoHandlePiBuzzAccepted } from './modes/ttoto/routes.js';
 
 const PORT = Number(process.env.PORT ?? 3001);
 const JUDGE_URL = process.env['JUDGE_URL'] ?? null;
@@ -141,7 +141,11 @@ if (!JUDGE_URL) {
           const windowId = msg.payload['windowId'] as string | null;
           const controllerId = String(msg.payload['controllerId'] ?? '');
           console.log(`[PiSniffer] BUZZ_ACCEPTED windowId=${windowId} controllerId=${controllerId}`);
+          // Both handlers no-op unless windowId matches their own mode's prefix (ss-* /
+          // ttoto-*), so it's safe to call both regardless of which mode is active —
+          // avoids needing the sniffer to track "which mode is active" itself.
           handlePiBuzzAccepted(windowId, controllerId);
+          ttotoHandlePiBuzzAccepted(windowId, controllerId);
         }
         // Wand test: fire team-color LED on every BUZZ_RECEIVED (fires regardless of arm state)
         if (msg.type === 'BUZZ_RECEIVED' && msg.payload['windowId'] === 'ss-wand-test') {
