@@ -104,25 +104,32 @@ function piJudge(path: string, body: Record<string, unknown>, attempt = 1): Prom
 }
 
 /**
- * Open+arm the shared ARMED_WINDOW_ID with the given eligibility and relay it to the Pi.
- * Callers pass the actual computed list of eligible controller IDs (e.g. from
- * eligibleControllersForTeams) — never an empty array to mean "everyone", since
- * judgeController treats [] as "no restriction" (see BuzzerWindow.eligibleControllers'
- * docs), which would be actively wrong here: an empty result from our per-player
- * exclusion logic means nobody legitimately remains, not "let anyone buzz". If that
- * happens (only possible with a badly misconfigured roster — e.g. a team with zero
- * players assigned), skip opening a window at all rather than silently opening it to
- * everyone.
+ * Open+arm a hardware judge window and relay it to the Pi. Callers pass the actual
+ * computed list of eligible controller IDs (e.g. from eligibleControllersForTeams) —
+ * never an empty array to mean "everyone", since judgeController treats [] as "no
+ * restriction" (see BuzzerWindow.eligibleControllers' docs), which would be actively
+ * wrong here: an empty result from our per-player exclusion logic means nobody
+ * legitimately remains, not "let anyone buzz". If that happens (only possible with a
+ * badly misconfigured roster — e.g. a team with zero players assigned), skip opening a
+ * window at all rather than silently opening it to everyone.
+ *
+ * The two piJudge calls are awaited in sequence rather than fired concurrently — over a
+ * real network relay to the Pi (not same-process, unlike judgeController.
+ * openWindow/armWindow above) these are two independent HTTP requests with no inherent
+ * ordering guarantee. Firing them concurrently let 'arm-window' occasionally arrive and
+ * get processed before 'open-window' had, making the arm a no-op ("no active window")
+ * and leaving the window stuck WAITING forever — found via a live deploy test, not
+ * caught by any local (same-process, no real network) testing.
  */
-function openHardwareWindow(eligibleControllers: string[]): void {
+async function openHardwareWindow(windowId: string, eligibleControllers: string[], earlyBuzzPenalty = false): Promise<void> {
   if (eligibleControllers.length === 0) {
-    console.warn('[TToTO] openHardwareWindow: no eligible controllers (check team rosters) — not opening a window');
+    console.warn(`[TToTO] openHardwareWindow: no eligible controllers for '${windowId}' (check team rosters) — not opening a window`);
     return;
   }
-  judgeController.openWindow({ windowId: ARMED_WINDOW_ID, eligibleControllers, earlyBuzzPenalty: false });
-  judgeController.armWindow(ARMED_WINDOW_ID);
-  void piJudge('open-window', { windowId: ARMED_WINDOW_ID, eligibleControllers, earlyBuzzPenalty: false });
-  void piJudge('arm-window', { windowId: ARMED_WINDOW_ID });
+  judgeController.openWindow({ windowId, eligibleControllers, earlyBuzzPenalty });
+  judgeController.armWindow(windowId);
+  await piJudge('open-window', { windowId, eligibleControllers, earlyBuzzPenalty });
+  await piJudge('arm-window', { windowId });
 }
 
 // TIMED_WINDOW steal: the exclusive-stage countdown. A real timer (not lazily computed on
@@ -185,15 +192,22 @@ function handleArmedBuzz(controllerId: string): void {
  * judge window can only have one winner (ARMED -> LOCKED), so to let a host test every
  * wand repeatedly (not just once total), immediately close and re-open+re-arm a fresh
  * window after each press. No per-player exclusion here — a wand test isn't a real
- * question, every assigned controller should always be testable. */
+ * question, every assigned controller should always be testable.
+ *
+ * Must relay the close (and the reopen, via openHardwareWindow) to the Pi's REAL judge,
+ * not just this process's local one — this function runs wherever handlePiBuzzAccepted
+ * is invoked from, which in the real deployed Pi+VPS split is the VPS's sniffer. Without
+ * relaying, only the VPS's own (inert — no real hardware ever attaches to it) judge
+ * would reset; the Pi's actual judge window would stay LOCKED after the very first
+ * real press, and every wand after that would get rejected instead of testable. */
 function handleWandTestBuzz(controllerId: string): void {
   const teamId = teamIdForController(controllerId);
   if (teamId) piLed({ effect: 'flash', color: teamColor(teamId), flashes: 2, on_ms: 150, off_ms: 80 });
   const allControllers = ttotoStore.getState().controllerAssignments.map(a => a.controllerId);
   judgeController.closeWindow(WAND_TEST_WINDOW_ID);
+  void piJudge('close-window', { windowId: WAND_TEST_WINDOW_ID });
   if (allControllers.length === 0) return;
-  judgeController.openWindow({ windowId: WAND_TEST_WINDOW_ID, eligibleControllers: allControllers, earlyBuzzPenalty: false });
-  judgeController.armWindow(WAND_TEST_WINDOW_ID);
+  void openHardwareWindow(WAND_TEST_WINDOW_ID, allControllers);
 }
 
 /**
@@ -322,16 +336,7 @@ router.post('/reveal-choices', (_req, res) => {
   // to resume" concept here the way NTT has, so open the window already armed.
   if (state.config.buzzerMode === 'hardware-player') {
     const eligible = eligibleControllersForTeams(allTeamIds());
-    if (state.config.earlyBuzzPenalty === 'lockout') {
-      if (eligible.length > 0) {
-        judgeController.openWindow({ windowId: ARMED_WINDOW_ID, eligibleControllers: eligible, earlyBuzzPenalty: true });
-        judgeController.armWindow(ARMED_WINDOW_ID);
-        void piJudge('open-window', { windowId: ARMED_WINDOW_ID, eligibleControllers: eligible, earlyBuzzPenalty: true });
-        void piJudge('arm-window', { windowId: ARMED_WINDOW_ID });
-      }
-    } else {
-      openHardwareWindow(eligible);
-    }
+    void openHardwareWindow(ARMED_WINDOW_ID, eligible, state.config.earlyBuzzPenalty === 'lockout');
   }
   res.json(state);
 });
@@ -363,7 +368,7 @@ router.post('/judge', (req, res) => {
   // controller on the other team, minus anyone already excluded) and schedule the
   // expansion-to-both once stealWindowSecs elapses.
   if (state.roundState.phase === 'steal_armed' && state.roundState.stealEligibleTeamId) {
-    openHardwareWindow(eligibleControllersForTeams([state.roundState.stealEligibleTeamId]));
+    void openHardwareWindow(ARMED_WINDOW_ID, eligibleControllersForTeams([state.roundState.stealEligibleTeamId]));
     const waitMs = Math.max(0, (state.roundState.stealWindowExpiresAt ?? Date.now()) - Date.now());
     stealTimer = setTimeout(() => {
       stealTimer = null;
@@ -372,7 +377,7 @@ router.post('/judge', (req, res) => {
       // timer firing and this callback running, vanishingly unlikely but cheap to check).
       if (expanded.roundState.phase === 'steal_armed' && expanded.roundState.stealWindowOpen) {
         // Both teams' remaining (non-excluded) players — see eligibleControllersForTeams.
-        openHardwareWindow(eligibleControllersForTeams(allTeamIds()));
+        void openHardwareWindow(ARMED_WINDOW_ID, eligibleControllersForTeams(allTeamIds()));
       }
     }, waitMs);
   }
@@ -402,12 +407,7 @@ router.post('/wand-test/show', (_req, res) => {
   // rejects NOT_ARMED and never fires BUZZ_ACCEPTED (see judgeController.receiveBuzz), so
   // an unarmed "wand test" window would never actually trigger the LED flash below.
   const allControllers = ttotoStore.getState().controllerAssignments.map(a => a.controllerId);
-  if (allControllers.length > 0) {
-    judgeController.openWindow({ windowId: WAND_TEST_WINDOW_ID, eligibleControllers: allControllers, earlyBuzzPenalty: false });
-    judgeController.armWindow(WAND_TEST_WINDOW_ID);
-    void piJudge('open-window', { windowId: WAND_TEST_WINDOW_ID, eligibleControllers: allControllers, earlyBuzzPenalty: false });
-    void piJudge('arm-window', { windowId: WAND_TEST_WINDOW_ID });
-  }
+  void openHardwareWindow(WAND_TEST_WINDOW_ID, allControllers);
   res.json(ttotoStore.showWandTest());
 });
 
