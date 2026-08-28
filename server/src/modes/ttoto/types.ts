@@ -179,4 +179,12 @@ export interface TToTOState {
   // know when to play the team-sorting animation (see TToTOTeamRandomizer / Survey Says's
   // randomizerSeq, ported straight across).
   randomizerSeq?: number;
+  // The randomizer is showing whenever randomizerSeq > randomizerDismissSeq — a plain
+  // derived comparison the show screen can compute with zero client-side memory, unlike
+  // the earlier snapshot-comparison approach (compare current showIntro/phase against
+  // what they were when randomize fired) which got stuck forever if the host's next
+  // navigation click happened not to change those particular values (e.g. clicking "Game
+  // Screen" when showIntro was already false). Every "host is moving on" action bumps
+  // this to the current randomizerSeq.
+  randomizerDismissSeq?: number;
 }

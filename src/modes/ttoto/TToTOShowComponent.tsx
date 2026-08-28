@@ -1074,47 +1074,54 @@ function TToTOWandTestOverlay({ teams, controllerAssignments }: {
                 {team.name}
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2vh', width: '100%', padding: '0 8%' }}>
-                {teamAssignments.length === 0 && (
-                  <div style={{ fontSize: '1.1rem', color: 'rgba(255,255,255,0.3)', fontStyle: 'italic', textAlign: 'center' }}>
-                    No players assigned — set rosters in /gameadmin.
-                  </div>
-                )}
-                {teamAssignments.map(a => {
-                  const isActive = activeWands.has(a.controllerId);
-                  return (
-                    <div key={a.controllerId} style={{
-                      display: 'flex', alignItems: 'center', gap: 16,
-                      borderRadius: 10, border: `2px solid ${isActive ? TTOTO_COLORS.correct : rgba(color, 0.27)}`,
-                      background: isActive ? rgba(TTOTO_COLORS.correct, 0.1) : rgba(color, 0.04),
-                      boxShadow: isActive ? `0 0 20px ${rgba(TTOTO_COLORS.correct, 0.5)}` : 'none',
-                      padding: '10px 16px', transition: 'all 0.08s ease',
-                    }}>
-                      <div style={{
-                        minWidth: 44, height: 44, borderRadius: '50%',
-                        border: `2px solid ${isActive ? TTOTO_COLORS.correct : color}`,
-                        background: isActive ? rgba(TTOTO_COLORS.correct, 0.2) : rgba(color, 0.13),
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+              {teamAssignments.length === 0 ? (
+                <div style={{ fontSize: '1.1rem', color: 'rgba(255,255,255,0.3)', fontStyle: 'italic', textAlign: 'center' }}>
+                  No players assigned — set rosters in /gameadmin.
+                </div>
+              ) : (
+                // CSS multi-column (not flex/grid): fills the first column top-to-bottom
+                // before starting the second, matching controller numbering order, unlike
+                // a row-major grid which would interleave 1,3,5.. / 2,4,6.. across columns.
+                // Needed once rosters approach the full 20-wand ceiling — a single column
+                // ran off the bottom of the screen (see MAX_POOL).
+                <div style={{ columns: teamAssignments.length > 6 ? 2 : 1, columnGap: '1.4vw', width: '100%', padding: '0 4%' }}>
+                  {teamAssignments.map(a => {
+                    const isActive = activeWands.has(a.controllerId);
+                    return (
+                      <div key={a.controllerId} style={{
+                        display: 'flex', alignItems: 'center', gap: 16, breakInside: 'avoid',
+                        borderRadius: 10, border: `2px solid ${isActive ? TTOTO_COLORS.correct : rgba(color, 0.27)}`,
+                        background: isActive ? rgba(TTOTO_COLORS.correct, 0.1) : rgba(color, 0.04),
+                        boxShadow: isActive ? `0 0 20px ${rgba(TTOTO_COLORS.correct, 0.5)}` : 'none',
+                        padding: '8px 14px', marginBottom: '1vh', transition: 'all 0.08s ease',
                       }}>
-                        <div style={{ fontWeight: 900, fontSize: 'clamp(1rem, 1.8vw, 1.8rem)', color: isActive ? TTOTO_COLORS.correct : color, lineHeight: 1 }}>
-                          {a.controllerId}
+                        <div style={{
+                          minWidth: 38, height: 38, borderRadius: '50%',
+                          border: `2px solid ${isActive ? TTOTO_COLORS.correct : color}`,
+                          background: isActive ? rgba(TTOTO_COLORS.correct, 0.2) : rgba(color, 0.13),
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                        }}>
+                          <div style={{ fontWeight: 900, fontSize: 'clamp(0.85rem, 1.5vw, 1.5rem)', color: isActive ? TTOTO_COLORS.correct : color, lineHeight: 1 }}>
+                            {a.controllerId}
+                          </div>
                         </div>
-                      </div>
-                      <div style={{
-                        fontWeight: 700, fontSize: 'clamp(1rem, 2vw, 2.2rem)',
-                        color: isActive ? '#fff' : 'rgba(255,255,255,0.85)', letterSpacing: '0.04em', flex: 1,
-                      }}>
-                        {a.playerName}
-                      </div>
-                      {isActive && (
-                        <div style={{ fontWeight: 900, fontSize: 'clamp(0.8rem, 1.4vw, 1.4rem)', color: TTOTO_COLORS.correct, letterSpacing: '0.1em' }}>
-                          BUZZ!
+                        <div style={{
+                          fontWeight: 700, fontSize: 'clamp(0.9rem, 1.7vw, 1.8rem)',
+                          color: isActive ? '#fff' : 'rgba(255,255,255,0.85)', letterSpacing: '0.04em', flex: 1,
+                          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                        }}>
+                          {a.playerName}
                         </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
+                        {isActive && (
+                          <div style={{ fontWeight: 900, fontSize: 'clamp(0.7rem, 1.2vw, 1.2rem)', color: TTOTO_COLORS.correct, letterSpacing: '0.1em', flexShrink: 0 }}>
+                            BUZZ!
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           );
         })}
@@ -1138,36 +1145,17 @@ export const TToTOShowComponent = () => {
     return () => clearInterval(id);
   }, [refresh]);
 
-  // Team-sorting animation (ported from Survey Says's randomizerSeq pattern): plays
-  // whenever randomAssignPlayers() bumps the seq, and stays up until the host navigates
-  // away from wherever they were when it started (showIntro/phase snapshot) — same
-  // "stays until host moves on" behavior as SS, not a fixed auto-dismiss timer.
-  const [randomizing, setRandomizing] = useState(false);
-  const randomizerSeededRef = useRef(false);
-  const prevSeqRef = useRef<number | null>(null);
-  const randomizerSnapshotRef = useRef<{ showIntro: boolean; phase: string } | null>(null);
-
-  useEffect(() => {
-    if (!state) return;
-    const seq = state.randomizerSeq ?? 0;
-    if (!randomizerSeededRef.current) {
-      prevSeqRef.current = seq;
-      randomizerSeededRef.current = true;
-      return;
-    }
-    if (seq > 0 && prevSeqRef.current !== null && seq > prevSeqRef.current) {
-      randomizerSnapshotRef.current = { showIntro: state.showIntro, phase: state.roundState.phase };
-      setRandomizing(true);
-    }
-    if (prevSeqRef.current === null || seq >= prevSeqRef.current) prevSeqRef.current = seq;
-  }, [state?.randomizerSeq]);
-
-  useEffect(() => {
-    if (!randomizing || !randomizerSnapshotRef.current || !state) return;
-    const snap = randomizerSnapshotRef.current;
-    if (state.showIntro !== snap.showIntro) { setRandomizing(false); return; }
-    if (state.roundState.phase !== snap.phase) { setRandomizing(false); return; }
-  }, [randomizing, state?.showIntro, state?.roundState.phase]);
+  // Team-sorting animation: plays whenever randomAssignPlayers() bumps randomizerSeq,
+  // and stays up until the host explicitly moves on (any of setShowIntro/beginRound/
+  // next/newGame/endGame/etc. catches randomizerDismissSeq up to the current
+  // randomizerSeq — see store.ts's dismissRandomizer()). A plain derived comparison,
+  // not client-side snapshot/ref bookkeeping — an earlier version snapshotted
+  // {showIntro, phase} when the randomizer started and dismissed only once those
+  // specific values changed, which got stuck forever if the host's next navigation
+  // click happened not to change either one (e.g. clicking "Game Screen" when
+  // showIntro was already false from an earlier click) — indistinguishable, from
+  // polled state alone, from nothing having happened at all.
+  const randomizing = (state?.randomizerSeq ?? 0) > (state?.randomizerDismissSeq ?? 0);
 
   // Wand test overlay — see TToTOWandTestOverlay above for why this exists at all.
   const [showingWandTest, setShowingWandTest] = useState(false);

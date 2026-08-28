@@ -128,6 +128,9 @@ export interface TToTOState {
   // Incremented each time randomAssignPlayers() runs — the show screen watches this to
   // play the team-sorting animation (see TToTOTeamRandomizer).
   randomizerSeq?: number;
+  // The randomizer shows whenever randomizerSeq > randomizerDismissSeq — see the server
+  // type's comment for why this replaced an earlier fragile snapshot-comparison approach.
+  randomizerDismissSeq?: number;
 }
 
 export const CHOICE_LABELS: Record<TToTOChoiceKey, string> = {

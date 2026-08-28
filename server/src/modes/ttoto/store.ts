@@ -27,6 +27,7 @@ const loadPersistedState = (): TToTOState | null => {
       s.playerPool = s.playerPool ?? [];
       s.controllerAssignments = s.controllerAssignments ?? [];
       s.randomizerSeq = s.randomizerSeq ?? 0;
+      s.randomizerDismissSeq = s.randomizerDismissSeq ?? 0;
       s.teams = s.teams.map(t => ({ ...t, players: t.players ?? [] })) as [TToTOTeam, TToTOTeam];
       s.roundState.attemptedControllerIds = s.roundState.attemptedControllerIds ?? [];
       s.roundState.answeringControllerId = s.roundState.answeringControllerId ?? null;
@@ -190,6 +191,7 @@ const createInitialState = (): TToTOState => ({
   playerPool: [],
   controllerAssignments: [],
   randomizerSeq: 0,
+  randomizerDismissSeq: 0,
 });
 
 // ─── Store ────────────────────────────────────────────────────────────────────
@@ -308,13 +310,23 @@ class TToTOStore {
   }
 
   setShowIntro(show: boolean): TToTOState {
-    return this.commit({ ...this.state, showIntro: show });
+    return this.commit({ ...this.state, showIntro: show, ...this.dismissRandomizer() });
+  }
+
+  // Catches the randomizer generation up to "seen" — see types.ts's randomizerDismissSeq
+  // comment. Spread into any action that represents the host explicitly moving on from
+  // wherever they were when a randomize last fired.
+  private dismissRandomizer(): { randomizerDismissSeq: number } {
+    return { randomizerDismissSeq: this.state.randomizerSeq ?? 0 };
   }
 
   // ── Round/question flow ─────────────────────────────────────────────────────
 
   private patchRound(patch: Partial<TToTORoundState>): TToTOState {
-    return this.commit({ ...this.state, roundState: { ...this.state.roundState, ...patch } });
+    // Any round-state progression at all (buzz, judge, next question, steal, ...) means
+    // the game is actively moving — a lingering randomizer overlay should never survive
+    // past this point either. See dismissRandomizer()'s comment.
+    return this.commit({ ...this.state, roundState: { ...this.state.roundState, ...patch }, ...this.dismissRandomizer() });
   }
 
   private multiplierForRound(roundIndex: number): number {
@@ -360,6 +372,7 @@ class TToTOStore {
       ...this.state,
       rounds,
       showIntro: false,
+      ...this.dismissRandomizer(),
       roundState: {
         ...initialRoundState(),
         phase: 'round_intro',
@@ -575,7 +588,10 @@ class TToTOStore {
   // newGame()) would mask the victory screen with the game-intro animation instead.
   endGame(): TToTOState {
     this.begin();
-    return this.commit({ ...this.state, showIntro: false, roundState: { ...this.state.roundState, phase: 'game_over' } });
+    return this.commit({
+      ...this.state, showIntro: false, ...this.dismissRandomizer(),
+      roundState: { ...this.state.roundState, phase: 'game_over' },
+    });
   }
 
   // ── Wand test (Phase 2 hardware) ─────────────────────────────────────────────
@@ -597,6 +613,7 @@ class TToTOStore {
       rounds: this.state.rounds.map(r => ({ ...r, letterStyle: undefined })),
       roundState: initialRoundState(),
       showIntro: true,
+      ...this.dismissRandomizer(),
     });
   }
 }
