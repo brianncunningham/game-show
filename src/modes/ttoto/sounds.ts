@@ -12,6 +12,7 @@ const SOUND_NAMES = [
   'reveal-splitflap', 'reveal-dotmatrix', 'reveal-segmented', // letter-display cascade, per display tech
   'correct',   // right answer given
   'victory',   // game-over winner fanfare
+  'steal-window-open',   // TIMED_WINDOW's exclusive stage expires, opens to both teams
 ] as const;
 
 const soundCache = new Map<string, HTMLAudioElement>();
@@ -53,6 +54,12 @@ export const playRevealSound = (letterStyle: 'split_flap' | 'dot_matrix' | 'segm
 
 export const playCorrectSound = (): void => playSound('correct');
 export const playVictorySound = (): void => playSound('victory');
+
+/** TIMED_WINDOW's exclusive stage just expired and opened to both teams. Deliberately no
+ * sound on the exclusive stage starting — the miss/crack sound that triggers it already
+ * covers that moment (see playMissSound) — and deliberately a gentler cue here than a
+ * NTT-style "time's up" alarm: this is inviting both teams in, not a hard cutoff. */
+export const playStealWindowOpenSound = (): void => playSound('steal-window-open');
 
 /** Buzz-in confirmation — reuses the shared root /buzz.mp3 (already used by NTT/Survey
  * Says and TToTO's own wand-test overlay) rather than a new TToTO-specific file. */

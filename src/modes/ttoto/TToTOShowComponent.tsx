@@ -12,7 +12,7 @@ import { TToTOStage } from './TToTOStage';
 import { TTOTO_COLORS, lighten, darken, rgba } from './colors';
 import { useGameEventOverlay, GameEventOverlay } from './GameOverlays';
 import { fitTextToWidth, fixedCharWidth } from './fitText';
-import { playMissSound, playRevealSound, playCorrectSound, playVictorySound, playBuzzSound } from './sounds';
+import { playMissSound, playRevealSound, playCorrectSound, playVictorySound, playBuzzSound, playStealWindowOpenSound } from './sounds';
 
 // Fixed content width all 3 answer panels share (see the answer-panel flex fix below) —
 // 1600 stage minus 64px outer margin minus 40px of inter-panel gap, split 3 ways, minus
@@ -773,6 +773,11 @@ function ComboScreen({ state }: { state: TToTOState }) {
     if (roundState.eliminatedChoices.length > prevEliminatedLenRef.current) playMissSound();
     prevEliminatedLenRef.current = roundState.eliminatedChoices.length;
   }, [roundState.eliminatedChoices.length]);
+  const prevStealWindowOpenRef = useRef(false);
+  useEffect(() => {
+    if (roundState.stealWindowOpen && !prevStealWindowOpenRef.current) playStealWindowOpenSound();
+    prevStealWindowOpenRef.current = roundState.stealWindowOpen ?? false;
+  }, [roundState.stealWindowOpen]);
 
   // 'reading' and 'armed' show no status text — the prompt/choices alone are the whole cue.
   // 'answering' also shows nothing: there's no clock/countdown for the initial answer (only

@@ -7,7 +7,7 @@ import {
 import { sendToPico } from '../../shared/buzzer/inputs/hardwareInput.js';
 import { judgeController } from '../../shared/buzzer/judgeController.js';
 import { addKnownPlayers, deleteKnownPlayer, listKnownPlayers } from '../../shared/services/knownPlayersService.js';
-import type { TToTOConfig, TToTOChoiceKey, TToTORound, TToTOTeam } from './types.js';
+import type { TToTOConfig, TToTOChoiceKey, TToTORound, TToTOTeam, TToTOState } from './types.js';
 
 const router = Router();
 
@@ -31,6 +31,23 @@ const TEAM_COLORS: Record<string, number[]> = {
   'team-2': [236, 72, 153],   // magenta/pink
 };
 const teamColor = (teamId: string): number[] => TEAM_COLORS[teamId] ?? [255, 255, 255];
+
+// Same duplication note as TEAM_COLORS above — keep in sync with colors.ts.
+const CORRECT_COLOR = [0, 255, 136];   // TTOTO_COLORS.correct
+const WRONG_COLOR = [255, 32, 32];     // TTOTO_COLORS.incorrect
+const THIS_COLOR = [34, 211, 238];     // TTOTO_COLORS.this
+const THAT_COLOR = [249, 115, 22];     // TTOTO_COLORS.that
+const GOLD = [255, 180, 0];            // victory accent, matches NTT/SS's own convention
+
+/** Gold + winner-team-color sparkle — pairs with the warm Edison-bulb victory screen
+ * rather than NTT/SS's rainbow-spin, which would read as more generic/psychedelic against
+ * that deliberately warm theatrical treatment. */
+function fireVictoryLed(state: TToTOState): void {
+  const [t1, t2] = state.teams;
+  const winner = t1.score === t2.score ? null : (t1.score > t2.score ? t1 : t2);
+  const winnerColor = winner ? teamColor(winner.id) : [255, 255, 255];
+  piLed({ effect: 'sparkle', color: GOLD, color2: winnerColor, density: 0.2, speed_ms: 30 });
+}
 
 /** Maps a hardware controller press to its team, via controllerAssignments. */
 function teamIdForController(controllerId: string): string | undefined {
@@ -281,6 +298,8 @@ router.patch('/teams/rosters', (req, res) => {
 });
 
 router.post('/teams/random-assign', (_req, res) => {
+  const [c1, c2] = [teamColor('team-1'), teamColor('team-2')];
+  piLed({ effect: 'spin', colors: [c2, c1], settle_colors: [c2, c1], duration_ms: 3000 });
   res.json(ttotoStore.randomAssignPlayers());
 });
 
@@ -312,6 +331,7 @@ router.post('/rounds', (req, res) => {
 // ─── Intro ───────────────────────────────────────────────────────────────────
 
 router.post('/intro/show', (_req, res) => {
+  piLed({ effect: 'marquee', color: THIS_COLOR, color2: THAT_COLOR, bulb_size: 4, gap_size: 2, speed_ms: 25 });
   res.json(ttotoStore.setShowIntro(true));
 });
 
@@ -364,11 +384,23 @@ router.post('/judge', (req, res) => {
   clearStealTimer();
   const state = ttotoStore.judge(choice);
 
+  // Correct/wrong LED, uniform regardless of what happens next — a single miss (still
+  // stealable) and a double miss (no-score, round over) get the exact same red flash per
+  // explicit direction: no special-casing double-miss.
+  if (choice === state.roundState.correctChoice) {
+    piLed({ effect: 'flash', color: CORRECT_COLOR, flashes: 4, on_ms: 150, off_ms: 80, end_color: CORRECT_COLOR });
+  } else {
+    piLed({ effect: 'flash', color: WRONG_COLOR, flashes: 4, on_ms: 120, off_ms: 80 });
+  }
+
   // TIMED_WINDOW steal just started: open the exclusive-stage hardware window (every
   // controller on the other team, minus anyone already excluded) and schedule the
   // expansion-to-both once stealWindowSecs elapses.
   if (state.roundState.phase === 'steal_armed' && state.roundState.stealEligibleTeamId) {
     void openHardwareWindow(ARMED_WINDOW_ID, eligibleControllersForTeams([state.roundState.stealEligibleTeamId]));
+    // Straight port of NTT's clock_bar countdown (same physical LED layout) — no separate
+    // "countdown started" sound, the miss/crack sound that triggered this already covers it.
+    piLed({ effect: 'clock_bar', duration_ms: state.config.stealWindowSecs * 1000, segment: 'top', mode: 'smooth' });
     const waitMs = Math.max(0, (state.roundState.stealWindowExpiresAt ?? Date.now()) - Date.now());
     stealTimer = setTimeout(() => {
       stealTimer = null;
@@ -378,6 +410,9 @@ router.post('/judge', (req, res) => {
       if (expanded.roundState.phase === 'steal_armed' && expanded.roundState.stealWindowOpen) {
         // Both teams' remaining (non-excluded) players — see eligibleControllersForTeams.
         void openHardwareWindow(ARMED_WINDOW_ID, eligibleControllersForTeams(allTeamIds()));
+        // Both-teams-can-buzz marquee — deliberately gentle/inviting, not an alarm (the
+        // client plays a matching "steal-window-open" sound for the same reason).
+        piLed({ effect: 'marquee', color: teamColor('team-1'), color2: teamColor('team-2'), bulb_size: 4, gap_size: 2, speed_ms: 28 });
       }
     }, waitMs);
   }
@@ -387,7 +422,16 @@ router.post('/judge', (req, res) => {
 
 router.post('/next', (_req, res) => {
   clearStealTimer();
-  res.json(ttotoStore.next());
+  const state = ttotoStore.next();
+  // next() lands on 'round_intro' only when it actually advanced to a new round (not for
+  // the next question within the same round, and not round 1's initial entry — that comes
+  // from startGame(), never through here).
+  if (state.roundState.phase === 'round_intro') {
+    piLed({ effect: 'rainbow', speed_ms: 15, brightness: 0.9, duration_ms: 4000 });
+  } else if (state.roundState.phase === 'game_over') {
+    fireVictoryLed(state);
+  }
+  res.json(state);
 });
 
 router.post('/game/new', (_req, res) => {
@@ -397,7 +441,9 @@ router.post('/game/new', (_req, res) => {
 
 router.post('/game/end', (_req, res) => {
   clearStealTimer();
-  res.json(ttotoStore.endGame());
+  const state = ttotoStore.endGame();
+  fireVictoryLed(state);
+  res.json(state);
 });
 
 // ─── Wand test (Phase 2 hardware) ─────────────────────────────────────────────
