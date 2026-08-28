@@ -68,9 +68,9 @@ const DEFAULT_TEAMS: [TToTOTeam, TToTOTeam] = [
 ];
 
 // No fixed roster cap — variable size, limited in practice only by how many physical
-// wands exist (hardwareInput.ts enumerates up to 15 controllers for NTT's clock-vote
-// routing, so that's the practical ceiling here too).
-const MAX_POOL = 15;
+// wands the Pico firmware supports: GP0-GP19, i.e. controllers 1-20 (see
+// pico/buzz_pico/main.py's BUTTON_MAP / "Watch 20 GPIO pins").
+const MAX_POOL = 20;
 
 const ALL_LETTER_STYLES: LetterStyle[] = ['split_flap', 'dot_matrix', 'segmented'];
 const ALL_CRACK_VARIANTS: CrackVariant[] = ['A', 'B', 'C', 'D'];

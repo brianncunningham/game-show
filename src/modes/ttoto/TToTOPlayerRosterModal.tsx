@@ -9,8 +9,8 @@ import {
 import DeleteIcon from '@mui/icons-material/Delete';
 import { addKnownPlayers, deleteKnownPlayer, listKnownPlayers } from './api';
 
-// Matches store.ts's MAX_POOL (practical ceiling = physical wand count), not SS's 10.
-const MAX_POOL = 15;
+// Matches store.ts's MAX_POOL (physical wand count: GP0-GP19, controllers 1-20), not SS's 10.
+const MAX_POOL = 20;
 
 interface Props {
   open: boolean;
