@@ -100,6 +100,26 @@ export interface SpotifyDevice {
   is_active: boolean;
 }
 
+export interface SpotifyPlayResult {
+  ok: boolean;
+  error?: string;
+}
+
+/** Accepts a bare Spotify track ID, a full `spotify:track:...` URI, or an
+ * open.spotify.com URL — with or without the `?si=...` share-tracking suffix Spotify's
+ * own "Share" menu appends — and normalizes down to the bare ID. A raw `?si=...` suffix
+ * pasted straight into a track-ID field silently breaks playback (the `spotify:track:`
+ * URI scheme takes no query string at all), which is exactly the kind of paste mistake a
+ * host filling in a track ID field is likely to make. */
+const normalizeTrackId = (raw: string): string => {
+  const trimmed = raw.trim();
+  const urlMatch = trimmed.match(/open\.spotify\.com\/track\/([a-zA-Z0-9]+)/);
+  if (urlMatch) return urlMatch[1];
+  const uriMatch = trimmed.match(/spotify:track:([a-zA-Z0-9]+)/);
+  if (uriMatch) return uriMatch[1];
+  return trimmed.split('?')[0].split('&')[0];
+};
+
 // --- Hook ---
 export const useSpotify = () => {
   const [token, setToken] = useState<string | null>(getStoredToken);
@@ -144,13 +164,28 @@ export const useSpotify = () => {
     void fetchDevices();
   }, [token, fetchDevices]);
 
-  const play = useCallback(async (trackId: string, positionMs: number) => {
-    if (!token) return;
+  /** Resolves to `{ ok: false, error }` instead of throwing/swallowing on failure —
+   * callers that only care about "fire and forget" (most do, `void spotify.play(...)`)
+   * are unaffected, but callers that want to surface *why* a track didn't play (e.g. a
+   * malformed ID, an unavailable track, no active device) now can. Previously any
+   * non-2xx response from Spotify was silently ignored — a real cause of "connected,
+   * device found, but the actual song just doesn't play" with zero diagnostic signal. */
+  const play = useCallback(async (trackId: string, positionMs: number): Promise<SpotifyPlayResult> => {
+    if (!token) return { ok: false, error: 'Not connected to Spotify.' };
+    const id = normalizeTrackId(trackId);
     const deviceParam = activeDeviceId ? `?device_id=${activeDeviceId}` : '';
-    await spotifyFetch(token, `/me/player/play${deviceParam}`, {
+    const res = await spotifyFetch(token, `/me/player/play${deviceParam}`, {
       method: 'PUT',
-      body: JSON.stringify({ uris: [`spotify:track:${trackId}`], position_ms: positionMs }),
+      body: JSON.stringify({ uris: [`spotify:track:${id}`], position_ms: positionMs }),
     });
+    if (res.ok) return { ok: true };
+    const body = await res.text().catch(() => '');
+    console.warn(`[Spotify] play(${id}) failed: ${res.status} ${body}`);
+    const hint = res.status === 404 ? 'track not found — check the ID'
+      : res.status === 403 ? 'restricted — needs Premium, or track unavailable in this account/region'
+        : res.status === 502 ? 'no active device — open Spotify and start playing something first'
+          : 'see console for details';
+    return { ok: false, error: `Spotify error ${res.status} (${hint})` };
   }, [token, activeDeviceId]);
 
   const pause = useCallback(async () => {

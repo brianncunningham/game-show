@@ -12,9 +12,11 @@ import { VictoryScreen } from './VictoryScreen';
 import { WandTestScreen } from './WandTestScreen';
 import type { GameShowTeam } from './types';
 import { useGameShowState } from './useGameShowState';
+import { useAutoReloadOnNewBuild } from '../../shared/hooks/useAutoReloadOnNewBuild';
 
 export const NTTShowComponent = () => {
   const { state, isLoading, error } = useGameShowState();
+  useAutoReloadOnNewBuild();
   const [showRandomizer, setShowRandomizer] = useState(false);
   const [showFirstPick, setShowFirstPick] = useState(false);
   const [showWandTest, setShowWandTest] = useState(false);

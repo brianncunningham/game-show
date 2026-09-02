@@ -64,6 +64,10 @@ export const TToTOHostComponent = () => {
   // a local UI toggle, same as NTT's spotifyPaused.
   const [spotifyPaused, setSpotifyPaused] = useState(false);
   const [spotifyTesting, setSpotifyTesting] = useState(false);
+  // Real diagnostic feedback for a song that fails to play — useSpotify's play() now
+  // resolves { ok: false, error } instead of silently swallowing a non-2xx response
+  // (previously the only symptom of e.g. a malformed track ID was total silence).
+  const [songPlayError, setSongPlayError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     try { setState(await getState()); } catch { /* ignore */ }
@@ -83,6 +87,12 @@ export const TToTOHostComponent = () => {
   const act = useCallback((fn: () => Promise<TToTOState>) => async () => {
     try { setState(await fn()); } catch (e) { console.error(e); }
   }, []);
+
+  // Clear any stale song-playback error the moment the question actually changes —
+  // otherwise an error from question N would keep showing on question N+1.
+  useEffect(() => {
+    setSongPlayError(null);
+  }, [state?.roundState.currentRoundIndex, state?.roundState.currentQuestionIndex]);
 
   // Wraps a navigation action (Game Screen, Next, etc.) so it always dismisses an active
   // wand test first. Without this, the /show screen's wand-test overlay renders ahead of
@@ -127,7 +137,10 @@ export const TToTOHostComponent = () => {
   // manually on their own device; the round still advances either way).
   const playMediaIfSong = () => {
     if (question?.mediaType === 'song' && question.mediaRef && spotify.isConnected) {
-      void spotify.play(question.mediaRef, 0);
+      setSongPlayError(null);
+      void spotify.play(question.mediaRef, 0).then(result => {
+        if (!result.ok) setSongPlayError(result.error ?? 'Playback failed.');
+      });
       setSpotifyPaused(false);
     }
   };
@@ -159,59 +172,58 @@ export const TToTOHostComponent = () => {
       </Stack>
 
       <Stack spacing={2}>
-        {/* ID Please (media_id) only — persistent Spotify status/config, visible whenever
-            the loaded round is media_id (not gated to a live song question), so the host
-            can connect and pick the right device before it's actually needed. Mirrors
-            NTTHostComponent's spotifyStatus header (device selector, refresh, a
-            connectivity Test button using the same reference track) — TToTO's host has
-            no shared header slot to hook into, so this is its own card instead. An empty
-            device list here is the most likely reason a song doesn't audibly play: Spotify
-            Connect has nothing to hand playback off to. */}
-        {round?.flavor === 'media_id' && (
-          <Card variant="outlined">
-            <CardContent sx={{ py: '10px !important' }}>
-              <Stack direction="row" spacing={1.5} alignItems="center" sx={{ flexWrap: 'wrap' }}>
-                <Typography sx={{ ...sectionLabelSx, mb: 0 }}>Spotify</Typography>
-                {spotify.isConnected ? (
-                  <>
-                    <Chip label="Connected ●" color="success" size="small" />
-                    <Select
-                      size="small" displayEmpty value={spotify.activeDeviceId ?? ''}
-                      onChange={(e) => spotify.setActiveDeviceId(e.target.value || null)}
-                      sx={{ fontSize: '0.8rem', minWidth: 160 }}
-                    >
-                      <MenuItem value=""><em>Active device (auto)</em></MenuItem>
-                      {spotify.devices.map(d => (
-                        <MenuItem key={d.id} value={d.id}>{d.name}{d.is_active ? ' ●' : ''}</MenuItem>
-                      ))}
-                    </Select>
-                    <IconButton size="small" onClick={() => void spotify.fetchDevices()} title="Refresh devices">
-                      <RefreshIcon fontSize="small" />
-                    </IconButton>
-                    <Button
-                      size="small" variant="text" color={spotifyTesting ? 'warning' : 'inherit'} sx={{ minWidth: 0 }}
-                      onClick={() => {
-                        if (spotifyTesting) { void spotify.pause(); setSpotifyTesting(false); }
-                        else { void spotify.play('3BQHpFgAp4l80e1XslIjNI', 0); setSpotifyTesting(true); }
-                      }}
-                    >
-                      {spotifyTesting ? 'Stop Test' : 'Test'}
-                    </Button>
-                    {spotify.devices.length === 0 && (
-                      <Typography variant="caption" color="warning.main">
-                        No devices found — open Spotify and start playing something anywhere, then hit refresh.
-                      </Typography>
-                    )}
-                  </>
-                ) : (
-                  <Button size="small" variant="outlined" color="success" onClick={() => void initiateSpotifyLogin()}>
-                    Connect Spotify
+        {/* Persistent Spotify status/config — always visible on this page, not gated to
+            a media_id round or any particular phase, so it can be set up before a game
+            even starts and rechecked/reconnected/switched at any point during or after
+            one (explicit host request: this is account/device setup, not something tied
+            to being mid-question). Mirrors NTTHostComponent's spotifyStatus header
+            (device selector, refresh, a connectivity Test button using the same reference
+            track) — TToTO's host has no shared header slot to hook into, so this is its
+            own card instead. An empty device list here is the most likely reason a song
+            doesn't audibly play: Spotify Connect has nothing to hand playback off to. */}
+        <Card variant="outlined">
+          <CardContent sx={{ py: '10px !important' }}>
+            <Stack direction="row" spacing={1.5} alignItems="center" sx={{ flexWrap: 'wrap' }}>
+              <Typography sx={{ ...sectionLabelSx, mb: 0 }}>Spotify</Typography>
+              {spotify.isConnected ? (
+                <>
+                  <Chip label="Connected ●" color="success" size="small" />
+                  <Select
+                    size="small" displayEmpty value={spotify.activeDeviceId ?? ''}
+                    onChange={(e) => spotify.setActiveDeviceId(e.target.value || null)}
+                    sx={{ fontSize: '0.8rem', minWidth: 160 }}
+                  >
+                    <MenuItem value=""><em>Active device (auto)</em></MenuItem>
+                    {spotify.devices.map(d => (
+                      <MenuItem key={d.id} value={d.id}>{d.name}{d.is_active ? ' ●' : ''}</MenuItem>
+                    ))}
+                  </Select>
+                  <IconButton size="small" onClick={() => void spotify.fetchDevices()} title="Refresh devices">
+                    <RefreshIcon fontSize="small" />
+                  </IconButton>
+                  <Button
+                    size="small" variant="text" color={spotifyTesting ? 'warning' : 'inherit'} sx={{ minWidth: 0 }}
+                    onClick={() => {
+                      if (spotifyTesting) { void spotify.pause(); setSpotifyTesting(false); }
+                      else { void spotify.play('3BQHpFgAp4l80e1XslIjNI', 0); setSpotifyTesting(true); }
+                    }}
+                  >
+                    {spotifyTesting ? 'Stop Test' : 'Test'}
                   </Button>
-                )}
-              </Stack>
-            </CardContent>
-          </Card>
-        )}
+                  {spotify.devices.length === 0 && (
+                    <Typography variant="caption" color="warning.main">
+                      No devices found — open Spotify and start playing something anywhere, then hit refresh.
+                    </Typography>
+                  )}
+                </>
+              ) : (
+                <Button size="small" variant="outlined" color="success" onClick={() => void initiateSpotifyLogin()}>
+                  Connect Spotify
+                </Button>
+              )}
+            </Stack>
+          </CardContent>
+        </Card>
 
         {/* ID Please (media_id) only — a dedicated, hard-to-miss Replay/Pause card rather
             than a small button buried in the crowded status bar above (which is exactly
@@ -234,6 +246,11 @@ export const TToTOHostComponent = () => {
                   🔁 Replay {question.mediaType === 'song' ? 'Song' : question.mediaType === 'sound' ? 'Sound' : 'Image'}
                 </Button>
               </Stack>
+              {songPlayError && (
+                <Typography variant="caption" color="error.main" sx={{ display: 'block', mt: 1 }}>
+                  ⚠ {songPlayError}
+                </Typography>
+              )}
             </CardContent>
           </Card>
         )}

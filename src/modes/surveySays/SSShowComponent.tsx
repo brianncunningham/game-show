@@ -3,6 +3,7 @@ import { Box, Typography } from '@mui/material';
 import type { SurveySaysState, SurveyTeam } from './types';
 import { getState } from './api';
 import { SSTeamRandomizer } from './SSTeamRandomizer';
+import { useAutoReloadOnNewBuild } from '../../shared/hooks/useAutoReloadOnNewBuild';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -1202,6 +1203,7 @@ const playSound = (name: string) => {
 
 export const SSShowComponent = () => {
   const [state, setState] = useState<SurveySaysState | null>(null);
+  useAutoReloadOnNewBuild();
   const [faceOffStrikeVisible, setFaceOffStrikeVisible] = useState(false);
   const prevStrikeTeamRef = useRef<string | null>(null);
   const faceOffTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);

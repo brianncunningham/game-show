@@ -13,6 +13,7 @@ import { TTOTO_COLORS, lighten, darken, rgba } from './colors';
 import { useGameEventOverlay, GameEventOverlay } from './GameOverlays';
 import { fitTextToWidth, fixedCharWidth } from './fitText';
 import { playMissSound, playRevealSound, playCorrectSound, playVictorySound, playBuzzSound, playStealWindowOpenSound, playTriageAlertSound, playMediaRevealSound, playMediaFile } from './sounds';
+import { useAutoReloadOnNewBuild } from '../../shared/hooks/useAutoReloadOnNewBuild';
 
 // Fixed content width all 3 answer panels share (see the answer-panel flex fix below) —
 // 1600 stage minus 64px outer margin minus 40px of inter-panel gap, split 3 ways, minus
@@ -1268,6 +1269,7 @@ function TToTOWandTestOverlay({ teams, controllerAssignments }: {
 
 export const TToTOShowComponent = () => {
   const [state, setState] = useState<TToTOState | null>(null);
+  useAutoReloadOnNewBuild();
 
   const refresh = useCallback(async () => {
     try { setState(await getState()); } catch { /* ignore */ }

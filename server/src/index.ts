@@ -8,6 +8,7 @@ import { attachBuzzerSocket } from './shared/buzzer/buzzerSocket.js';
 import gameShowRoutes from './modes/nameThatTune/routes.js';
 import buzzerRoutes from './shared/buzzer/buzzerRoutes.js';
 import modeRoutes from './shared/routes/modeRoutes.js';
+import buildInfoRoutes from './shared/routes/buildInfoRoutes.js';
 import { initHardwareInput } from './shared/buzzer/inputs/hardwareInput.js';
 import { request as httpRequest } from 'http';
 import { WebSocket } from 'ws';
@@ -31,6 +32,7 @@ app.use(cors({ origin: '*' }));
 app.use(express.json());
 
 app.use('/api/mode', modeRoutes);
+app.use('/api/build-info', buildInfoRoutes);
 app.use('/api/game-show', gameShowRoutes);
 app.use('/api/survey-says', ssRoutes);
 app.use('/api/ttoto', ttotoRoutes);
