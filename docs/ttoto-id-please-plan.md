@@ -43,7 +43,7 @@ round; media *type* is a question-level field here, not a round-level one).
 | Type | Sourcing | Playback/render |
 |---|---|---|
 | **Song** | Reuses NTT's existing Spotify Connect integration (`src/features/spotify/useSpotify.ts`) as-is. Admin field is a plain "Spotify Track ID" text box — checked NTT's `ContentManager.tsx`, it's just a pasted ID, not a live search picker (the old implementation-plan doc's "Spotify search picker" idea was never actually built for NTT, so none was built here either). | Host's Spotify account/device plays audio through the synced speaker — the browser tab never plays it. `TToTOHostComponent` calls `spotify.play(mediaRef, 0)` directly (same pattern as `NTTHostComponent`) whenever the current question is a song, on both Reveal and Replay. Show screen renders a "🎵 NOW PLAYING" badge, no actual audio. |
-| **Image** | No upload UI — matches how every other static asset in this app works (sounds, logos): drop the file into `public/ttoto/media/`, reference by filename in the question's `mediaRef`. No server upload infra exists anywhere in this repo, and none was added for this. | Full-bleed render on `/show` only, from `media_shown` through `resolved`. |
+| **Image** | No upload UI — matches how every other static asset in this app works (sounds, logos): drop the file into `public/ttoto/media/`, reference by filename in the question's `mediaRef`. No server upload infra exists anywhere in this repo, and none was added for this. | **Full-stage overlay** (`MediaImageOverlay`), not inline in the question panel — see §5 addendum below for why the original inline approach didn't hold up. |
 | **Sound effect** | Added same day as song/image, for "identify this sound" questions — doesn't fit on Spotify. Same `public/ttoto/media/` file-drop convention as images (any browser-playable audio format, e.g. mp3). | Unlike song, there's no external device to hand a local file off to — it plays through the **`/show` screen's own browser tab** (`playMediaFile()` in `sounds.ts`, a plain `new Audio(...)`. This relies on the same "autoplay from a polled state transition, no user gesture" behavior TToTO's other cue sounds already depend on — proven to work since `playCorrectSound`/`playMissSound`/etc. already do exactly this.). Show screen renders a "🔊 NOW PLAYING" badge. |
 | **Video** | ❌ deferred | Two options considered, both with real downsides for a Pi-hosted local rig at a physical party: self-hosted mp4 (offline-safe, but storage + manual clipping work) vs. YouTube embed (zero storage, but depends on live venue internet, ads/related-video breaking the fullscreen show screen, and region/embed-lock risk you can't fix mid-party). Revisit once source clips are picked and the venue's internet situation is known. |
 
@@ -88,15 +88,49 @@ present) is one of the three values.
   `media_shown` through `resolved`). Wires in NTT's `useSpotify()` hook directly — same
   localStorage token, so a host who already connected Spotify for NTT this session doesn't
   need to reconnect — plus a small "Connect Spotify" link if not yet connected.
-- Show component (`TToTOShowComponent.tsx`): renders the image full-bleed, or a "🎵/🔊 NOW
-  PLAYING" badge for song/sound, inside the question panel from `media_shown` onward
-  (`mediaRevealed` derived flag). Plays the actual clip via `playMediaFile()` for sound
-  questions on both the initial reveal and every replay. **Image-only** gets a generic
-  `playMediaRevealSound()` chime (`media-reveal.mp3` — needs the actual audio file dropped
-  into `public/ttoto/sounds/`, same as `triage-alert.mp3`); song and sound both skip it —
-  their own real audio is the reveal, and for song specifically the chime would play
-  through the show screen's own (likely speakerless-on-purpose) browser tab, a different
-  physical device than wherever Spotify Connect is actually routing the song.
+- Show component (`TToTOShowComponent.tsx`): renders a "🎵/🔊 NOW PLAYING" badge for
+  song/sound inside the question panel from `media_shown` onward (`mediaRevealed` derived
+  flag) — see below for image, which works differently. Plays the actual clip via
+  `playMediaFile()` for sound questions on both the initial reveal and every replay.
+  **Image-only** gets a generic `playMediaRevealSound()` chime (`media-reveal.mp3` — needs
+  the actual audio file dropped into `public/ttoto/sounds/`, same as `triage-alert.mp3`);
+  song and sound both skip it — their own real audio is the reveal, and for song
+  specifically the chime would play through the show screen's own (likely
+  speakerless-on-purpose) browser tab, a different physical device than wherever Spotify
+  Connect is actually routing the song.
+
+### 5a. Correction — image is a full-stage overlay, not inline (added 2026-09-02)
+
+The first pass rendered the image *inline inside the question panel*, growing it to fit.
+That doesn't hold up against a real question: the question panel is only ~100px tall in
+practice (tag + one line of prompt), and the whole show screen is a **fixed 1600×900
+canvas**, not a scrolling page — header, question panel, and the answer-panel row below it
+all sit at hardcoded pixel heights/margins. There's no slack for the panel to grow by
+200-300px without shoving the answer panels down and off the bottom edge. Caught by
+inspecting a real screenshot, not by the earlier live-preview check (which only confirmed
+the image rendered, not that the composition held together at realistic sizes).
+
+Fix: a new full-stage overlay component, `MediaImageOverlay` (in `TToTOShowComponent.tsx`,
+next to `Rivet`/`MultiplierBadge`) — a centered gunmetal-styled card (reuses
+`ttoto-gunmetal`/`ttoto-metal-brushed`/`Rivet`/`ttoto-a-tag`, same chrome as the rest of
+the show screen) over a dimmed backdrop, sized against the full stage instead of the small
+panel.
+
+- **During `media_shown`**: shown continuously, no auto-dismiss, until the host taps
+  Reveal Answers — the answer panels are inert at that point anyway, so covering them
+  costs nothing.
+- **Once `armed`**: the overlay is swapped out for the small persistent thumbnail that
+  *is* correctly sized for the question panel (a real thumbnail, `maxHeight: 64`, not the
+  320px that broke the layout) — same "reference while playing" intent as before, just at
+  a size that actually fits.
+- **Host Replay after `armed`**: temporarily re-opens the big overlay (`imageReplayFlash`
+  state + a 4s auto-dismiss timer, mirroring `GameOverlays.tsx`'s existing transient-event
+  pattern) as a "look again" beat, then it recedes back to the thumbnail on its own —
+  rather than blocking gameplay indefinitely.
+- Rendered as a sibling of `GameEventOverlay` at the stage's top level (`zIndex: 15`, one
+  below `GameEventOverlay`'s `zIndex: 20`, so a real-time buzz/correct/miss flash always
+  wins if the two ever coincide) rather than nested inside the question panel, so it can
+  actually cover the whole stage.
 
 ## 6. Host replay/retrigger control
 

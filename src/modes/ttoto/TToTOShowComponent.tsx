@@ -452,6 +452,40 @@ function Rivet({ top, left, right, bottom }: { top?: number; left?: number; righ
   return <div className="ttoto-rivet" style={{ top, left, right, bottom }} />;
 }
 
+/**
+ * ID Please (media_id) image reveal — a full-stage overlay rather than crammed into the
+ * small question panel. That panel is only ~100px tall in practice (tag + one line of
+ * prompt), nowhere near enough for a meaningful image, and there's no layout slack to let
+ * it grow into: the header, question panel, and answer-panel row all sit at hardcoded
+ * pixel heights/margins within the fixed 1600x900 stage (not a scrolling page) — a panel
+ * that suddenly grew 300px would shove the answer panels down and off the bottom edge.
+ *
+ * Shown full (no auto-dismiss) for the whole `media_shown` phase — the answer panels are
+ * inert then anyway, so covering them costs nothing. Once the host advances to `armed`,
+ * ComboScreen swaps this out for a small persistent thumbnail inline in the question
+ * panel instead, so gameplay isn't obstructed; a host Replay tap after that re-opens this
+ * big version temporarily (ComboScreen's `imageReplayFlash`), auto-dismissing itself.
+ */
+function MediaImageOverlay({ mediaRef }: { mediaRef: string }) {
+  return (
+    <div style={{ position: 'absolute', inset: 0, zIndex: 15, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+      <div style={{ position: 'absolute', inset: 0, background: 'rgba(5,8,14,0.72)' }} />
+      <div className="ttoto-gunmetal ttoto-media-pulse" style={{
+        position: 'relative', padding: '20px 26px 24px 26px', borderRadius: 10,
+        border: '2px solid #4a5058', boxShadow: '0 0 60px rgba(0,0,0,0.6), 0 0 40px rgba(120,170,230,0.18)',
+        maxWidth: '78%', maxHeight: '78%', display: 'flex', flexDirection: 'column', alignItems: 'center',
+      }}>
+        <div className="ttoto-metal-brushed" style={{ borderRadius: 10 }} />
+        <Rivet top={10} left={12} /><Rivet top={10} right={12} /><Rivet bottom={10} left={12} /><Rivet bottom={10} right={12} />
+        <div className="ttoto-a-tag" style={{ position: 'relative', background: '#c7d4ea', color: '#0d1b2e', fontSize: 13, fontWeight: 800, letterSpacing: 3, padding: '5px 18px 5px 12px', marginBottom: 14 }}>
+          IMAGE
+        </div>
+        <img src={`/ttoto/media/${mediaRef}`} alt="" style={{ position: 'relative', maxWidth: '100%', maxHeight: '58vh', borderRadius: 6, display: 'block' }} />
+      </div>
+    </div>
+  );
+}
+
 /** Only rendered when a round is worth more (or less) than the default ×1 — see multiplierForRound(). */
 function MultiplierBadge({ multiplier, fontSize = 16 }: { multiplier: number; fontSize?: number }) {
   return (
@@ -816,6 +850,29 @@ function ComboScreen({ state }: { state: TToTOState }) {
     if (roundState.stealWindowOpen && !prevStealWindowOpenRef.current) playStealWindowOpenSound();
     prevStealWindowOpenRef.current = roundState.stealWindowOpen ?? false;
   }, [roundState.stealWindowOpen]);
+  // ID Please, image only — a host Replay tap after media_shown (i.e. once the big
+  // overlay below has already receded to the small in-panel thumbnail) briefly re-opens
+  // the big overlay as a "look again" beat, then auto-dismisses so it doesn't block
+  // gameplay indefinitely. No flash needed while still in media_shown — the overlay's
+  // already up, its own key-remount (see MediaImageOverlay usage below) handles replay.
+  const IMAGE_REPLAY_FLASH_MS = 4000;
+  const [imageReplayFlash, setImageReplayFlash] = useState(false);
+  const prevImageReplaySeqRef = useRef(roundState.mediaReplaySeq ?? 0);
+  useEffect(() => {
+    const seq = roundState.mediaReplaySeq ?? 0;
+    const bumped = seq > prevImageReplaySeqRef.current;
+    prevImageReplaySeqRef.current = seq;
+    if (bumped && question?.mediaType === 'image' && roundState.phase !== 'media_shown') {
+      setImageReplayFlash(true);
+      const t = setTimeout(() => setImageReplayFlash(false), IMAGE_REPLAY_FLASH_MS);
+      return () => clearTimeout(t);
+    }
+  }, [roundState.mediaReplaySeq]);
+  // media_shown: up continuously, no timer, until the host advances to armed. After that,
+  // only shown as a temporary Replay-triggered flash (see above) — see MediaImageOverlay's
+  // own doc comment for why this needs to be a full-stage overlay rather than inline.
+  const showBigImageOverlay = mediaRevealed && question?.mediaType === 'image' && !!question.mediaRef
+    && (roundState.phase === 'media_shown' || imageReplayFlash);
   // ID Please only — host tapped Replay. Skips the very first render (ref starts at the
   // current value, not 0) so loading into an already-bumped seq via undo/refresh doesn't
   // spuriously replay the sound.
@@ -928,13 +985,16 @@ function ComboScreen({ state }: { state: TToTOState }) {
           {roundState.phase === 'categories_shown' ? 'GET READY…' : question ? question.prompt.toUpperCase() : ''}
         </div>
         {/* ID Please (media_id) only. Keyed on mediaReplaySeq so a host Replay tap remounts
-            this (image: re-plays the pulse animation; song/sound: the actual audio replay
-            is driven elsewhere — the host's Spotify call, or the sound-effect useEffect
-            above — but the key stays uniform across all three types for one simple code
-            path, and the pulse is a harmless bonus visual cue for the audio types too). */}
-        {mediaRevealed && question?.mediaType === 'image' && question.mediaRef && (
-          <div key={`media-${roundState.mediaReplaySeq ?? 0}`} className="ttoto-media-pulse" style={{ position: 'relative', textAlign: 'center', marginTop: 12 }}>
-            <img src={`/ttoto/media/${question.mediaRef}`} alt="" style={{ maxWidth: '100%', maxHeight: 320, borderRadius: 6, boxShadow: '0 0 30px rgba(0,0,0,0.5)' }} />
+            this (song/sound: the actual audio replay is driven elsewhere — the host's
+            Spotify call, or the sound-effect useEffect above — but the key stays uniform
+            across all three types for one simple code path, and the pulse is a harmless
+            bonus visual cue for the audio types too). Image only renders here as a small
+            persistent thumbnail once the big MediaImageOverlay (below) has receded past
+            media_shown — this panel is only ~100px tall in practice, nowhere near enough
+            room for a real image (see MediaImageOverlay's doc comment). */}
+        {mediaRevealed && question?.mediaType === 'image' && question.mediaRef && !showBigImageOverlay && (
+          <div key={`media-thumb-${roundState.mediaReplaySeq ?? 0}`} className="ttoto-media-pulse" style={{ position: 'relative', textAlign: 'center', marginTop: 8 }}>
+            <img src={`/ttoto/media/${question.mediaRef}`} alt="" style={{ maxHeight: 64, borderRadius: 4, boxShadow: '0 0 14px rgba(0,0,0,0.5)' }} />
           </div>
         )}
         {mediaRevealed && (question?.mediaType === 'song' || question?.mediaType === 'sound') && (
@@ -1025,6 +1085,9 @@ function ComboScreen({ state }: { state: TToTOState }) {
         })}
       </div>
 
+      {showBigImageOverlay && question?.mediaRef && (
+        <MediaImageOverlay key={`media-overlay-${roundState.mediaReplaySeq ?? 0}`} mediaRef={question.mediaRef} />
+      )}
       {overlayEvent && <GameEventOverlay key={overlayEvent.key} event={overlayEvent} onDone={clearOverlayEvent} />}
     </div>
     </TToTOStage>
