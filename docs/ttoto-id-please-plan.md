@@ -91,9 +91,12 @@ present) is one of the three values.
 - Show component (`TToTOShowComponent.tsx`): renders the image full-bleed, or a "🎵/🔊 NOW
   PLAYING" badge for song/sound, inside the question panel from `media_shown` onward
   (`mediaRevealed` derived flag). Plays the actual clip via `playMediaFile()` for sound
-  questions on both the initial reveal and every replay; song/image instead get a shared
+  questions on both the initial reveal and every replay. **Image-only** gets a generic
   `playMediaRevealSound()` chime (`media-reveal.mp3` — needs the actual audio file dropped
-  into `public/ttoto/sounds/`, same as `triage-alert.mp3`).
+  into `public/ttoto/sounds/`, same as `triage-alert.mp3`); song and sound both skip it —
+  their own real audio is the reveal, and for song specifically the chime would play
+  through the show screen's own (likely speakerless-on-purpose) browser tab, a different
+  physical device than wherever Spotify Connect is actually routing the song.
 
 ## 6. Host replay/retrigger control
 
@@ -115,7 +118,8 @@ initial reveal:
   - **Image:** the image never actually stops being shown, so "replay" has no state to
     restart. It re-plays the reveal cue (chime + a brief attention-pulse animation on the
     image, a quick scale/glow flash) rather than being a true no-op — keeps the button
-    meaningful ("look again, everyone") without needing new state.
+    meaningful ("look again, everyone") without needing new state. Song replay gets the
+    pulse animation too (on its "🎵 NOW PLAYING" badge) but no chime, same reasoning as §2.
 - Store-side: `replayMedia()`, valid whenever `roundState.phase` is `media_shown` or later
   for a `media_id` question and `currentQuestionIndex` hasn't advanced — doesn't change
   `phase`, just bumps `mediaReplaySeq` so the show screen can key a remount off of it and

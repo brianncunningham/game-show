@@ -790,12 +790,15 @@ function ComboScreen({ state }: { state: TToTOState }) {
     // this doesn't need its own flavor check.
     if (phase === 'armed' && (prevPhase === 'categories_shown' || prevPhase === 'resolved')) playTriageAlertSound();
     // ID Please only — media just revealed (reading -> media_shown). Sound-effect
-    // questions play the actual clip instead of the generic chime (it IS the reveal);
-    // song/image get the chime (song's real audio is a separate Spotify Connect call
-    // from the host, not driven from here; image is silent otherwise).
+    // questions play the actual clip instead of the generic chime (it IS the reveal).
+    // Songs skip the chime too — the real audio is a separate Spotify Connect call from
+    // the host, playing through a different physical device than this browser tab, so a
+    // local chime here would either be silent (show-screen device has no speakers wired
+    // up, on purpose — the real audio comes from elsewhere) or just an odd double-up
+    // against the song fading in. Only image (silent otherwise) gets the chime.
     if (phase === 'media_shown' && prevPhase === 'reading') {
       if (question?.mediaType === 'sound' && question.mediaRef) playMediaFile(question.mediaRef);
-      else playMediaRevealSound();
+      else if (question?.mediaType === 'image') playMediaRevealSound();
     }
     // Only real buzz-ins play the buzz sound — 'answering' -> 'steal' (EXCLUSIVE's
     // automatic handoff after a miss) is not a buzz, nobody pressed anything for it.
@@ -821,7 +824,7 @@ function ComboScreen({ state }: { state: TToTOState }) {
     const seq = roundState.mediaReplaySeq ?? 0;
     if (seq > prevMediaReplaySeqRef.current) {
       if (question?.mediaType === 'sound' && question.mediaRef) playMediaFile(question.mediaRef);
-      else playMediaRevealSound();
+      else if (question?.mediaType === 'image') playMediaRevealSound();
     }
     prevMediaReplaySeqRef.current = seq;
   }, [roundState.mediaReplaySeq]);
