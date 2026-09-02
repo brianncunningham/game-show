@@ -984,22 +984,28 @@ function ComboScreen({ state }: { state: TToTOState }) {
         <div style={{ position: 'relative', fontFamily: "'Big Shoulders Display', sans-serif", fontWeight: 800, fontSize: 32, letterSpacing: 0.5, textAlign: 'center', color: '#fff' }}>
           {roundState.phase === 'categories_shown' ? 'GET READY…' : question ? question.prompt.toUpperCase() : ''}
         </div>
-        {/* ID Please (media_id) only. Keyed on mediaReplaySeq so a host Replay tap remounts
-            this (song/sound: the actual audio replay is driven elsewhere — the host's
-            Spotify call, or the sound-effect useEffect above — but the key stays uniform
-            across all three types for one simple code path, and the pulse is a harmless
-            bonus visual cue for the audio types too). Image only renders here as a small
-            persistent thumbnail once the big MediaImageOverlay (below) has receded past
-            media_shown — this panel is only ~100px tall in practice, nowhere near enough
-            room for a real image (see MediaImageOverlay's doc comment). */}
+        {/* ID Please (media_id) only — a corner badge, deliberately `position: absolute`
+            so it can NEVER add to this panel's height. Even the earlier "small" 64px
+            in-flow thumbnail was enough to push the fixed 1600x900 stage past its budget
+            and shove the answer panels off the bottom edge (there's essentially zero
+            vertical slack — see MediaImageOverlay's doc comment) — this panel and every
+            neighboring block sit at hardcoded pixel heights, no layout resize is safe
+            here. Keyed on mediaReplaySeq so a host Replay tap remounts it (song/sound:
+            the actual audio replay is driven elsewhere — the host's Spotify call, or the
+            sound-effect useEffect above — but the key stays uniform across all three
+            types for one simple code path; the pulse is a harmless bonus visual cue for
+            the audio types too). Image is hidden while the big MediaImageOverlay (below)
+            is up, to avoid showing the same picture twice at once. */}
         {mediaRevealed && question?.mediaType === 'image' && question.mediaRef && !showBigImageOverlay && (
-          <div key={`media-thumb-${roundState.mediaReplaySeq ?? 0}`} className="ttoto-media-pulse" style={{ position: 'relative', textAlign: 'center', marginTop: 8 }}>
-            <img src={`/ttoto/media/${question.mediaRef}`} alt="" style={{ maxHeight: 64, borderRadius: 4, boxShadow: '0 0 14px rgba(0,0,0,0.5)' }} />
+          <div key={`media-thumb-${roundState.mediaReplaySeq ?? 0}`} className="ttoto-media-pulse"
+            style={{ position: 'absolute', top: 10, right: 40, width: 52, height: 40, borderRadius: 4, overflow: 'hidden', boxShadow: '0 0 14px rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.25)' }}>
+            <img src={`/ttoto/media/${question.mediaRef}`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
           </div>
         )}
         {mediaRevealed && (question?.mediaType === 'song' || question?.mediaType === 'sound') && (
-          <div key={`media-${roundState.mediaReplaySeq ?? 0}`} className="ttoto-media-pulse" style={{ position: 'relative', textAlign: 'center', marginTop: 12, fontSize: 20, letterSpacing: 3, color: TTOTO_COLORS.this }}>
-            {question.mediaType === 'song' ? '🎵 NOW PLAYING' : '🔊 NOW PLAYING'}
+          <div key={`media-${roundState.mediaReplaySeq ?? 0}`} className="ttoto-media-pulse"
+            style={{ position: 'absolute', top: 12, right: 20, fontSize: 13, letterSpacing: 2, color: TTOTO_COLORS.this, whiteSpace: 'nowrap' }}>
+            {question.mediaType === 'song' ? '🎵 PLAYING' : '🔊 PLAYING'}
           </div>
         )}
         <div style={{ position: 'relative', textAlign: 'center', marginTop: 8, fontSize: 15, letterSpacing: 2, color: '#c7d4ea', minHeight: 20 }}>

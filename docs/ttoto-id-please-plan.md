@@ -132,6 +132,44 @@ panel.
   wins if the two ever coincide) rather than nested inside the question panel, so it can
   actually cover the whole stage.
 
+### 5b. Correction — even the small thumbnail broke the layout; badges are absolute now (added 2026-09-02)
+
+Live testing (real screenshot, not the local preview) showed the answer panels' bottom
+edges clipped off — even the "safe" 64px inline thumbnail from §5a was enough to push the
+fixed-height stage past its budget. The header + question panel + answer-panel row leave
+essentially **zero vertical slack** by design; any in-flow addition to the question panel
+is unsafe, not just a 320px image.
+
+Fix: both the image thumbnail and the song/sound "NOW PLAYING" text are now
+`position: absolute` within the question panel (a small corner badge — 52×40 image
+thumbnail top-right, or a plain text label for song/sound) instead of sitting in normal
+document flow. Absolutely-positioned elements don't contribute to their parent's layout
+height at all, so this can't recreate the same bug regardless of content size. Resizing
+the answer panels themselves to make real room was considered and rejected — it would
+touch the shared fixed-height layout every other flavor also depends on, for a much larger
+and riskier change than this one.
+
+### 5c. Song controls — Pause/Resume + a persistent Spotify status card (added 2026-09-02)
+
+Two gaps found in live testing: no way to pause/resume a song once playing (only
+Reveal/Replay existed), and a song that silently didn't play with no way to diagnose why.
+Both fixed by porting NTTHostComponent's existing Spotify UI patterns, which TToTO hadn't
+reused yet:
+
+- **New persistent "Spotify" card**, visible whenever the loaded round is `media_id` (not
+  gated to a live song question, so the host can connect/configure ahead of time): connection
+  status, a device `Select` (`spotify.activeDeviceId`/`setActiveDeviceId`) + refresh
+  button, and a connectivity **Test** button that plays/pauses the same reference track
+  NTT's own Test button uses (`3BQHpFgAp4l80e1XslIjNI`) — lets the host verify the whole
+  Spotify Connect pipeline independent of any specific question's content. An **empty
+  device list** is called out explicitly as the most likely reason a song doesn't audibly
+  play: Spotify Connect has nothing to hand playback off to (no device has an active
+  Spotify session for the host's account to target).
+- **Pause/Resume** added to the existing Media card, song-only (nothing to pause for a
+  static image; sound effects are short enough not to need it) — local `spotifyPaused`
+  toggle state, same as NTT's, since this app can't actually query real playback state
+  from a separate Connect device.
+
 ## 6. Host replay/retrigger control
 
 Added 2026-09-02. Host can retrigger the media at any point, not just right after the

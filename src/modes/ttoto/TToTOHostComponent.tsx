@@ -58,6 +58,12 @@ export const TToTOHostComponent = () => {
   // already connected Spotify via /host for Name That Tune this session doesn't need to
   // reconnect here. Image questions never touch this.
   const spotify = useSpotify();
+  // Mirrors NTTHostComponent's local pause/resume + connectivity-test state — this app
+  // never asks the server whether Spotify is actually playing (it can't know; playback
+  // happens on a separate Connect device, not this process), so "is it paused" is purely
+  // a local UI toggle, same as NTT's spotifyPaused.
+  const [spotifyPaused, setSpotifyPaused] = useState(false);
+  const [spotifyTesting, setSpotifyTesting] = useState(false);
 
   const refresh = useCallback(async () => {
     try { setState(await getState()); } catch { /* ignore */ }
@@ -122,10 +128,15 @@ export const TToTOHostComponent = () => {
   const playMediaIfSong = () => {
     if (question?.mediaType === 'song' && question.mediaRef && spotify.isConnected) {
       void spotify.play(question.mediaRef, 0);
+      setSpotifyPaused(false);
     }
   };
   const handleRevealMedia = (): Promise<TToTOState> => { playMediaIfSong(); return revealMedia(); };
   const handleReplayMedia = (): Promise<TToTOState> => { playMediaIfSong(); return replayMedia(); };
+  const toggleSpotifyPause = () => {
+    if (spotifyPaused) { void spotify.resume(); setSpotifyPaused(false); }
+    else { void spotify.pause(); setSpotifyPaused(true); }
+  };
 
   return (
     <Box sx={{ p: { xs: 1.5, md: 2 }, maxWidth: 860, mx: 'auto' }}>
@@ -135,18 +146,6 @@ export const TToTOHostComponent = () => {
         <Chip label={phase.replace(/_/g, ' ').toUpperCase()} size="small"
           color={phase === 'answering' ? 'warning' : phase === 'steal' || phase === 'steal_armed' ? 'error' : phase === 'armed' ? 'info' : 'default'} />
         {mult > 1 && <Chip label={`×${mult}`} size="small" sx={{ background: '#f5c51822', color: '#f5c518', border: '1px solid #f5c51844' }} />}
-        {round?.flavor === 'media_id' && question?.mediaType === 'song' && !spotify.isConnected && (
-          <Button size="small" variant="text" color="success" sx={{ minWidth: 0 }}
-            onClick={() => void initiateSpotifyLogin()}>
-            Connect Spotify
-          </Button>
-        )}
-        {round?.flavor === 'media_id' && question && MEDIA_REPLAYABLE_PHASES.includes(phase) && (
-          <Button size="small" variant="outlined" color="secondary" sx={{ minWidth: 0 }}
-            onClick={act(() => handleReplayMedia())}>
-            🔁 Replay {question.mediaType === 'song' ? 'Song' : question.mediaType === 'sound' ? 'Sound' : 'Image'}
-          </Button>
-        )}
         <Box sx={{ flex: 1 }} />
         <Button size="small" variant="outlined" color="inherit" startIcon={<UndoIcon fontSize="small" />}
           onClick={act(() => undo())} sx={{ minWidth: 0 }}>
@@ -160,6 +159,85 @@ export const TToTOHostComponent = () => {
       </Stack>
 
       <Stack spacing={2}>
+        {/* ID Please (media_id) only — persistent Spotify status/config, visible whenever
+            the loaded round is media_id (not gated to a live song question), so the host
+            can connect and pick the right device before it's actually needed. Mirrors
+            NTTHostComponent's spotifyStatus header (device selector, refresh, a
+            connectivity Test button using the same reference track) — TToTO's host has
+            no shared header slot to hook into, so this is its own card instead. An empty
+            device list here is the most likely reason a song doesn't audibly play: Spotify
+            Connect has nothing to hand playback off to. */}
+        {round?.flavor === 'media_id' && (
+          <Card variant="outlined">
+            <CardContent sx={{ py: '10px !important' }}>
+              <Stack direction="row" spacing={1.5} alignItems="center" sx={{ flexWrap: 'wrap' }}>
+                <Typography sx={{ ...sectionLabelSx, mb: 0 }}>Spotify</Typography>
+                {spotify.isConnected ? (
+                  <>
+                    <Chip label="Connected ●" color="success" size="small" />
+                    <Select
+                      size="small" displayEmpty value={spotify.activeDeviceId ?? ''}
+                      onChange={(e) => spotify.setActiveDeviceId(e.target.value || null)}
+                      sx={{ fontSize: '0.8rem', minWidth: 160 }}
+                    >
+                      <MenuItem value=""><em>Active device (auto)</em></MenuItem>
+                      {spotify.devices.map(d => (
+                        <MenuItem key={d.id} value={d.id}>{d.name}{d.is_active ? ' ●' : ''}</MenuItem>
+                      ))}
+                    </Select>
+                    <IconButton size="small" onClick={() => void spotify.fetchDevices()} title="Refresh devices">
+                      <RefreshIcon fontSize="small" />
+                    </IconButton>
+                    <Button
+                      size="small" variant="text" color={spotifyTesting ? 'warning' : 'inherit'} sx={{ minWidth: 0 }}
+                      onClick={() => {
+                        if (spotifyTesting) { void spotify.pause(); setSpotifyTesting(false); }
+                        else { void spotify.play('3BQHpFgAp4l80e1XslIjNI', 0); setSpotifyTesting(true); }
+                      }}
+                    >
+                      {spotifyTesting ? 'Stop Test' : 'Test'}
+                    </Button>
+                    {spotify.devices.length === 0 && (
+                      <Typography variant="caption" color="warning.main">
+                        No devices found — open Spotify and start playing something anywhere, then hit refresh.
+                      </Typography>
+                    )}
+                  </>
+                ) : (
+                  <Button size="small" variant="outlined" color="success" onClick={() => void initiateSpotifyLogin()}>
+                    Connect Spotify
+                  </Button>
+                )}
+              </Stack>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* ID Please (media_id) only — a dedicated, hard-to-miss Replay/Pause card rather
+            than a small button buried in the crowded status bar above (which is exactly
+            what happened: it was there, just easy to overlook). Visible any time the
+            current question's media is up, media_shown through resolved (see
+            MEDIA_REPLAYABLE_PHASES). Pause/Resume is song-only (nothing to pause for a
+            static image; sound effects are short enough not to need it). */}
+        {round?.flavor === 'media_id' && question && MEDIA_REPLAYABLE_PHASES.includes(phase) && (
+          <Card sx={{ border: '2px solid', borderColor: 'secondary.main' }}>
+            <CardContent sx={{ py: '10px !important' }}>
+              <Stack direction="row" spacing={1.5} alignItems="center" sx={{ flexWrap: 'wrap' }}>
+                <Typography sx={{ ...sectionLabelSx, mb: 0 }}>Media</Typography>
+                <Box sx={{ flex: 1 }} />
+                {question.mediaType === 'song' && (
+                  <Button variant="outlined" color="secondary" sx={bigBtnSx} onClick={() => toggleSpotifyPause()}>
+                    {spotifyPaused ? '▶ Resume' : '⏸ Pause'}
+                  </Button>
+                )}
+                <Button variant="contained" color="secondary" sx={bigBtnSx} onClick={act(() => handleReplayMedia())}>
+                  🔁 Replay {question.mediaType === 'song' ? 'Song' : question.mediaType === 'sound' ? 'Sound' : 'Image'}
+                </Button>
+              </Stack>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Load Game */}
         {saves.length > 0 && (
           <Card>
