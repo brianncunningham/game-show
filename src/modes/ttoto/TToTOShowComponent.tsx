@@ -12,7 +12,7 @@ import { TToTOStage } from './TToTOStage';
 import { TTOTO_COLORS, lighten, darken, rgba } from './colors';
 import { useGameEventOverlay, GameEventOverlay } from './GameOverlays';
 import { fitTextToWidth, fixedCharWidth } from './fitText';
-import { playMissSound, playRevealSound, playCorrectSound, playVictorySound, playBuzzSound, playStealWindowOpenSound, playTriageAlertSound } from './sounds';
+import { playMissSound, playRevealSound, playCorrectSound, playVictorySound, playBuzzSound, playStealWindowOpenSound, playTriageAlertSound, playMediaRevealSound, playMediaFile } from './sounds';
 
 // Fixed content width all 3 answer panels share (see the answer-panel flex fix below) —
 // 1600 stage minus 64px outer margin minus 40px of inter-panel gap, split 3 ways, minus
@@ -103,6 +103,18 @@ const GLOBAL_CSS = `
     background-image:
       repeating-linear-gradient(0deg, rgba(255,255,255,0.55) 0px, rgba(255,255,255,0.55) 1px, transparent 1px, transparent 2px),
       repeating-linear-gradient(90deg, rgba(120,220,255,0.12) 0px, transparent 2px, transparent 7px); }
+
+  /* ID Please ("media_id") only — plays once whenever the media element mounts: the
+     initial reveal, and every host Replay tap (which remounts it via a key bump on
+     roundState.mediaReplaySeq — see ComboScreen). A quick scale/glow pulse rather than a
+     static appearance, so a replay reads as "look again" even though the image itself
+     hasn't changed. */
+  @keyframes ttotoMediaPulse {
+    0%   { transform: scale(0.94); opacity: 0; filter: brightness(1.6); }
+    40%  { transform: scale(1.02); opacity: 1; filter: brightness(1.3); }
+    100% { transform: scale(1); opacity: 1; filter: brightness(1); }
+  }
+  .ttoto-media-pulse { animation: ttotoMediaPulse 500ms cubic-bezier(.2,.8,.3,1) both; }
 
   /* Phase B: gunmetal chassis for the header/score-plates/question-panel — the cabinet the
      CRT screens (Phase A) are mounted into. Blackened metal fill + an inset shadow (reads as
@@ -746,6 +758,11 @@ function ComboScreen({ state }: { state: TToTOState }) {
   const choicesRevealed = roundState.phase === 'categories_shown' || roundState.phase === 'armed' || roundState.phase === 'answering'
     || roundState.phase === 'steal' || roundState.phase === 'steal_armed' || roundState.phase === 'resolved';
 
+  // ID Please (media_id) only — media stays up from the moment it's revealed all the way
+  // through resolved (same "whole question" window as the host's Replay control), one
+  // phase earlier than choicesRevealed since the media reveal comes first.
+  const mediaRevealed = round?.flavor === 'media_id' && roundState.phase !== 'round_intro' && roundState.phase !== 'reading';
+
   const answeringTeam = teams.find(t => t.id === roundState.answeringTeamId);
   const stealEligibleTeam = teams.find(t => t.id === roundState.stealEligibleTeamId);
   const stealCountdown = useCountdownSeconds(
@@ -772,6 +789,14 @@ function ComboScreen({ state }: { state: TToTOState }) {
     // next()). Neither of those prevPhase values is reachable for any other flavor, so
     // this doesn't need its own flavor check.
     if (phase === 'armed' && (prevPhase === 'categories_shown' || prevPhase === 'resolved')) playTriageAlertSound();
+    // ID Please only — media just revealed (reading -> media_shown). Sound-effect
+    // questions play the actual clip instead of the generic chime (it IS the reveal);
+    // song/image get the chime (song's real audio is a separate Spotify Connect call
+    // from the host, not driven from here; image is silent otherwise).
+    if (phase === 'media_shown' && prevPhase === 'reading') {
+      if (question?.mediaType === 'sound' && question.mediaRef) playMediaFile(question.mediaRef);
+      else playMediaRevealSound();
+    }
     // Only real buzz-ins play the buzz sound — 'answering' -> 'steal' (EXCLUSIVE's
     // automatic handoff after a miss) is not a buzz, nobody pressed anything for it.
     if (phase === 'answering' && prevPhase === 'armed') playBuzzSound();
@@ -788,6 +813,18 @@ function ComboScreen({ state }: { state: TToTOState }) {
     if (roundState.stealWindowOpen && !prevStealWindowOpenRef.current) playStealWindowOpenSound();
     prevStealWindowOpenRef.current = roundState.stealWindowOpen ?? false;
   }, [roundState.stealWindowOpen]);
+  // ID Please only — host tapped Replay. Skips the very first render (ref starts at the
+  // current value, not 0) so loading into an already-bumped seq via undo/refresh doesn't
+  // spuriously replay the sound.
+  const prevMediaReplaySeqRef = useRef(roundState.mediaReplaySeq ?? 0);
+  useEffect(() => {
+    const seq = roundState.mediaReplaySeq ?? 0;
+    if (seq > prevMediaReplaySeqRef.current) {
+      if (question?.mediaType === 'sound' && question.mediaRef) playMediaFile(question.mediaRef);
+      else playMediaRevealSound();
+    }
+    prevMediaReplaySeqRef.current = seq;
+  }, [roundState.mediaReplaySeq]);
 
   // 'reading' and 'armed' show no status text — the prompt/choices alone are the whole cue.
   // 'answering' also shows nothing: there's no clock/countdown for the initial answer (only
@@ -887,6 +924,21 @@ function ComboScreen({ state }: { state: TToTOState }) {
         <div style={{ position: 'relative', fontFamily: "'Big Shoulders Display', sans-serif", fontWeight: 800, fontSize: 32, letterSpacing: 0.5, textAlign: 'center', color: '#fff' }}>
           {roundState.phase === 'categories_shown' ? 'GET READY…' : question ? question.prompt.toUpperCase() : ''}
         </div>
+        {/* ID Please (media_id) only. Keyed on mediaReplaySeq so a host Replay tap remounts
+            this (image: re-plays the pulse animation; song/sound: the actual audio replay
+            is driven elsewhere — the host's Spotify call, or the sound-effect useEffect
+            above — but the key stays uniform across all three types for one simple code
+            path, and the pulse is a harmless bonus visual cue for the audio types too). */}
+        {mediaRevealed && question?.mediaType === 'image' && question.mediaRef && (
+          <div key={`media-${roundState.mediaReplaySeq ?? 0}`} className="ttoto-media-pulse" style={{ position: 'relative', textAlign: 'center', marginTop: 12 }}>
+            <img src={`/ttoto/media/${question.mediaRef}`} alt="" style={{ maxWidth: '100%', maxHeight: 320, borderRadius: 6, boxShadow: '0 0 30px rgba(0,0,0,0.5)' }} />
+          </div>
+        )}
+        {mediaRevealed && (question?.mediaType === 'song' || question?.mediaType === 'sound') && (
+          <div key={`media-${roundState.mediaReplaySeq ?? 0}`} className="ttoto-media-pulse" style={{ position: 'relative', textAlign: 'center', marginTop: 12, fontSize: 20, letterSpacing: 3, color: TTOTO_COLORS.this }}>
+            {question.mediaType === 'song' ? '🎵 NOW PLAYING' : '🔊 NOW PLAYING'}
+          </div>
+        )}
         <div style={{ position: 'relative', textAlign: 'center', marginTop: 8, fontSize: 15, letterSpacing: 2, color: '#c7d4ea', minHeight: 20 }}>
           {statusText}
         </div>

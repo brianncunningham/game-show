@@ -22,6 +22,11 @@ export interface TToTOQuestion {
   // assigns these three to This/That/TheOther display slots when the question
   // loads (see TToTORoundState.displayChoices/correctChoice).
   choices: [string, string, string];
+  // media_id ("ID Please") only — see server types.ts for the full rationale. 'song':
+  // mediaRef is a Spotify track ID; 'image'/'sound': mediaRef is a filename under
+  // public/ttoto/media/ (sound plays on the show screen itself, no external device).
+  // Per-question, not per-round, so a round can mix media types.
+  mediaType?: 'song' | 'image' | 'sound';
   mediaRef?: string;
   // Optional host-only context, e.g. "Tomato is technically a fruit; the other two are
   // vegetables" for an odd-one-out question. Only the /host UI renders this.
@@ -57,6 +62,7 @@ export type TToTOPhase =
   | 'idle'
   | 'round_intro'
   | 'reading'
+  | 'media_shown'      // media_id ("ID Please") only — see server types.ts's comment
   | 'categories_shown' // category_sort only — see server types.ts's comment
   | 'armed'
   | 'answering'
@@ -93,6 +99,10 @@ export interface TToTORoundState {
   choiceCracks: Partial<Record<TToTOChoiceKey, CrackInfo>>;
   displayChoices: Record<TToTOChoiceKey, string> | null;
   correctChoice: TToTOChoiceKey | null;
+  // media_id ("ID Please") only — bumped by the host's Replay control so the show screen
+  // can re-fire its reveal cue (image pulse) even when nothing else changes. See server
+  // types.ts for the full rationale.
+  mediaReplaySeq?: number;
   // ── TIMED_WINDOW steal only (phase 'steal_armed') ────────────────────────────
   stealEligibleTeamId?: string | null;
   stealWindowOpen?: boolean;

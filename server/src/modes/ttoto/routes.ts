@@ -362,6 +362,18 @@ function armHardwareIfNeeded(state: ReturnType<typeof ttotoStore.getState>): voi
   }
 }
 
+// media_id ("ID Please") only — no hardware/LED side-effect: buzzers aren't armed until
+// the follow-up /reveal-choices tap, same as 'reading' has none today.
+router.post('/reveal-media', (_req, res) => {
+  res.json(ttotoStore.revealMedia());
+});
+
+// media_id ("ID Please") only — host retrigger, "if needed" (see store.ts's comment).
+// No hardware/LED side-effect either: nothing about the buzzer state changes.
+router.post('/replay-media', (_req, res) => {
+  res.json(ttotoStore.replayMedia());
+});
+
 router.post('/reveal-choices', (_req, res) => {
   const state = ttotoStore.revealChoices();
   armHardwareIfNeeded(state);

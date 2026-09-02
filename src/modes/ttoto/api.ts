@@ -73,6 +73,8 @@ export const hideIntro = () => post('/intro/hide');
 // ── Round/question flow ───────────────────────────────────────────────────────
 export const startGame = () => post('/game/start');
 export const beginRound = () => post('/round/begin');
+export const revealMedia = () => post('/reveal-media');
+export const replayMedia = () => post('/replay-media');
 export const revealChoices = () => post('/reveal-choices');
 export const recordBuzz = (teamId: string) => post(`/buzz/${teamId}`);
 export const judge = (choice: TToTOChoiceKey) => post('/judge', { choice });

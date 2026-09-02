@@ -31,7 +31,18 @@ export interface TToTOQuestion {
   // authoring error of mislabeling which slot is correct, and simplifies bulk/
   // AI-generated content to "correct answer + 2 wrong answers", no slot bookkeeping.
   choices: [string, string, string];
-  mediaRef?: string;          // Spotify track ID or image URL (media_id flavor) — Phase 3
+  // media_id ("ID Please") only. mediaType picks which kind of value mediaRef holds —
+  // 'song': a Spotify track ID, played via the existing NTT Spotify-Connect integration
+  // (see TToTOHostComponent's useSpotify usage). 'image': a filename under
+  // public/ttoto/media/, dropped in manually (no upload UI, matches how every other
+  // static asset in this app — sounds, logos — already works). 'sound': a local audio
+  // file (e.g. a sound-effect clip to identify), same public/ttoto/media/ convention as
+  // images, but played through the /show screen's own browser tab rather than an
+  // external Spotify device — there's no separate speaker to hand it off to for a local
+  // file. Media type is a per-question field, not a round-level one, so a single round
+  // can mix songs, images, and sound effects.
+  mediaType?: 'song' | 'image' | 'sound';
+  mediaRef?: string;
   // Optional host-only context, e.g. "Tomato is technically a fruit; the other two are
   // vegetables" for an odd-one-out question. Same state payload as everything else in this
   // app (no per-client filtering), but only the /host UI renders it.
@@ -81,6 +92,11 @@ export type TToTOPhase =
   | 'idle'            // nothing loaded
   | 'round_intro'     // round-type card on /show
   | 'reading'         // prompt visible, choices hidden (revealTiming: prompt_first)
+  | 'media_shown'     // media_id ("ID Please") only — prompt + media revealed (song playing
+                        // via Spotify Connect, or image on screen), choices still hidden and
+                        // buzzers not yet armed. Sits between 'reading' and 'armed': the host
+                        // taps once to reveal media (revealMedia()), then again to reveal the
+                        // choices and arm buzzers (revealChoices(), same as every other flavor).
   | 'categories_shown' // category_sort only — the inverse of 'reading': the round's 3 fixed
                         // category answers are visible, prompt hidden, not armed. Used once
                         // per round (at beginRound()); every subsequent question in the round
@@ -130,6 +146,14 @@ export interface TToTORoundState {
   // (beginRound / next) and held stable through the steal handoff and undo.
   displayChoices: Record<TToTOChoiceKey, string> | null;
   correctChoice: TToTOChoiceKey | null;
+
+  // media_id ("ID Please") only. Bumped by the host's "Replay" control (any time the
+  // current question's media is up, media_shown through resolved) — nothing else about
+  // the state changes, this purely gives the show screen something to key a remount off
+  // of so it can re-fire the reveal cue (sound + attention-pulse) for images. Songs replay
+  // client-side via Spotify directly (see TToTOHostComponent), so they don't depend on
+  // this, but it's bumped uniformly for both media types for a single, simple code path.
+  mediaReplaySeq?: number;
 
   // ── TIMED_WINDOW steal only (phase 'steal_armed') ────────────────────────────
   // Which team has exclusive buzz-in rights during the first stealWindowSecs seconds.

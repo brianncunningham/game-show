@@ -14,6 +14,7 @@ const SOUND_NAMES = [
   'victory',   // game-over winner fanfare
   'steal-window-open',   // TIMED_WINDOW's exclusive stage expires, opens to both teams
   'triage-alert',   // Triage only — a new item's prompt just appeared and buzzers are live
+  'media-reveal',   // ID Please only — media (song/image) reveals, and every host replay
 ] as const;
 
 const soundCache = new Map<string, HTMLAudioElement>();
@@ -68,6 +69,23 @@ export const playStealWindowOpenSound = (): void => playSound('steal-window-open
  * re-cascading here (the category answers stay on screen the whole round), so the normal
  * letter-display reveal sound would be misleading — this is purely a "go" cue. */
 export const playTriageAlertSound = (): void => playSound('triage-alert');
+
+/** ID Please only — plays when media first reveals (reading -> media_shown) and again on
+ * every host Replay tap (mediaReplaySeq bump), for both media types. Deliberately one
+ * shared cue rather than per-type: it's announcing "look/listen now", not identifying
+ * what kind of media it is (the host's on-screen badge already does that). */
+export const playMediaRevealSound = (): void => playSound('media-reveal');
+
+/** ID Please only, mediaType 'sound' — plays a question's own local sound-effect file
+ * from public/ttoto/media/ (dropped in manually, same convention as image mediaRef).
+ * Unlike the fixed cues above, this isn't a small preloadable set (it's arbitrary
+ * per-question content), so no preload cache — just play it fresh each call. Used both
+ * for the initial reveal and every host Replay, in place of playMediaRevealSound (the
+ * sound effect itself IS the reveal — a generic chime first would just be noise). */
+export const playMediaFile = (filename: string): void => {
+  const audio = new Audio(`/ttoto/media/${filename}`);
+  audio.play().catch(() => { /* file not dropped in yet, or autoplay-blocked — fine either way */ });
+};
 
 /** Buzz-in confirmation — reuses the shared root /buzz.mp3 (already used by NTT/Survey
  * Says and TToTO's own wand-test overlay) rather than a new TToTO-specific file. */

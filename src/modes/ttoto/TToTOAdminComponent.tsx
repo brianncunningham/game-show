@@ -63,8 +63,42 @@ const buildCategoryChoices = (categoryOptions: [string, string, string], correct
   return [categoryOptions[correctIndex], rest[0], rest[1]];
 };
 
-function QuestionForm({ question, onChange, onRemove, canRemove }: {
-  question: TToTOQuestion; onChange: (q: TToTOQuestion) => void; onRemove: () => void; canRemove: boolean;
+// media_id ("ID Please") only — mediaType dropdown + a mediaRef field whose label/
+// placeholder switches with it. Same "flavor-specific fields bolted onto the generic
+// question form" approach as category_sort's dedicated row, just smaller since media_id
+// otherwise uses the normal prompt/3-choices shape (unlike category_sort's own layout).
+function MediaFields({ question, onChange }: { question: TToTOQuestion; onChange: (q: TToTOQuestion) => void }) {
+  return (
+    <Stack direction="row" spacing={1} sx={{ mb: 1.5 }}>
+      <TextField
+        size="small" select label="Media type" value={question.mediaType ?? ''}
+        sx={{ minWidth: 140 }}
+        onChange={e => onChange({ ...question, mediaType: (e.target.value || undefined) as TToTOQuestion['mediaType'] })}
+      >
+        <MenuItem value=""><em>None</em></MenuItem>
+        <MenuItem value="song">Song</MenuItem>
+        <MenuItem value="image">Image</MenuItem>
+        <MenuItem value="sound">Sound effect</MenuItem>
+      </TextField>
+      {question.mediaType && (
+        <TextField
+          fullWidth size="small"
+          label={question.mediaType === 'song' ? 'Spotify Track ID' : question.mediaType === 'image' ? 'Image filename' : 'Sound filename'}
+          placeholder={
+            question.mediaType === 'song' ? 'e.g. 3BQHpFgAp4l80e1XslIjNI'
+              : question.mediaType === 'image' ? 'e.g. eiffel-tower.jpg (in public/ttoto/media/)'
+                : 'e.g. dial-up-modem.mp3 (in public/ttoto/media/)'
+          }
+          value={question.mediaRef ?? ''}
+          onChange={e => onChange({ ...question, mediaRef: e.target.value || undefined })}
+        />
+      )}
+    </Stack>
+  );
+}
+
+function QuestionForm({ question, flavor, onChange, onRemove, canRemove }: {
+  question: TToTOQuestion; flavor: TToTOFlavor; onChange: (q: TToTOQuestion) => void; onRemove: () => void; canRemove: boolean;
 }) {
   return (
     <Box sx={{ p: 1.5, border: '1px solid rgba(255,255,255,0.1)', borderRadius: 1, mb: 1.5 }}>
@@ -82,6 +116,7 @@ function QuestionForm({ question, onChange, onRemove, canRemove }: {
           </span>
         </Tooltip>
       </Stack>
+      {flavor === 'media_id' && <MediaFields question={question} onChange={onChange} />}
       <Stack spacing={1}>
         {(['Correct answer', 'Wrong answer 1', 'Wrong answer 2'] as const).map((label, i) => (
           <TextField
@@ -231,7 +266,7 @@ function RoundForm({ round, index, total, onChange, onRemove, onMove }: {
         ) : (
           <>
             {round.questions.map((q, qi) => (
-              <QuestionForm key={q.id} question={q} canRemove={round.questions.length > 1}
+              <QuestionForm key={q.id} question={q} flavor={round.flavor} canRemove={round.questions.length > 1}
                 onChange={(nq) => updateQuestion(qi, nq)} onRemove={() => removeQuestion(qi)} />
             ))}
             <Button size="small" startIcon={<AddIcon />} onClick={addQuestion}>Add Question</Button>
@@ -358,6 +393,9 @@ function BulkJsonImport({ onRefresh }: { onRefresh: () => Promise<void> }) {
             throw new Error(`Round ${i + 1}, Q${qi + 1}: choices must be a permutation of the round's categoryOptions (${round.categoryOptions.join(', ')}).`);
           }
         }
+        if (q.mediaType !== undefined && q.mediaType !== 'song' && q.mediaType !== 'image' && q.mediaType !== 'sound') {
+          throw new Error(`Round ${i + 1}, Q${qi + 1}: mediaType must be "song", "image", or "sound" if present.`);
+        }
       });
       return {
         id: round.id ?? `round-${i + 1}-${uid()}`,
@@ -368,6 +406,7 @@ function BulkJsonImport({ onRefresh }: { onRefresh: () => Promise<void> }) {
           id: q.id ?? `q-${i + 1}-${qi + 1}-${uid()}`,
           prompt: q.prompt,
           choices: q.choices,
+          ...(q.mediaType ? { mediaType: q.mediaType } : {}),
           ...(q.mediaRef ? { mediaRef: q.mediaRef } : {}),
           ...(q.hostNote ? { hostNote: q.hostNote } : {}),
         })),
@@ -410,7 +449,7 @@ function BulkJsonImport({ onRefresh }: { onRefresh: () => Promise<void> }) {
           <Box sx={{ mt: 1.5 }}>
             <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
               <Typography variant="caption" color="text.secondary">
-                Valid flavors: {FLAVOR_OPTIONS.join(', ')}. <code>choices</code> is an array of exactly 3 strings — the first is always correct; the game randomizes screen position. Optional <code>hostNote</code> string shows only on /host. <code>category_sort</code> rounds also need a round-level <code>categoryOptions</code> array of exactly 3 strings (fixed for the round); every question's <code>choices</code> must be a permutation of it.
+                Valid flavors: {FLAVOR_OPTIONS.join(', ')}. <code>choices</code> is an array of exactly 3 strings — the first is always correct; the game randomizes screen position. Optional <code>hostNote</code> string shows only on /host. <code>category_sort</code> rounds also need a round-level <code>categoryOptions</code> array of exactly 3 strings (fixed for the round); every question's <code>choices</code> must be a permutation of it. <code>media_id</code> ("ID Please") questions take an optional <code>mediaType</code> ("song", "image", or "sound") + <code>mediaRef</code> (Spotify Track ID for songs, filename under <code>public/ttoto/media/</code> for images/sounds).
               </Typography>
               <Button size="small" variant="outlined" onClick={() => setJsonText(JSON.stringify(EXAMPLE_ROUNDS, null, 2))}>
                 Load Example

@@ -31,6 +31,7 @@ const loadPersistedState = (): TToTOState | null => {
       s.teams = s.teams.map(t => ({ ...t, players: t.players ?? [] })) as [TToTOTeam, TToTOTeam];
       s.roundState.attemptedControllerIds = s.roundState.attemptedControllerIds ?? [];
       s.roundState.answeringControllerId = s.roundState.answeringControllerId ?? null;
+      s.roundState.mediaReplaySeq = s.roundState.mediaReplaySeq ?? 0;
       if ((s.config?.buzzerMode as string) === 'hardware-team') s.config.buzzerMode = 'hardware-player';
       return s;
     }
@@ -180,6 +181,7 @@ const initialRoundState = (): TToTORoundState => ({
   choiceCracks: {},
   displayChoices: null,
   correctChoice: null,
+  mediaReplaySeq: 0,
 });
 
 const createInitialState = (): TToTOState => ({
@@ -409,9 +411,30 @@ class TToTOStore {
     });
   }
 
+  // reading -> media_shown (media_id / "ID Please" only). The host's Spotify playback
+  // call (song) or nothing extra (image — the show screen renders straight from
+  // question.mediaRef) happens client-side in TToTOHostComponent; this just advances the
+  // phase so the show screen knows to render the media.
+  revealMedia(): TToTOState {
+    this.begin();
+    return this.patchRound({ phase: 'media_shown' });
+  }
+
+  // Host retrigger — "if needed" per design discussion, valid any time from media_shown
+  // through resolved for the current question. Doesn't touch phase or anything else;
+  // just bumps mediaReplaySeq so the show screen can remount its media element and
+  // re-fire the reveal cue (see GameOverlays-adjacent media pulse in TToTOShowComponent).
+  // Songs replay via a direct Spotify call in the host component instead, but this is
+  // bumped for both media types uniformly — harmless no-op for songs, load-bearing for
+  // images. No begin()/undo entry: nothing here is meaningful to undo.
+  replayMedia(): TToTOState {
+    return this.patchRound({ mediaReplaySeq: (this.state.roundState.mediaReplaySeq ?? 0) + 1 });
+  }
+
   // reading -> armed (choices reveal / cascade in; buzzers "armed"). Also serves
   // category_sort's categories_shown -> armed (the prompt reveals instead, since the
-  // choices are already up) — same phase transition either way, so no flavor branch
+  // choices are already up) and media_id's media_shown -> armed (media already up,
+  // choices are the new thing) — same phase transition either way, so no flavor branch
   // needed here, just different meaning depending which phase it's called from.
   revealChoices(): TToTOState {
     this.begin();

@@ -7,16 +7,23 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import UndoIcon from '@mui/icons-material/Undo';
-import type { TToTOState, TToTOChoiceKey } from './types';
+import type { TToTOState, TToTOChoiceKey, TToTOPhase } from './types';
 import { CHOICE_LABELS, FLAVOR_LABELS } from './types';
 import {
-  getState, startGame, beginRound, revealChoices, recordBuzz, judge, next,
+  getState, startGame, beginRound, revealMedia, replayMedia, revealChoices, recordBuzz, judge, next,
   newGame, endGame, undo, showIntro, hideIntro, listSaves, loadSave,
   showWandTest, hideWandTest, randomAssignPlayers,
 } from './api';
 import type { TToTOSaveMeta } from './api';
 import { TTOTO_COLORS } from './colors';
 import { ledEffect } from '../../features/buzzer/buzzerApi';
+import { useSpotify, initiateSpotifyLogin } from '../../features/spotify/useSpotify';
+
+// ID Please ("media_id") only — the host's Replay control stays available for the whole
+// question, not just the initial reveal beat (see docs/ttoto-id-please-plan.md §6): teams
+// may want another listen/look, and the show screen's full-bleed event overlays can step
+// on a revealed image for a moment during buzz/steal/resolved.
+const MEDIA_REPLAYABLE_PHASES: TToTOPhase[] = ['media_shown', 'armed', 'answering', 'steal', 'steal_armed', 'resolved'];
 
 const TEAM_COLORS = [TTOTO_COLORS.team1, TTOTO_COLORS.team2] as const;
 const CHOICE_ORDER: TToTOChoiceKey[] = ['this', 'that', 'the_other'];
@@ -46,6 +53,11 @@ export const TToTOHostComponent = () => {
   const [gameOpen, setGameOpen] = useState(false);
   const [saves, setSaves] = useState<TToTOSaveMeta[]>([]);
   const [loadingSaveId, setLoadingSaveId] = useState<string | null>(null);
+  // ID Please ("media_id") song playback. Reuses NTT's Spotify Connect integration as-is
+  // (see docs/ttoto-id-please-plan.md §2) — same localStorage token, so a host who's
+  // already connected Spotify via /host for Name That Tune this session doesn't need to
+  // reconnect here. Image questions never touch this.
+  const spotify = useSpotify();
 
   const refresh = useCallback(async () => {
     try { setState(await getState()); } catch { /* ignore */ }
@@ -102,6 +114,19 @@ export const TToTOHostComponent = () => {
   const answeringTeam = teams.find(t => t.id === answeringTeamId);
   const stealEligibleTeam = teams.find(t => t.id === stealEligibleTeamId);
 
+  // ID Please ("media_id") only. Starts Spotify playback client-side (same pattern NTT's
+  // NTTHostComponent uses: the server call and the Spotify call are two independent
+  // actions fired together) whenever the current question is a song — a no-op if it's an
+  // image, or if Spotify isn't connected (the host can always fall back to playing it
+  // manually on their own device; the round still advances either way).
+  const playMediaIfSong = () => {
+    if (question?.mediaType === 'song' && question.mediaRef && spotify.isConnected) {
+      void spotify.play(question.mediaRef, 0);
+    }
+  };
+  const handleRevealMedia = (): Promise<TToTOState> => { playMediaIfSong(); return revealMedia(); };
+  const handleReplayMedia = (): Promise<TToTOState> => { playMediaIfSong(); return replayMedia(); };
+
   return (
     <Box sx={{ p: { xs: 1.5, md: 2 }, maxWidth: 860, mx: 'auto' }}>
       {/* Status bar */}
@@ -110,6 +135,18 @@ export const TToTOHostComponent = () => {
         <Chip label={phase.replace(/_/g, ' ').toUpperCase()} size="small"
           color={phase === 'answering' ? 'warning' : phase === 'steal' || phase === 'steal_armed' ? 'error' : phase === 'armed' ? 'info' : 'default'} />
         {mult > 1 && <Chip label={`×${mult}`} size="small" sx={{ background: '#f5c51822', color: '#f5c518', border: '1px solid #f5c51844' }} />}
+        {round?.flavor === 'media_id' && question?.mediaType === 'song' && !spotify.isConnected && (
+          <Button size="small" variant="text" color="success" sx={{ minWidth: 0 }}
+            onClick={() => void initiateSpotifyLogin()}>
+            Connect Spotify
+          </Button>
+        )}
+        {round?.flavor === 'media_id' && question && MEDIA_REPLAYABLE_PHASES.includes(phase) && (
+          <Button size="small" variant="outlined" color="secondary" sx={{ minWidth: 0 }}
+            onClick={act(() => handleReplayMedia())}>
+            🔁 Replay {question.mediaType === 'song' ? 'Song' : question.mediaType === 'sound' ? 'Sound' : 'Image'}
+          </Button>
+        )}
         <Box sx={{ flex: 1 }} />
         <Button size="small" variant="outlined" color="inherit" startIcon={<UndoIcon fontSize="small" />}
           onClick={act(() => undo())} sx={{ minWidth: 0 }}>
@@ -281,11 +318,21 @@ export const TToTOHostComponent = () => {
           </Card>
         )}
 
-        {/* Reading: prompt visible, choices hidden */}
+        {/* Reading: prompt visible, choices hidden. ID Please ("media_id") gets a cue
+            badge here — before anything reveals on /show — so the host can verbally tell
+            the room to listen or watch a beat ahead of tapping through, plus its own
+            "Reveal Media" step instead of jumping straight to choices. */}
         {phase === 'reading' && question && (
           <Card sx={{ border: '2px solid', borderColor: 'info.main' }}>
             <CardContent>
-              <Typography sx={{ ...sectionLabelSx, mb: 1 }}>Reading</Typography>
+              <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
+                <Typography sx={{ ...sectionLabelSx, mb: 0 }}>Reading</Typography>
+                {round?.flavor === 'media_id' && question.mediaType && (
+                  <Chip size="small" color="secondary" label={
+                    question.mediaType === 'song' ? '🎵 LISTEN UP' : question.mediaType === 'sound' ? '🔊 LISTEN UP' : '🖼 WATCH THE SCREEN'
+                  } />
+                )}
+              </Stack>
               <Typography variant="body1" sx={{ mb: 1.5, p: 1.25, borderRadius: 1, bgcolor: 'rgba(255,255,255,0.06)', fontStyle: 'italic' }}>
                 "{question.prompt}"
               </Typography>
@@ -295,8 +342,54 @@ export const TToTOHostComponent = () => {
                   Correct answer: <strong>{CHOICE_LABELS[correctChoice]}</strong> ({displayChoices?.[correctChoice]})
                 </Typography>
               )}
+              {round?.flavor === 'media_id' ? (
+                <Button fullWidth variant="contained" color="info" sx={bigBtnSx} onClick={navAct(() => handleRevealMedia())}>
+                  Reveal Media →
+                </Button>
+              ) : (
+                <Button fullWidth variant="contained" color="info" sx={bigBtnSx} onClick={navAct(() => revealChoices())}>
+                  Reveal Choices →
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* media_shown: media (song/image/sound) revealed on /show, choices still hidden.
+            Host gets a preview (image thumbnail, or just the ref for songs/sounds — host
+            is always fully informed in this app, same principle as the always-visible
+            correct-choice flag) plus the persistent Replay control up in the status bar. */}
+        {phase === 'media_shown' && question && (
+          <Card sx={{ border: '2px solid', borderColor: 'info.main' }}>
+            <CardContent>
+              <Typography sx={{ ...sectionLabelSx, mb: 1 }}>Media Revealed</Typography>
+              <Typography variant="body1" sx={{ mb: 1.5, p: 1.25, borderRadius: 1, bgcolor: 'rgba(255,255,255,0.06)', fontStyle: 'italic' }}>
+                "{question.prompt}"
+              </Typography>
+              {question.mediaType === 'image' && question.mediaRef && (
+                <Box sx={{ mb: 1.5, textAlign: 'center' }}>
+                  <img src={`/ttoto/media/${question.mediaRef}`} alt="" style={{ maxWidth: '100%', maxHeight: 180, borderRadius: 4 }} />
+                </Box>
+              )}
+              {question.mediaType === 'song' && (
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>
+                  🎵 Spotify track: <code>{question.mediaRef}</code>
+                  {!spotify.isConnected && ' — not connected, play it manually if needed.'}
+                </Typography>
+              )}
+              {question.mediaType === 'sound' && (
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>
+                  🔊 Sound effect: <code>{question.mediaRef}</code> — playing on the show screen.
+                </Typography>
+              )}
+              <HostNote note={question.hostNote} />
+              {correctChoice && (
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>
+                  Correct answer: <strong>{CHOICE_LABELS[correctChoice]}</strong> ({displayChoices?.[correctChoice]})
+                </Typography>
+              )}
               <Button fullWidth variant="contained" color="info" sx={bigBtnSx} onClick={navAct(() => revealChoices())}>
-                Reveal Choices →
+                Reveal Answers →
               </Button>
             </CardContent>
           </Card>
