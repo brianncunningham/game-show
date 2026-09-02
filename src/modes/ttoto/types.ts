@@ -139,12 +139,14 @@ export const CHOICE_LABELS: Record<TToTOChoiceKey, string> = {
   the_other: 'THE OTHER',
 };
 
+// Player-facing round names, not the internal TToTOFlavor identifiers — chosen to read as
+// punchy idioms/exclamations rather than dev-facing descriptions of the mechanic.
 export const FLAVOR_LABELS: Record<TToTOFlavor, string> = {
-  trivia: 'Straight Trivia',
+  trivia: 'Just the Facts',
   odd_one_out: 'Odd One Out',
   real_or_fake: 'Real or Fake',
-  closest_guess: 'Closest Guess',
-  media_id: 'Media ID',
-  attribution: 'Attribution',
-  category_sort: 'Category Sort',
+  closest_guess: 'On The Nose',
+  media_id: 'ID Please',
+  attribution: 'Whodunit?',
+  category_sort: 'Triage',
 };
