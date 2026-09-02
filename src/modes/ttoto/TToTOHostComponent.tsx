@@ -257,6 +257,30 @@ export const TToTOHostComponent = () => {
           </Card>
         )}
 
+        {/* Triage only: category answers are up on /show, prompt still hidden from the
+            audience. The host sees the prompt here so they're ready to read it the moment
+            they click through — "Reveal Question" opens buzzers immediately, no separate
+            arm step, so there's no reason to show it before the host is ready to go. */}
+        {phase === 'categories_shown' && question && (
+          <Card sx={{ border: '2px solid', borderColor: 'info.main' }}>
+            <CardContent>
+              <Typography sx={{ ...sectionLabelSx, mb: 1 }}>Categories Revealed</Typography>
+              <Typography variant="body1" sx={{ mb: 1.5, p: 1.25, borderRadius: 1, bgcolor: 'rgba(255,255,255,0.06)', fontStyle: 'italic' }}>
+                "{question.prompt}" <Typography component="span" variant="caption" color="text.secondary">(hidden from audience until you reveal)</Typography>
+              </Typography>
+              <HostNote note={question.hostNote} />
+              {correctChoice && (
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>
+                  Correct answer: <strong>{CHOICE_LABELS[correctChoice]}</strong> ({displayChoices?.[correctChoice]})
+                </Typography>
+              )}
+              <Button fullWidth variant="contained" color="info" sx={bigBtnSx} onClick={navAct(() => revealChoices())}>
+                Reveal Question →
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Reading: prompt visible, choices hidden */}
         {phase === 'reading' && question && (
           <Card sx={{ border: '2px solid', borderColor: 'info.main' }}>
@@ -387,6 +411,11 @@ export const TToTOHostComponent = () => {
                 {resolvedCorrectly ? `${answeringTeam?.name ?? ''} got it! ✓` : `Nobody got it — it was ${correctChoice ? CHOICE_LABELS[correctChoice] : ''}`}
               </Typography>
               <HostNote note={question.hostNote} />
+              {round?.flavor === 'category_sort' && (
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+                  Categories stay up — Next shows the next item and opens buzzers immediately.
+                </Typography>
+              )}
               <Button fullWidth variant="contained" color="primary" sx={bigBtnSx} onClick={navAct(() => next())}>
                 Next →
               </Button>

@@ -12,7 +12,7 @@ import { TToTOStage } from './TToTOStage';
 import { TTOTO_COLORS, lighten, darken, rgba } from './colors';
 import { useGameEventOverlay, GameEventOverlay } from './GameOverlays';
 import { fitTextToWidth, fixedCharWidth } from './fitText';
-import { playMissSound, playRevealSound, playCorrectSound, playVictorySound, playBuzzSound, playStealWindowOpenSound } from './sounds';
+import { playMissSound, playRevealSound, playCorrectSound, playVictorySound, playBuzzSound, playStealWindowOpenSound, playTriageAlertSound } from './sounds';
 
 // Fixed content width all 3 answer panels share (see the answer-panel flex fix below) —
 // 1600 stage minus 64px outer margin minus 40px of inter-panel gap, split 3 ways, minus
@@ -741,7 +741,9 @@ function ComboScreen({ state }: { state: TToTOState }) {
   const letterStyle: LetterStyle = round?.letterStyle ?? 'split_flap';
   const multiplier = multiplierForRound(config.roundMultipliers, roundState.currentRoundIndex);
 
-  const choicesRevealed = roundState.phase === 'armed' || roundState.phase === 'answering'
+  // categories_shown (Triage only) reveals the answer panels same as armed onward — it's
+  // specifically the phase where the category answers are up but the prompt isn't yet.
+  const choicesRevealed = roundState.phase === 'categories_shown' || roundState.phase === 'armed' || roundState.phase === 'answering'
     || roundState.phase === 'steal' || roundState.phase === 'steal_armed' || roundState.phase === 'resolved';
 
   const answeringTeam = teams.find(t => t.id === roundState.answeringTeamId);
@@ -762,6 +764,14 @@ function ComboScreen({ state }: { state: TToTOState }) {
     const prevPhase = prevPhaseForSoundRef.current;
     const phase = roundState.phase;
     if (phase === 'armed' && prevPhase === 'reading') playRevealSound(letterStyle);
+    // Triage: the category answers cascade in once, at round start, instead of per
+    // question — same reveal sound, just a different (one-time) trigger point.
+    if (phase === 'categories_shown' && prevPhase === 'round_intro') playRevealSound(letterStyle);
+    // Triage: every item's prompt+arm happens in one step, from either categories_shown
+    // (the first item) or resolved (every one after, skipping 'reading' — see store.ts's
+    // next()). Neither of those prevPhase values is reachable for any other flavor, so
+    // this doesn't need its own flavor check.
+    if (phase === 'armed' && (prevPhase === 'categories_shown' || prevPhase === 'resolved')) playTriageAlertSound();
     // Only real buzz-ins play the buzz sound — 'answering' -> 'steal' (EXCLUSIVE's
     // automatic handoff after a miss) is not a buzz, nobody pressed anything for it.
     if (phase === 'answering' && prevPhase === 'armed') playBuzzSound();
@@ -872,10 +882,10 @@ function ComboScreen({ state }: { state: TToTOState }) {
             the existing corner brackets only use tr/bl) — rivets go on the two intact corners. */}
         <Rivet top={9} right={12} /><Rivet bottom={9} left={12} />
         <div className="ttoto-a-tag" style={{ position: 'relative', background: '#c7d4ea', color: '#0d1b2e', fontSize: 13, fontWeight: 800, letterSpacing: 3, padding: '5px 18px 5px 12px', display: 'inline-block', marginBottom: 10 }}>
-          QUESTION
+          {roundState.phase === 'categories_shown' ? 'CATEGORIES' : 'QUESTION'}
         </div>
         <div style={{ position: 'relative', fontFamily: "'Big Shoulders Display', sans-serif", fontWeight: 800, fontSize: 32, letterSpacing: 0.5, textAlign: 'center', color: '#fff' }}>
-          {question ? question.prompt.toUpperCase() : ''}
+          {roundState.phase === 'categories_shown' ? 'GET READY…' : question ? question.prompt.toUpperCase() : ''}
         </div>
         <div style={{ position: 'relative', textAlign: 'center', marginTop: 8, fontSize: 15, letterSpacing: 2, color: '#c7d4ea', minHeight: 20 }}>
           {statusText}

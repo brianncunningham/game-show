@@ -388,13 +388,18 @@ class TToTOStore {
     return this.enterRoundIntro(0);
   }
 
-  // round_intro -> reading (load current question)
+  // round_intro -> reading (load current question), or for category_sort ->
+  // categories_shown instead: the round's 3 fixed category answers reveal immediately
+  // (they're the same all round), with the prompt held back until revealChoices() —
+  // repurposed for this flavor to mean "reveal the item, arm buzzers" rather than
+  // "reveal the choices" (the choices are already up).
   beginRound(): TToTOState {
     this.begin();
+    const round = this.currentRound();
     const question = this.currentQuestion();
-    const shuffled = question ? shuffleChoices(question, this.fixedSlotsFor(this.currentRound())) : { displayChoices: null, correctChoice: null };
+    const shuffled = question ? shuffleChoices(question, this.fixedSlotsFor(round)) : { displayChoices: null, correctChoice: null };
     return this.patchRound({
-      phase: 'reading',
+      phase: round?.flavor === 'category_sort' ? 'categories_shown' : 'reading',
       answeringTeamId: null,
       eliminatedChoices: [],
       missedBy: [],
@@ -404,7 +409,10 @@ class TToTOStore {
     });
   }
 
-  // reading -> armed (choices reveal / cascade in; buzzers "armed")
+  // reading -> armed (choices reveal / cascade in; buzzers "armed"). Also serves
+  // category_sort's categories_shown -> armed (the prompt reveals instead, since the
+  // choices are already up) — same phase transition either way, so no flavor branch
+  // needed here, just different meaning depending which phase it's called from.
   revealChoices(): TToTOState {
     this.begin();
     return this.patchRound({ phase: 'armed' });
@@ -559,8 +567,13 @@ class TToTOStore {
 
     if (round && nextQuestionIndex < round.questions.length) {
       const shuffled = shuffleChoices(round.questions[nextQuestionIndex], this.fixedSlotsFor(round));
+      // category_sort skips 'reading' entirely and goes straight to 'armed' — the
+      // category answers are already on screen (revealed once at categories_shown,
+      // never re-hidden since), so there's nothing left to do before the next item
+      // except show its prompt and open buzzers, which is exactly what "Next" should
+      // do in one click for this flavor's faster pace.
       return this.patchRound({
-        phase: 'reading',
+        phase: round.flavor === 'category_sort' ? 'armed' : 'reading',
         currentQuestionIndex: nextQuestionIndex,
         answeringTeamId: null,
         answeringControllerId: null,

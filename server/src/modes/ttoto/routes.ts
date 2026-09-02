@@ -350,14 +350,21 @@ router.post('/round/begin', (_req, res) => {
   res.json(ttotoStore.beginRound());
 });
 
-router.post('/reveal-choices', (_req, res) => {
-  const state = ttotoStore.revealChoices();
-  // Buzzers go live the instant choices are revealed — there's no "waiting for the song
-  // to resume" concept here the way NTT has, so open the window already armed.
-  if (state.config.buzzerMode === 'hardware-player') {
+// Buzzers go live the instant a question's choices are on screen — there's no "waiting
+// for the song to resume" concept here the way NTT has, so open the window already armed.
+// Shared by /reveal-choices and /next: category_sort's /next also lands directly on
+// 'armed' (see store.ts's next()), so it needs the exact same hardware-arming as
+// /reveal-choices normally does, not just the LED/phase bookkeeping.
+function armHardwareIfNeeded(state: ReturnType<typeof ttotoStore.getState>): void {
+  if (state.roundState.phase === 'armed' && state.config.buzzerMode === 'hardware-player') {
     const eligible = eligibleControllersForTeams(allTeamIds());
     void openHardwareWindow(ARMED_WINDOW_ID, eligible, state.config.earlyBuzzPenalty === 'lockout');
   }
+}
+
+router.post('/reveal-choices', (_req, res) => {
+  const state = ttotoStore.revealChoices();
+  armHardwareIfNeeded(state);
   res.json(state);
 });
 
@@ -430,6 +437,10 @@ router.post('/next', (_req, res) => {
     piLed({ effect: 'rainbow', speed_ms: 15, brightness: 0.9, duration_ms: 4000 });
   } else if (state.roundState.phase === 'game_over') {
     fireVictoryLed(state);
+  } else {
+    // category_sort only: next() went straight to 'armed' rather than 'reading' (see
+    // store.ts) — arm the hardware window now, exactly as /reveal-choices would.
+    armHardwareIfNeeded(state);
   }
   res.json(state);
 });

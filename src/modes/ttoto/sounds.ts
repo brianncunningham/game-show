@@ -13,6 +13,7 @@ const SOUND_NAMES = [
   'correct',   // right answer given
   'victory',   // game-over winner fanfare
   'steal-window-open',   // TIMED_WINDOW's exclusive stage expires, opens to both teams
+  'triage-alert',   // Triage only — a new item's prompt just appeared and buzzers are live
 ] as const;
 
 const soundCache = new Map<string, HTMLAudioElement>();
@@ -60,6 +61,13 @@ export const playVictorySound = (): void => playSound('victory');
  * covers that moment (see playMissSound) — and deliberately a gentler cue here than a
  * NTT-style "time's up" alarm: this is inviting both teams in, not a hard cutoff. */
 export const playStealWindowOpenSound = (): void => playSound('steal-window-open');
+
+/** Triage only — fires every time a new item's prompt appears and buzzers go live in the
+ * same instant (categories_shown -> armed for the first item, or resolved -> armed for
+ * every one after). Deliberately distinct from playRevealSound: nothing is visually
+ * re-cascading here (the category answers stay on screen the whole round), so the normal
+ * letter-display reveal sound would be misleading — this is purely a "go" cue. */
+export const playTriageAlertSound = (): void => playSound('triage-alert');
 
 /** Buzz-in confirmation — reuses the shared root /buzz.mp3 (already used by NTT/Survey
  * Says and TToTO's own wand-test overlay) rather than a new TToTO-specific file. */

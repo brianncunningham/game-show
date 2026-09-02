@@ -57,6 +57,7 @@ export type TToTOPhase =
   | 'idle'
   | 'round_intro'
   | 'reading'
+  | 'categories_shown' // category_sort only — see server types.ts's comment
   | 'armed'
   | 'answering'
   | 'steal'

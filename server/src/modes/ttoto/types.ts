@@ -81,6 +81,11 @@ export type TToTOPhase =
   | 'idle'            // nothing loaded
   | 'round_intro'     // round-type card on /show
   | 'reading'         // prompt visible, choices hidden (revealTiming: prompt_first)
+  | 'categories_shown' // category_sort only — the inverse of 'reading': the round's 3 fixed
+                        // category answers are visible, prompt hidden, not armed. Used once
+                        // per round (at beginRound()); every subsequent question in the round
+                        // skips straight from 'resolved' to 'armed' instead, since the
+                        // category answers never need re-revealing (see store.ts's next()).
   | 'armed'           // choices revealed, buzzers "armed" (manual buzz buttons live)
   | 'answering'       // a team is on the clock
   | 'steal'           // opposing team (or, once open, either team) is on the clock with a choice picked
