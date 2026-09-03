@@ -231,6 +231,10 @@ const multiplierForRound = (roundMultipliers: number[], roundIndex: number): num
 const CHOICE_ORDER: TToTOChoiceKey[] = ['this', 'that', 'the_other'];
 const CHOICE_VARIANT: Record<TToTOChoiceKey, LetterVariant> = { this: 'this', that: 'that', the_other: 'other' };
 const CHOICE_COLOR: Record<TToTOChoiceKey, string> = { this: TTOTO_COLORS.this, that: TTOTO_COLORS.that, the_other: TTOTO_COLORS.the_other };
+// Reverse of CHOICE_VARIANT, for PlainTextRow's fallback tile tint — split-flap is the
+// one style that's colored per-choice rather than a fixed signature color (dot-matrix's
+// teal, segmented's orange), so it needs the mapping the other two don't.
+const VARIANT_COLOR: Record<LetterVariant, string> = { this: TTOTO_COLORS.this, that: TTOTO_COLORS.that, other: TTOTO_COLORS.the_other, neutral: '#8a939e' };
 const CHOICE_TAG_BG = CHOICE_COLOR;
 const CHOICE_LABEL: Record<TToTOChoiceKey, string> = { this: 'THIS', that: 'THAT', the_other: 'THE OTHER' };
 
@@ -249,11 +253,34 @@ const CHOICE_LABEL: Record<TToTOChoiceKey, string> = { this: 'THIS', that: 'THAT
  * Only the specific answer(s) that actually need it fall back — a round's other, shorter
  * answers keep the mechanical display, since the decision is per-answer (see each Row
  * component's own fit.lines.length check), not a round-wide or flavor-wide switch.
+ *
+ * Pre-reveal, this can't just render nothing — every mechanical style shows some kind of
+ * "blank card, not yet flipped" placeholder before reveal (split-flap's dashed tile
+ * backs, dot-matrix/segmented's dim ghost glyphs), and a bare empty box next to two
+ * panels that still look alive reads as broken, not as "nothing to see yet" (caught from
+ * a live screenshot: one empty panel next to two showing tile placeholders). So this
+ * shows its own placeholder instead: a row of blank tiles sized to roughly match the
+ * answer's length, tinted with the same accentColor the real (this/that/the_other) panel
+ * border/tag already uses — visually closer to "an unflipped row of cards in this
+ * panel's color" than a generic grey box.
  */
-function PlainTextRow({ word, revealed, won, maxWidth = ANSWER_PANEL_CONTENT_WIDTH }: {
-  word: string; revealed: boolean; won: boolean; maxWidth?: number;
+function PlainTextRow({ word, revealed, won, maxWidth = ANSWER_PANEL_CONTENT_WIDTH, accentColor }: {
+  word: string; revealed: boolean; won: boolean; maxWidth?: number; accentColor: string;
 }) {
-  if (!revealed) return <div style={{ width: maxWidth, height: 70 }} />;
+  if (!revealed) {
+    const tileCount = Math.min(Math.max(Math.ceil(word.length / 2), 4), 16);
+    return (
+      <div style={{ width: maxWidth, height: 70, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, flexWrap: 'wrap' }}>
+        {Array.from({ length: tileCount }).map((_, i) => (
+          <div key={i} style={{
+            width: 20, height: 30, borderRadius: 3,
+            background: `linear-gradient(to bottom, ${rgba(accentColor, 0.22)} 0 50%, ${rgba(accentColor, 0.12)} 50% 100%)`,
+            boxShadow: `inset 0 0 0 1px ${rgba(accentColor, 0.35)}`,
+          }} />
+        ))}
+      </div>
+    );
+  }
   return (
     <div className="ttoto-media-pulse" style={{
       width: maxWidth, textAlign: 'center', fontFamily: "'Big Shoulders Display', sans-serif",
@@ -310,7 +337,7 @@ function SplitFlapRow({ variant, word, revealed, won, maxWidth = ANSWER_PANEL_CO
   // an awkward mid-phrase flap wrap (see PlainTextRow's doc comment). The effect above
   // still runs harmlessly every render (line1Ref/line2Ref are simply never attached to
   // anything in this branch, so its `if (!el1) return` guard just no-ops).
-  if (fit.lines.length > 1) return <PlainTextRow word={upper} revealed={revealed} won={won} maxWidth={maxWidth} />;
+  if (fit.lines.length > 1) return <PlainTextRow word={upper} revealed={revealed} won={won} maxWidth={maxWidth} accentColor={VARIANT_COLOR[variant]} />;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'center' }}>
@@ -378,8 +405,10 @@ function DotMatrixRow({ word, revealed, won, maxWidth = ANSWER_PANEL_CONTENT_WID
   const height = Math.round(84 * fit.scale);
 
   // See SplitFlapRow's identical check — too long to fit on one line even at the shrink
-  // floor, so fall back to plain text rather than illegible tiny dots.
-  if (fit.lines.length > 1) return <PlainTextRow word={upper} revealed={revealed} won={won} maxWidth={maxWidth} />;
+  // floor, so fall back to plain text rather than illegible tiny dots. Tinted with
+  // dot-matrix's own signature teal (see .ttoto-dotmatrix-text) rather than a per-choice
+  // color — this style is monochrome regardless of choice already.
+  if (fit.lines.length > 1) return <PlainTextRow word={upper} revealed={revealed} won={won} maxWidth={maxWidth} accentColor="#4dfff0" />;
 
   return (
     <div className="ttoto-dotmatrix-panel">
@@ -469,8 +498,10 @@ function SegmentedRow({ word, revealed, won, maxWidth = ANSWER_PANEL_CONTENT_WID
 
   // See SplitFlapRow's identical check — this is the style that actually motivated
   // PlainTextRow: thin glowing segments become illegible well before split-flap's
-  // thicker tiles do at the same shrink amount.
-  if (fit.lines.length > 1) return <PlainTextRow word={upper} revealed={revealed} won={won} maxWidth={maxWidth} />;
+  // thicker tiles do at the same shrink amount. Tinted with segmented's own signature
+  // orange (see .ttoto-segment-lit) rather than a per-choice color, same reasoning as
+  // DotMatrixRow above.
+  if (fit.lines.length > 1) return <PlainTextRow word={upper} revealed={revealed} won={won} maxWidth={maxWidth} accentColor="#ff6a3d" />;
 
   return (
     <div className="ttoto-segment-panel">
