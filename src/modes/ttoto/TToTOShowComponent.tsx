@@ -273,10 +273,13 @@ function PlainTextRow({ word, revealed, won, maxWidth = ANSWER_PANEL_CONTENT_WID
       <div style={{ width: maxWidth, height: 70, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, flexWrap: 'wrap' }}>
         {Array.from({ length: tileCount }).map((_, i) => (
           <div key={i} style={{
-            width: 20, height: 30, borderRadius: 3,
+            width: 20, height: 30, borderRadius: 3, display: 'flex', alignItems: 'center', justifyContent: 'center',
             background: `linear-gradient(to bottom, ${rgba(accentColor, 0.22)} 0 50%, ${rgba(accentColor, 0.12)} 50% 100%)`,
             boxShadow: `inset 0 0 0 1px ${rgba(accentColor, 0.35)}`,
-          }} />
+            fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 16, color: rgba(accentColor, 0.6),
+          }}>
+            {'\u2013'}
+          </div>
         ))}
       </div>
     );
@@ -1076,8 +1079,15 @@ function ComboScreen({ state }: { state: TToTOState }) {
             the audio types too). Image is hidden while the big MediaImageOverlay (below)
             is up, to avoid showing the same picture twice at once. */}
         {mediaRevealed && question?.mediaType === 'image' && question.mediaRef && !showBigImageOverlay && (
+          // Much bigger than the original 52x40 — being position:absolute, it doesn't
+          // contribute to this panel's own height at all (that's still driven purely by
+          // the prompt text), so it can grow freely without the panel growing with it.
+          // The only real constraint is the panel's clip-path, which only notches the
+          // top-left and bottom-right corners (see .ttoto-a-panel) — staying 40px clear
+          // of the right edge keeps this well outside the bottom-right notch even at
+          // this height, so nothing gets clipped.
           <div key={`media-thumb-${roundState.mediaReplaySeq ?? 0}`} className="ttoto-media-pulse"
-            style={{ position: 'absolute', top: 10, right: 40, width: 52, height: 40, borderRadius: 4, overflow: 'hidden', boxShadow: '0 0 14px rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.25)' }}>
+            style={{ position: 'absolute', top: 10, right: 40, width: 150, height: 105, borderRadius: 5, overflow: 'hidden', boxShadow: '0 0 18px rgba(0,0,0,0.55)', border: '1px solid rgba(255,255,255,0.25)' }}>
             <img src={`/ttoto/media/${question.mediaRef}`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
           </div>
         )}
