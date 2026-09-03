@@ -234,6 +234,38 @@ const CHOICE_COLOR: Record<TToTOChoiceKey, string> = { this: TTOTO_COLORS.this, 
 const CHOICE_TAG_BG = CHOICE_COLOR;
 const CHOICE_LABEL: Record<TToTOChoiceKey, string> = { this: 'THIS', that: 'THAT', the_other: 'THE OTHER' };
 
+/**
+ * Fallback for answers too long to read well in any of the three mechanical letter
+ * displays. fitTextToWidth() only wraps onto a 2nd line once shrinking alone can't fit a
+ * single line anymore (see fitText.ts's MIN_SCALE floor), and by that point none of
+ * split-flap/dot-matrix/segmented render it well: dot-matrix/segmented's thin glowing
+ * dots/segments lose their shape well before split-flap's thicker tiles do, and even
+ * split-flap's own mid-phrase 2-line wrap reads as an awkward flip-board glitch rather
+ * than a deliberate line break. Plain, normally-reflowing text in the same font as the
+ * question prompt (not a fixed-width grid) handles a long phrase far better. Revealed
+ * with a quick fade/pop (reusing ID Please's ttoto-media-pulse keyframe) since there's no
+ * flap/dot/segment mechanism here to cascade.
+ *
+ * Only the specific answer(s) that actually need it fall back — a round's other, shorter
+ * answers keep the mechanical display, since the decision is per-answer (see each Row
+ * component's own fit.lines.length check), not a round-wide or flavor-wide switch.
+ */
+function PlainTextRow({ word, revealed, won, maxWidth = ANSWER_PANEL_CONTENT_WIDTH }: {
+  word: string; revealed: boolean; won: boolean; maxWidth?: number;
+}) {
+  if (!revealed) return <div style={{ width: maxWidth, height: 70 }} />;
+  return (
+    <div className="ttoto-media-pulse" style={{
+      width: maxWidth, textAlign: 'center', fontFamily: "'Big Shoulders Display', sans-serif",
+      fontWeight: 800, fontSize: 30, lineHeight: 1.15, overflowWrap: 'break-word',
+      color: won ? TTOTO_COLORS.correct : '#f2f5fb',
+      textShadow: won ? `0 0 16px ${rgba(TTOTO_COLORS.correct, 0.8)}` : '0 0 10px rgba(255,255,255,0.25)',
+    }}>
+      {word}
+    </div>
+  );
+}
+
 // ─── Split-flap row (imperative DOM cascade) ────────────────────────────────
 
 const FLAP_FULL_TILE = { width: 52, height: 86 }; // historical default = scale 1
@@ -273,6 +305,12 @@ function SplitFlapRow({ variant, word, revealed, won, maxWidth = ANSWER_PANEL_CO
     // same scale), so gating the rebuild on buildKey alone is sufficient.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [buildKey, revealed, variant]);
+
+  // Too long to fit on one line even at the shrink floor — plain text reads better than
+  // an awkward mid-phrase flap wrap (see PlainTextRow's doc comment). The effect above
+  // still runs harmlessly every render (line1Ref/line2Ref are simply never attached to
+  // anything in this branch, so its `if (!el1) return` guard just no-ops).
+  if (fit.lines.length > 1) return <PlainTextRow word={upper} revealed={revealed} won={won} maxWidth={maxWidth} />;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'center' }}>
@@ -338,6 +376,10 @@ function DotMatrixRow({ word, revealed, won, maxWidth = ANSWER_PANEL_CONTENT_WID
   const upper = word.toUpperCase();
   const fit = fitTextToWidth(upper, maxWidth, fixedCharWidth(DOT_FULL_CHAR_WIDTH));
   const height = Math.round(84 * fit.scale);
+
+  // See SplitFlapRow's identical check — too long to fit on one line even at the shrink
+  // floor, so fall back to plain text rather than illegible tiny dots.
+  if (fit.lines.length > 1) return <PlainTextRow word={upper} revealed={revealed} won={won} maxWidth={maxWidth} />;
 
   return (
     <div className="ttoto-dotmatrix-panel">
@@ -424,6 +466,11 @@ function SegmentedRow({ word, revealed, won, maxWidth = ANSWER_PANEL_CONTENT_WID
   const fit = fitTextToWidth(upper, maxWidth, measureSegmentedWidth);
   const fontSize = Math.round(SEGMENTED_FULL_FONT_SIZE * fit.scale);
   const letterSpacing = Math.round(SEGMENTED_FULL_LETTER_SPACING * fit.scale);
+
+  // See SplitFlapRow's identical check — this is the style that actually motivated
+  // PlainTextRow: thin glowing segments become illegible well before split-flap's
+  // thicker tiles do at the same shrink amount.
+  if (fit.lines.length > 1) return <PlainTextRow word={upper} revealed={revealed} won={won} maxWidth={maxWidth} />;
 
   return (
     <div className="ttoto-segment-panel">

@@ -345,18 +345,51 @@ router.post('/game/start', (_req, res) => {
   res.json(ttotoStore.startGame());
 });
 
+// Opens an UNARMED hardware window the moment a question enters a phase where content
+// isn't fully revealed yet — 'reading' for every flavor except category_sort, and
+// 'categories_shown'/'resolved' for category_sort ("Triage"), whose faster-paced loop has
+// no separate reveal step for items after the first (see the /judge and /next handlers
+// below). Doing this is what makes earlyBuzzPenalty actually mean something: previously
+// the window opened and armed atomically right at 'armed', so a controller mashing its
+// buzzer the entire time the host was reading the prompt hit "no active window" (DISABLED)
+// the whole way through — completely untracked, regardless of the ignore/lockout setting.
+// With the window open (WAITING) for that whole span instead, a lockout config now really
+// does exclude a controller for the rest of the question the moment it buzzes early,
+// anywhere in that window — not just in the sliver of time between the Pi receiving
+// open-window and arm-window over the network.
+function openWaitingWindow(state: ReturnType<typeof ttotoStore.getState>): void {
+  if (state.config.buzzerMode !== 'hardware-player') return;
+  const eligible = eligibleControllersForTeams(allTeamIds());
+  if (eligible.length === 0) return;
+  const earlyBuzzPenalty = state.config.earlyBuzzPenalty === 'lockout';
+  judgeController.openWindow({ windowId: ARMED_WINDOW_ID, eligibleControllers: eligible, earlyBuzzPenalty });
+  void piJudge('open-window', { windowId: ARMED_WINDOW_ID, eligibleControllers: eligible, earlyBuzzPenalty });
+}
+
 router.post('/round/begin', (_req, res) => {
   clearStealTimer();
-  res.json(ttotoStore.beginRound());
+  const state = ttotoStore.beginRound();
+  // 'reading' (every flavor except category_sort) or 'categories_shown' (category_sort's
+  // round-opening phase, before its first item shows) — see openWaitingWindow's comment.
+  if (state.roundState.phase === 'reading' || state.roundState.phase === 'categories_shown') {
+    openWaitingWindow(state);
+  }
+  res.json(state);
 });
 
-// Buzzers go live the instant a question's choices are on screen — there's no "waiting
-// for the song to resume" concept here the way NTT has, so open the window already armed.
-// Shared by /reveal-choices and /next: category_sort's /next also lands directly on
-// 'armed' (see store.ts's next()), so it needs the exact same hardware-arming as
-// /reveal-choices normally does, not just the LED/phase bookkeeping.
+// Arms the window opened earlier by openWaitingWindow, carrying forward whatever
+// early-buzz exclusions accumulated while it was WAITING — this is *not* a fresh
+// open+arm, deliberately: re-opening here would silently wipe out any lockouts from the
+// wait. Falls back to an atomic open+arm only if no window is actually open yet (should
+// only happen if some caller skipped the corresponding openWaitingWindow — a safety net,
+// not the normal path — so a phase never ends up on 'armed' with buzzers that never
+// actually went live).
 function armHardwareIfNeeded(state: ReturnType<typeof ttotoStore.getState>): void {
-  if (state.roundState.phase === 'armed' && state.config.buzzerMode === 'hardware-player') {
+  if (state.roundState.phase !== 'armed' || state.config.buzzerMode !== 'hardware-player') return;
+  if (judgeController.getWindowState().windowId === ARMED_WINDOW_ID) {
+    judgeController.armWindow(ARMED_WINDOW_ID);
+    void piJudge('arm-window', { windowId: ARMED_WINDOW_ID });
+  } else {
     const eligible = eligibleControllersForTeams(allTeamIds());
     void openHardwareWindow(ARMED_WINDOW_ID, eligible, state.config.earlyBuzzPenalty === 'lockout');
   }
@@ -412,6 +445,18 @@ router.post('/judge', (req, res) => {
     piLed({ effect: 'flash', color: WRONG_COLOR, flashes: 4, on_ms: 120, off_ms: 80 });
   }
 
+  // category_sort ("Triage") only: pre-open the hardware window for the NEXT item the
+  // instant this one resolves. /next skips straight from 'resolved' to 'armed' for this
+  // flavor with no separate reveal step in between (see store.ts) — so unlike every other
+  // flavor, which gets its window opened at the following 'reading' phase, Triage's
+  // window has to open here or there would be no WAITING period at all for the gap
+  // between items, and earlyBuzzPenalty would have nothing to apply to if someone mashes
+  // while the host is about to move on to the next item.
+  if (state.roundState.phase === 'resolved') {
+    const round = ttotoStore.getState().rounds[state.roundState.currentRoundIndex];
+    if (round?.flavor === 'category_sort') openWaitingWindow(state);
+  }
+
   // TIMED_WINDOW steal just started: open the exclusive-stage hardware window (every
   // controller on the other team, minus anyone already excluded) and schedule the
   // expansion-to-both once stealWindowSecs elapses.
@@ -449,9 +494,14 @@ router.post('/next', (_req, res) => {
     piLed({ effect: 'rainbow', speed_ms: 15, brightness: 0.9, duration_ms: 4000 });
   } else if (state.roundState.phase === 'game_over') {
     fireVictoryLed(state);
+  } else if (state.roundState.phase === 'reading') {
+    // Every flavor except category_sort: next question, nothing revealed yet — open the
+    // waiting window now (see openWaitingWindow's comment) rather than arming anything.
+    openWaitingWindow(state);
   } else {
     // category_sort only: next() went straight to 'armed' rather than 'reading' (see
-    // store.ts) — arm the hardware window now, exactly as /reveal-choices would.
+    // store.ts) — arm the window /judge's category_sort branch already opened back when
+    // the previous item resolved, exactly as /reveal-choices would for the first item.
     armHardwareIfNeeded(state);
   }
   res.json(state);
