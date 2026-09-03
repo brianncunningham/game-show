@@ -43,6 +43,12 @@ export interface TToTOQuestion {
   // can mix songs, images, and sound effects.
   mediaType?: 'song' | 'image' | 'sound';
   mediaRef?: string;
+  // song only — playback start position in ms, same idea as NTT's clipStartMs/
+  // chorusStartMs but a single value here (a host picks one meaningful spot per
+  // question — the intro riff, the chorus, whatever identifies it — not both a "start"
+  // and a "chorus" jump like NTT's two-button setup). Defaults to 0 (track start) when
+  // omitted. Passed straight through as positionMs to useSpotify's play().
+  mediaStartMs?: number;
   // Optional host-only context, e.g. "Tomato is technically a fruit; the other two are
   // vegetables" for an odd-one-out question. Same state payload as everything else in this
   // app (no per-client filtering), but only the /host UI renders it.

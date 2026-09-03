@@ -93,6 +93,17 @@ function MediaFields({ question, onChange }: { question: TToTOQuestion; onChange
           onChange={e => onChange({ ...question, mediaRef: e.target.value || undefined })}
         />
       )}
+      {question.mediaType === 'song' && (
+        <TextField
+          size="small" type="number" label="Start (ms)" placeholder="0"
+          sx={{ width: 110 }}
+          value={question.mediaStartMs ?? ''}
+          onChange={e => {
+            const n = e.target.value === '' ? undefined : Math.max(0, Number(e.target.value));
+            onChange({ ...question, mediaStartMs: n });
+          }}
+        />
+      )}
     </Stack>
   );
 }
@@ -396,6 +407,9 @@ function BulkJsonImport({ onRefresh }: { onRefresh: () => Promise<void> }) {
         if (q.mediaType !== undefined && q.mediaType !== 'song' && q.mediaType !== 'image' && q.mediaType !== 'sound') {
           throw new Error(`Round ${i + 1}, Q${qi + 1}: mediaType must be "song", "image", or "sound" if present.`);
         }
+        if (q.mediaStartMs !== undefined && (typeof q.mediaStartMs !== 'number' || q.mediaStartMs < 0)) {
+          throw new Error(`Round ${i + 1}, Q${qi + 1}: mediaStartMs must be a non-negative number if present.`);
+        }
       });
       return {
         id: round.id ?? `round-${i + 1}-${uid()}`,
@@ -408,6 +422,7 @@ function BulkJsonImport({ onRefresh }: { onRefresh: () => Promise<void> }) {
           choices: q.choices,
           ...(q.mediaType ? { mediaType: q.mediaType } : {}),
           ...(q.mediaRef ? { mediaRef: q.mediaRef } : {}),
+          ...(q.mediaStartMs !== undefined ? { mediaStartMs: q.mediaStartMs } : {}),
           ...(q.hostNote ? { hostNote: q.hostNote } : {}),
         })),
       } as TToTORound;
@@ -449,7 +464,7 @@ function BulkJsonImport({ onRefresh }: { onRefresh: () => Promise<void> }) {
           <Box sx={{ mt: 1.5 }}>
             <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
               <Typography variant="caption" color="text.secondary">
-                Valid flavors: {FLAVOR_OPTIONS.join(', ')}. <code>choices</code> is an array of exactly 3 strings — the first is always correct; the game randomizes screen position. Optional <code>hostNote</code> string shows only on /host. <code>category_sort</code> rounds also need a round-level <code>categoryOptions</code> array of exactly 3 strings (fixed for the round); every question's <code>choices</code> must be a permutation of it. <code>media_id</code> ("ID Please") questions take an optional <code>mediaType</code> ("song", "image", or "sound") + <code>mediaRef</code> (Spotify Track ID for songs, filename under <code>public/ttoto/media/</code> for images/sounds).
+                Valid flavors: {FLAVOR_OPTIONS.join(', ')}. <code>choices</code> is an array of exactly 3 strings — the first is always correct; the game randomizes screen position. Optional <code>hostNote</code> string shows only on /host. <code>category_sort</code> rounds also need a round-level <code>categoryOptions</code> array of exactly 3 strings (fixed for the round); every question's <code>choices</code> must be a permutation of it. <code>media_id</code> ("ID Please") questions take an optional <code>mediaType</code> ("song", "image", or "sound") + <code>mediaRef</code> (Spotify Track ID for songs, filename under <code>public/ttoto/media/</code> for images/sounds), plus an optional <code>mediaStartMs</code> (song only — playback start position in ms, defaults to track start).
               </Typography>
               <Button size="small" variant="outlined" onClick={() => setJsonText(JSON.stringify(EXAMPLE_ROUNDS, null, 2))}>
                 Load Example

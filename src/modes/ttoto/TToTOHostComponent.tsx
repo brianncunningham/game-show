@@ -138,7 +138,7 @@ export const TToTOHostComponent = () => {
   const playMediaIfSong = () => {
     if (question?.mediaType === 'song' && question.mediaRef && spotify.isConnected) {
       setSongPlayError(null);
-      void spotify.play(question.mediaRef, 0).then(result => {
+      void spotify.play(question.mediaRef, question.mediaStartMs ?? 0).then(result => {
         if (!result.ok) setSongPlayError(result.error ?? 'Playback failed.');
       });
       setSpotifyPaused(false);
@@ -469,6 +469,7 @@ export const TToTOHostComponent = () => {
               {question.mediaType === 'song' && (
                 <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>
                   🎵 Spotify track: <code>{question.mediaRef}</code>
+                  {question.mediaStartMs ? ` (starts at ${(question.mediaStartMs / 1000).toFixed(1)}s)` : ''}
                   {!spotify.isConnected && ' — not connected, play it manually if needed.'}
                 </Typography>
               )}

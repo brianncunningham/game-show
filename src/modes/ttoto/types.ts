@@ -28,6 +28,10 @@ export interface TToTOQuestion {
   // Per-question, not per-round, so a round can mix media types.
   mediaType?: 'song' | 'image' | 'sound';
   mediaRef?: string;
+  // song only — playback start position in ms (a single value, unlike NTT's separate
+  // clipStartMs/chorusStartMs — a host picks one meaningful spot per question, not both).
+  // Defaults to 0 (track start) when omitted. See server types.ts for the full rationale.
+  mediaStartMs?: number;
   // Optional host-only context, e.g. "Tomato is technically a fruit; the other two are
   // vegetables" for an odd-one-out question. Only the /host UI renders this.
   hostNote?: string;
