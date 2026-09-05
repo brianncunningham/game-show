@@ -28,6 +28,8 @@ const FLAVOR_OPTIONS = Object.keys(FLAVOR_LABELS) as TToTOFlavor[];
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 
+// Covers all 7 flavors so "Load Example" doubles as a schema reference — see
+// docs/ttoto-content-json-guide.md for the full field-by-field writeup.
 const EXAMPLE_ROUNDS: TToTORound[] = [
   {
     id: 'round-1', roundNumber: 1, flavor: 'trivia',
@@ -40,14 +42,66 @@ const EXAMPLE_ROUNDS: TToTORound[] = [
     ],
   },
   {
-    // category_sort: categoryOptions is fixed for the whole round; each question's choices
-    // must be a permutation of it (index 0 = correct, same convention as every other flavor).
-    id: 'round-2', roundNumber: 2, flavor: 'category_sort',
+    id: 'round-2', roundNumber: 2, flavor: 'odd_one_out',
+    questions: [
+      {
+        id: 'q3', prompt: 'Which of these three is NOT a primary color (paint mixing)?', choices: ['Green', 'Red', 'Blue'],
+        hostNote: 'Green is a secondary color — it\u2019s a mix of blue and yellow.',
+      },
+      { id: 'q4', prompt: 'Which of these three does NOT have a shell?', choices: ['Slug', 'Snail', 'Turtle'] },
+    ],
+  },
+  {
+    id: 'round-3', roundNumber: 3, flavor: 'real_or_fake',
+    questions: [
+      {
+        id: 'q5', prompt: 'Which of these three "facts" about octopuses is real?',
+        choices: ['Octopuses have three hearts', 'Octopuses can fly short distances', 'Octopuses are technically a type of fish'],
+        hostNote: 'Octopuses have three hearts and blue, copper-based blood.',
+      },
+    ],
+  },
+  {
+    id: 'round-4', roundNumber: 4, flavor: 'closest_guess',
+    questions: [
+      { id: 'q6', prompt: 'How many bones are in the adult human body?', choices: ['206', '150', '300'] },
+    ],
+  },
+  {
+    id: 'round-5', roundNumber: 5, flavor: 'attribution',
+    questions: [
+      { id: 'q7', prompt: 'Who directed the movie "Jaws"?', choices: ['Steven Spielberg', 'George Lucas', 'Martin Scorsese'] },
+    ],
+  },
+  {
+    // media_id ("ID Please"): mediaType/mediaRef are per-question, so a round can mix
+    // song/image/sound. mediaStartMs is song-only and defaults to track start (0) if omitted.
+    id: 'round-6', roundNumber: 6, flavor: 'media_id',
+    questions: [
+      {
+        id: 'q8', prompt: 'Identify this song', choices: ['Bohemian Rhapsody', 'We Will Rock You', 'Another One Bites the Dust'],
+        mediaType: 'song', mediaRef: '3z8h0TU7dZUno2LRR6BSjA', mediaStartMs: 30000,
+      },
+      {
+        id: 'q9', prompt: 'Identify this landmark', choices: ['Eiffel Tower', 'Big Ben', 'Leaning Tower of Pisa'],
+        mediaType: 'image', mediaRef: 'eiffel-tower.jpg',
+      },
+      {
+        id: 'q10', prompt: 'Identify this sound', choices: ['Dial-up modem connecting', 'Fax machine', 'Old dot-matrix printer'],
+        mediaType: 'sound', mediaRef: 'dial-up-modem.mp3',
+      },
+    ],
+  },
+  {
+    // category_sort ("Triage"): categoryOptions is fixed for the whole round; each question's
+    // choices must be a permutation of it (index 0 = correct, same convention as every other flavor).
+    id: 'round-7', roundNumber: 7, flavor: 'category_sort',
     categoryOptions: ['Animal', 'Mineral', 'Vegetable'],
     questions: [
-      { id: 'q3', prompt: 'Tomato', choices: ['Vegetable', 'Animal', 'Mineral'] },
-      { id: 'q4', prompt: 'Granite', choices: ['Mineral', 'Animal', 'Vegetable'] },
-      { id: 'q5', prompt: 'Elephant', choices: ['Animal', 'Mineral', 'Vegetable'] },
+      { id: 'q11', prompt: 'Tomato', choices: ['Vegetable', 'Animal', 'Mineral'] },
+      { id: 'q12', prompt: 'Granite', choices: ['Mineral', 'Animal', 'Vegetable'] },
+      { id: 'q13', prompt: 'Elephant', choices: ['Animal', 'Mineral', 'Vegetable'] },
+      { id: 'q14', prompt: 'Quartz', choices: ['Mineral', 'Vegetable', 'Animal'] },
     ],
   },
 ];
