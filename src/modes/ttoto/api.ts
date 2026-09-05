@@ -79,6 +79,7 @@ export const revealChoices = () => post('/reveal-choices');
 export const recordBuzz = (teamId: string) => post(`/buzz/${teamId}`);
 export const judge = (choice: TToTOChoiceKey) => post('/judge', { choice });
 export const next = () => post('/next');
+export const skipRound = () => post('/round/skip');
 export const newGame = () => post('/game/new');
 export const endGame = () => post('/game/end');
 export const undo = () => post('/undo');

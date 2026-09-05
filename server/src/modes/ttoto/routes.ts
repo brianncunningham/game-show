@@ -507,6 +507,22 @@ router.post('/next', (_req, res) => {
   res.json(state);
 });
 
+// Host override: bail out of whatever's left of the current round (any phase) straight
+// to the next round's intro. Tear down any live hardware window first — skipRound() can
+// be called mid-'armed'/'answering'/'steal', not just 'resolved' like next() requires.
+router.post('/round/skip', (_req, res) => {
+  clearStealTimer();
+  judgeController.closeWindow(ARMED_WINDOW_ID);
+  void piJudge('close-window', { windowId: ARMED_WINDOW_ID });
+  const state = ttotoStore.skipRound();
+  if (state.roundState.phase === 'round_intro') {
+    piLed({ effect: 'rainbow', speed_ms: 15, brightness: 0.9, duration_ms: 4000 });
+  } else if (state.roundState.phase === 'game_over') {
+    fireVictoryLed(state);
+  }
+  res.json(state);
+});
+
 router.post('/game/new', (_req, res) => {
   clearStealTimer();
   res.json(ttotoStore.newGame());

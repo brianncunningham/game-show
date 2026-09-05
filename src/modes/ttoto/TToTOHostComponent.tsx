@@ -1,16 +1,19 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
-  Box, Button, Card, CardContent, Chip, Collapse, Divider, Grid, IconButton, MenuItem, Select, Stack, Typography,
+  Box, Button, Card, CardContent, Chip, Collapse, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle,
+  Divider, Grid, IconButton, MenuItem, Select, Stack, Typography,
 } from '@mui/material';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import SkipNextIcon from '@mui/icons-material/SkipNext';
+import StopCircleIcon from '@mui/icons-material/StopCircle';
 import UndoIcon from '@mui/icons-material/Undo';
 import type { TToTOState, TToTOChoiceKey, TToTOPhase } from './types';
 import { CHOICE_LABELS, FLAVOR_LABELS } from './types';
 import {
-  getState, startGame, beginRound, revealMedia, replayMedia, revealChoices, recordBuzz, judge, next,
+  getState, startGame, beginRound, revealMedia, replayMedia, revealChoices, recordBuzz, judge, next, skipRound,
   newGame, endGame, undo, showIntro, hideIntro, listSaves, loadSave,
   showWandTest, hideWandTest, randomAssignPlayers,
 } from './api';
@@ -53,6 +56,10 @@ export const TToTOHostComponent = () => {
   const [gameOpen, setGameOpen] = useState(false);
   const [saves, setSaves] = useState<TToTOSaveMeta[]>([]);
   const [loadingSaveId, setLoadingSaveId] = useState<string | null>(null);
+  // End Game / New Game both jump straight to an abrupt, hard-to-undo-in-the-moment
+  // state (New Game zeroes both scores) from a single tap today — gate them behind an
+  // explicit confirm dialog instead of firing immediately on click.
+  const [confirmAction, setConfirmAction] = useState<'end' | 'new' | null>(null);
   // ID Please ("media_id") song playback. Reuses NTT's Spotify Connect integration as-is
   // (see docs/ttoto-id-please-plan.md §2) — same localStorage token, so a host who's
   // already connected Spotify via /host for Name That Tune this session doesn't need to
@@ -164,6 +171,14 @@ export const TToTOHostComponent = () => {
           onClick={act(() => undo())} sx={{ minWidth: 0 }}>
           Undo
         </Button>
+        {/* Bails out of whatever's left of the current round (a round that isn't landing,
+            is running long, or was loaded by mistake) straight to the next round's intro
+            — available any time there's a round in progress, not gated behind the
+            collapsed Game section since it needs to be reachable fast, mid-question. */}
+        <Button size="small" variant="outlined" color="warning" startIcon={<SkipNextIcon fontSize="small" />}
+          disabled={phase === 'idle' || phase === 'game_over'} onClick={navAct(() => skipRound())} sx={{ minWidth: 0 }}>
+          Skip Round
+        </Button>
         {teams.map((t, i) => (
           <Typography key={t.id} sx={{ fontWeight: 700, fontSize: '0.9rem', color: TEAM_COLORS[i] }}>
             {t.name}: {t.score}
@@ -201,6 +216,22 @@ export const TToTOHostComponent = () => {
                   <IconButton size="small" onClick={() => void spotify.fetchDevices()} title="Refresh devices">
                     <RefreshIcon fontSize="small" />
                   </IconButton>
+                  {/* Generic "kill whatever's playing" — not gated to the current question
+                      being media_id/song, since the whole problem this solves is a song
+                      still going from a PAST question after the host has already moved on
+                      (the per-question Media card below disappears the moment the question
+                      does, taking its Pause button with it). Always visible whenever
+                      Spotify is connected, any phase, any flavor. */}
+                  <Button
+                    size="small" variant="outlined" color="error" startIcon={<StopCircleIcon fontSize="small" />}
+                    onClick={() => {
+                      void spotify.stop();
+                      setSpotifyPaused(false);
+                      setSpotifyTesting(false);
+                    }}
+                  >
+                    Stop Audio
+                  </Button>
                   <Button
                     size="small" variant="text" color={spotifyTesting ? 'warning' : 'inherit'} sx={{ minWidth: 0 }}
                     onClick={() => {
@@ -293,7 +324,9 @@ export const TToTOHostComponent = () => {
             <Collapse in={gameOpen}>
               <Grid container spacing={1.5} sx={{ mt: 0.5 }}>
                 <Grid item xs={6} sm={4}>
-                  <Button fullWidth variant="contained" sx={bigBtnSx} onClick={navAct(() => newGame())}>New Game</Button>
+                  <Button fullWidth variant="contained" color="error" sx={bigBtnSx} onClick={() => setConfirmAction('new')}>
+                    New Game
+                  </Button>
                 </Grid>
                 <Grid item xs={6} sm={4}>
                   <Button fullWidth variant={state.showIntro ? 'contained' : 'outlined'} color="secondary" sx={bigBtnSx}
@@ -309,7 +342,7 @@ export const TToTOHostComponent = () => {
                 </Grid>
                 <Grid item xs={12} sm={4}>
                   <Button fullWidth variant="outlined" color="warning" sx={bigBtnSx}
-                    disabled={phase === 'idle' || phase === 'game_over'} onClick={navAct(() => endGame())}>
+                    disabled={phase === 'idle' || phase === 'game_over'} onClick={() => setConfirmAction('end')}>
                     🏆 End Game
                   </Button>
                 </Grid>
@@ -616,12 +649,48 @@ export const TToTOHostComponent = () => {
         {phase === 'game_over' && (
           <Card sx={{ border: '2px solid', borderColor: 'primary.main' }}>
             <CardContent>
-              <Typography sx={{ ...sectionLabelSx, mb: 1.5 }}>Game Over</Typography>
-              <Button fullWidth variant="contained" sx={bigBtnSx} onClick={act(() => newGame())}>New Game</Button>
+              <Typography sx={{ ...sectionLabelSx, mb: 0.5 }}>Game Over</Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>
+                Starting a new game resets both teams' scores to 0 and restarts from Round 1.
+              </Typography>
+              <Button fullWidth variant="contained" color="error" sx={bigBtnSx} onClick={() => setConfirmAction('new')}>
+                New Game
+              </Button>
             </CardContent>
           </Card>
         )}
       </Stack>
+
+      {/* Confirm dialog for End Game / New Game — both were previously a single
+          unconfirmed tap; End Game jumps straight to the victory screen from wherever the
+          game currently is, and New Game additionally zeroes both teams' scores. Making
+          both require an explicit second step here (rather than e.g. a "hold to confirm"
+          button) mirrors the confirm pattern already used for the mode-switch dialog on
+          /gameadmin. */}
+      <Dialog open={confirmAction !== null} onClose={() => setConfirmAction(null)}>
+        <DialogTitle>{confirmAction === 'end' ? 'End the game now?' : 'Start a new game?'}</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            {confirmAction === 'end'
+              ? "This jumps straight to the victory screen, wherever the game currently is. Scores aren't touched — Undo works right after if this was a mistake."
+              : "This resets both teams' scores to 0 and restarts from Round 1 with the same rounds/questions still loaded."}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmAction(null)}>Cancel</Button>
+          <Button
+            color={confirmAction === 'end' ? 'warning' : 'error'} variant="contained"
+            onClick={() => {
+              const action = confirmAction;
+              setConfirmAction(null);
+              if (action === 'end') void navAct(() => endGame())();
+              else if (action === 'new') void navAct(() => newGame())();
+            }}
+          >
+            {confirmAction === 'end' ? 'End Game' : 'Start New Game'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

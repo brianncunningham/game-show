@@ -617,6 +617,22 @@ class TToTOStore {
     return this.patchRound({ phase: 'game_over' });
   }
 
+  // Host override — abandon whatever's left of the current round (any phase, any
+  // question) and jump straight to the next round's intro, or game_over if this was the
+  // last one. For a round that isn't landing with the room, is running long, or was
+  // loaded by mistake. Unlike next(), doesn't require 'resolved' — a host needs this
+  // available mid-question too. Routes.ts is responsible for tearing down any live
+  // hardware buzzer window before calling this, same as it does for judge()/next().
+  skipRound(): TToTOState {
+    if (this.state.roundState.phase === 'idle' || this.state.roundState.phase === 'game_over') return this.state;
+    this.begin();
+    const nextRoundIndex = this.state.roundState.currentRoundIndex + 1;
+    if (nextRoundIndex < this.state.rounds.length) {
+      return this.enterRoundIntro(nextRoundIndex);
+    }
+    return this.patchRound({ phase: 'game_over' });
+  }
+
   // Manually jump straight to the victory screen regardless of how far through the
   // rounds/questions play currently is — a host control, not an automatic transition
   // (mirrors Survey Says's/Name That Tune's manual "End Game" host button). Also clears
