@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
+  Accordion, AccordionDetails, AccordionSummary,
   Alert, Box, Button, Card, CardContent, Chip, Divider, IconButton, MenuItem, Select, Stack, Tab, Tabs, TextField, Tooltip, Typography,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
@@ -8,6 +9,7 @@ import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import CasinoIcon from '@mui/icons-material/Casino';
 import DeleteIcon from '@mui/icons-material/Delete';
 import DownloadDoneIcon from '@mui/icons-material/DownloadDone';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import SaveIcon from '@mui/icons-material/Save';
 import type { TToTOState, TToTORound, TToTOQuestion, TToTOFlavor, TToTOConfig } from './types';
 import { FLAVOR_LABELS } from './types';
@@ -108,12 +110,13 @@ function MediaFields({ question, onChange }: { question: TToTOQuestion; onChange
   );
 }
 
-function QuestionForm({ question, flavor, onChange, onRemove, canRemove }: {
-  question: TToTOQuestion; flavor: TToTOFlavor; onChange: (q: TToTOQuestion) => void; onRemove: () => void; canRemove: boolean;
+function QuestionForm({ question, number, flavor, onChange, onRemove, canRemove }: {
+  question: TToTOQuestion; number: number; flavor: TToTOFlavor; onChange: (q: TToTOQuestion) => void; onRemove: () => void; canRemove: boolean;
 }) {
   return (
     <Box sx={{ p: 1.5, border: '1px solid rgba(255,255,255,0.1)', borderRadius: 1, mb: 1.5 }}>
       <Stack direction="row" spacing={1} alignItems="flex-start">
+        <Chip label={`Q${number}`} size="small" sx={{ mt: 0.5 }} />
         <TextField
           fullWidth size="small" label="Prompt" value={question.prompt}
           onChange={e => onChange({ ...question, prompt: e.target.value })}
@@ -160,8 +163,8 @@ function QuestionForm({ question, flavor, onChange, onRemove, canRemove }: {
 // category_sort: a dense two-column row (item | correct category) instead of QuestionForm's
 // full card — this flavor is meant as a quick-fire round with many items, so no host note
 // field and minimal per-row chrome, to keep a long list scannable/editable at a glance.
-function CategorySortRow({ question, categoryOptions, onChange, onRemove, canRemove }: {
-  question: TToTOQuestion; categoryOptions: [string, string, string];
+function CategorySortRow({ question, number, categoryOptions, onChange, onRemove, canRemove }: {
+  question: TToTOQuestion; number: number; categoryOptions: [string, string, string];
   onChange: (q: TToTOQuestion) => void; onRemove: () => void; canRemove: boolean;
 }) {
   const categoriesReady = categoryOptions.every(c => c.trim());
@@ -169,6 +172,7 @@ function CategorySortRow({ question, categoryOptions, onChange, onRemove, canRem
 
   return (
     <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.75 }}>
+      <Typography variant="caption" color="text.disabled" sx={{ width: 20, textAlign: 'right' }}>{number}.</Typography>
       <TextField
         size="small" placeholder="Item to classify" value={question.prompt}
         onChange={e => onChange({ ...question, prompt: e.target.value })}
@@ -193,8 +197,8 @@ function CategorySortRow({ question, categoryOptions, onChange, onRemove, canRem
   );
 }
 
-function RoundForm({ round, index, total, onChange, onRemove, onMove }: {
-  round: TToTORound; index: number; total: number;
+function RoundForm({ round, index, total, expanded, onToggleExpand, onChange, onRemove, onMove }: {
+  round: TToTORound; index: number; total: number; expanded: boolean; onToggleExpand: () => void;
   onChange: (r: TToTORound) => void; onRemove: () => void; onMove: (dir: -1 | 1) => void;
 }) {
   const updateQuestion = (qi: number, q: TToTOQuestion) => {
@@ -215,34 +219,42 @@ function RoundForm({ round, index, total, onChange, onRemove, onMove }: {
     onChange({ ...round, categoryOptions: options, categorySlots: undefined });
   };
 
-  return (
-    <Card variant="outlined">
-      <CardContent>
-        <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1.5 }}>
-          <Chip label={`Round ${round.roundNumber}`} size="small" color="primary" />
-          <Select
-            size="small" value={round.flavor}
-            onChange={e => {
-              const flavor = e.target.value as TToTOFlavor;
-              const categoryOptions = flavor === 'category_sort' ? (round.categoryOptions ?? ['', '', '']) : round.categoryOptions;
-              onChange({ ...round, flavor, categoryOptions });
-            }}
-            sx={{ minWidth: 180, fontSize: '0.85rem' }}
-          >
-            {FLAVOR_OPTIONS.map(f => <MenuItem key={f} value={f}>{FLAVOR_LABELS[f]}</MenuItem>)}
-          </Select>
-          <Box sx={{ flex: 1 }} />
-          <Tooltip title="Move round up">
-            <span><IconButton size="small" disabled={index === 0} onClick={() => onMove(-1)}><ArrowUpwardIcon fontSize="small" /></IconButton></span>
-          </Tooltip>
-          <Tooltip title="Move round down">
-            <span><IconButton size="small" disabled={index === total - 1} onClick={() => onMove(1)}><ArrowDownwardIcon fontSize="small" /></IconButton></span>
-          </Tooltip>
-          <Tooltip title="Delete round">
-            <IconButton size="small" color="error" onClick={onRemove}><DeleteIcon fontSize="small" /></IconButton>
-          </Tooltip>
-        </Stack>
+  const questionCount = round.questions.length;
+  const countLabel = `${questionCount} ${isCategorySort ? 'item' : 'question'}${questionCount !== 1 ? 's' : ''}`;
 
+  return (
+    <Accordion expanded={expanded} onChange={onToggleExpand} disableGutters variant="outlined" sx={{ '&::before': { display: 'none' } }}>
+      <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ '& .MuiAccordionSummary-content': { overflow: 'hidden' } }}>
+        <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap" sx={{ width: '100%', pr: 1 }}>
+          <Chip label={`Round ${round.roundNumber}`} size="small" color="primary" />
+          <Chip label={countLabel} size="small" variant="outlined" />
+          <Box sx={{ flex: 1 }} />
+          {/* Interactive controls: stop propagation so clicking them doesn't also toggle the accordion. */}
+          <Stack direction="row" spacing={0.5} alignItems="center" onClick={e => e.stopPropagation()}>
+            <Select
+              size="small" value={round.flavor}
+              onChange={e => {
+                const flavor = e.target.value as TToTOFlavor;
+                const categoryOptions = flavor === 'category_sort' ? (round.categoryOptions ?? ['', '', '']) : round.categoryOptions;
+                onChange({ ...round, flavor, categoryOptions });
+              }}
+              sx={{ minWidth: 180, fontSize: '0.85rem' }}
+            >
+              {FLAVOR_OPTIONS.map(f => <MenuItem key={f} value={f}>{FLAVOR_LABELS[f]}</MenuItem>)}
+            </Select>
+            <Tooltip title="Move round up">
+              <span><IconButton size="small" disabled={index === 0} onClick={() => onMove(-1)}><ArrowUpwardIcon fontSize="small" /></IconButton></span>
+            </Tooltip>
+            <Tooltip title="Move round down">
+              <span><IconButton size="small" disabled={index === total - 1} onClick={() => onMove(1)}><ArrowDownwardIcon fontSize="small" /></IconButton></span>
+            </Tooltip>
+            <Tooltip title="Delete round">
+              <IconButton size="small" color="error" onClick={onRemove}><DeleteIcon fontSize="small" /></IconButton>
+            </Tooltip>
+          </Stack>
+        </Stack>
+      </AccordionSummary>
+      <AccordionDetails>
         {isCategorySort && (
           <Box sx={{ mb: 1.5, p: 1.5, border: '1px dashed rgba(255,255,255,0.2)', borderRadius: 1 }}>
             <Typography variant="caption" sx={{ display: 'block', mb: 1, color: 'text.secondary' }}>
@@ -263,12 +275,13 @@ function RoundForm({ round, index, total, onChange, onRemove, onMove }: {
         {isCategorySort ? (
           <>
             <Stack direction="row" spacing={1} sx={{ mb: 0.5 }}>
+              <Box sx={{ width: 20 }} />
               <Typography variant="caption" sx={{ flex: 1, color: 'text.disabled' }}>ITEM</Typography>
               <Typography variant="caption" sx={{ flex: 1, color: 'text.disabled' }}>CORRECT CATEGORY</Typography>
               <Box sx={{ width: 34 }} />
             </Stack>
             {round.questions.map((q, qi) => (
-              <CategorySortRow key={q.id} question={q} canRemove={round.questions.length > 1}
+              <CategorySortRow key={q.id} question={q} number={qi + 1} canRemove={round.questions.length > 1}
                 categoryOptions={round.categoryOptions ?? ['', '', '']}
                 onChange={(nq) => updateQuestion(qi, nq)} onRemove={() => removeQuestion(qi)} />
             ))}
@@ -277,14 +290,14 @@ function RoundForm({ round, index, total, onChange, onRemove, onMove }: {
         ) : (
           <>
             {round.questions.map((q, qi) => (
-              <QuestionForm key={q.id} question={q} flavor={round.flavor} canRemove={round.questions.length > 1}
+              <QuestionForm key={q.id} question={q} number={qi + 1} flavor={round.flavor} canRemove={round.questions.length > 1}
                 onChange={(nq) => updateQuestion(qi, nq)} onRemove={() => removeQuestion(qi)} />
             ))}
             <Button size="small" startIcon={<AddIcon />} onClick={addQuestion}>Add Question</Button>
           </>
         )}
-      </CardContent>
-    </Card>
+      </AccordionDetails>
+    </Accordion>
   );
 }
 
@@ -292,6 +305,11 @@ function RoundFormEditor({ state, onRefresh }: { state: TToTOState; onRefresh: (
   const [draft, setDraft] = useState<TToTORound[]>(() => cloneRounds(state.rounds));
   const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
+  // Rounds can get long (many questions each, plus a 25-question round) — each round is
+  // collapsible so the whole list stays scannable; default to just the first round open.
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(
+    () => new Set(state.rounds.length > 0 ? [state.rounds[0].id] : []),
+  );
 
   // Re-sync from the server whenever it changes from elsewhere (e.g. JSON import, or
   // after our own save completes) — but not while the user has unsaved local edits.
@@ -299,6 +317,14 @@ function RoundFormEditor({ state, onRefresh }: { state: TToTOState; onRefresh: (
     if (!dirty) setDraft(cloneRounds(state.rounds));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.rounds]);
+
+  const toggleExpand = (id: string) => {
+    setExpandedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
 
   const updateRound = (ri: number, r: TToTORound) => {
     setDraft(d => d.map((existing, i) => (i === ri ? r : existing)));
@@ -309,7 +335,9 @@ function RoundFormEditor({ state, onRefresh }: { state: TToTOState; onRefresh: (
     setDirty(true);
   };
   const addRound = () => {
-    setDraft(d => [...d, emptyRound(d.length + 1)]);
+    const round = emptyRound(draft.length + 1);
+    setDraft(d => [...d, round]);
+    setExpandedIds(prev => new Set(prev).add(round.id)); // open the round you just added
     setDirty(true);
   };
   const moveRound = (ri: number, dir: -1 | 1) => {
@@ -360,8 +388,15 @@ function RoundFormEditor({ state, onRefresh }: { state: TToTOState; onRefresh: (
 
   return (
     <Stack spacing={2}>
+      {draft.length > 1 && (
+        <Stack direction="row" spacing={1}>
+          <Button size="small" onClick={() => setExpandedIds(new Set(draft.map(r => r.id)))}>Expand all</Button>
+          <Button size="small" onClick={() => setExpandedIds(new Set())}>Collapse all</Button>
+        </Stack>
+      )}
       {draft.map((round, ri) => (
         <RoundForm key={round.id} round={round} index={ri} total={draft.length}
+          expanded={expandedIds.has(round.id)} onToggleExpand={() => toggleExpand(round.id)}
           onChange={(r) => updateRound(ri, r)} onRemove={() => removeRound(ri)} onMove={(dir) => moveRound(ri, dir)} />
       ))}
       <Button variant="outlined" startIcon={<AddIcon />} onClick={addRound}>Add Round</Button>
